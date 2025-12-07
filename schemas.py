@@ -95,6 +95,7 @@ class TaskCreate(BaseModel):
     category_id: UUID
     title: str
     description: Optional[str] = None
+    ai_analysis_metadata: Optional[dict] = None
     estimated_points: Optional[int] = 0
     due_date: Optional[datetime] = None
 
@@ -104,6 +105,7 @@ class TaskUpdate(BaseModel):
     category_id: Optional[UUID] = None
     title: Optional[str] = None
     description: Optional[str] = None
+    ai_analysis_metadata: Optional[dict] = None
     estimated_points: Optional[int] = None
     due_date: Optional[datetime] = None
     completed_at: Optional[datetime] = None
@@ -116,6 +118,7 @@ class TaskResponse(BaseModel):
     category_id: UUID
     title: str
     description: Optional[str]
+    ai_analysis_metadata: Optional[dict]
     estimated_points: int
     awarded_points: int
     due_date: Optional[datetime]
@@ -172,7 +175,7 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     user_id: Optional[str] = None
-    role: Optional[str] = None  # например: "user" или "admin"
+    role: Optional[str] = None 
 
 class UserLogin(BaseModel):
     email: EmailStr
