@@ -1,9 +1,3 @@
-# database.py
-"""
-ОДИН ФАЙЛ: модели + создание таблиц.
-Таблицы создаются автоматически при вызове init_db().
-"""
-
 from sqlalchemy import (
     Column, String, Integer, Text, ForeignKey, JSON, DateTime,
     create_engine, text, MetaData
@@ -13,7 +7,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from config.db import engine
 
-# Базовый класс для моделей
 Base = declarative_base()
 
 class User(Base):
@@ -31,7 +24,6 @@ class User(Base):
     tasks = relationship("Task", back_populates="user")
     categories = relationship("Category", back_populates="user")
     rewards = relationship("Reward", back_populates="user")
-    # roles = relationship("Role", secondary="user_roles", back_populates="users")
 
 class Board(Base):
     __tablename__ = "boards"
@@ -43,18 +35,6 @@ class Board(Base):
     updated_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"), onupdate=text("CURRENT_TIMESTAMP"))
     user = relationship("User", back_populates="boards")
     tasks = relationship("Task", back_populates="board")
-
-# class Role(Base):
-#     __tablename__ = "roles"
-#     id = Column(PG_UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
-#     name = Column(String, unique=True, nullable=False)
-#     description = Column(Text)
-#     users = relationship("User", secondary="user_roles", back_populates="roles")
-#
-# class UserRole(Base):
-#     __tablename__ = "user_roles"
-#     user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True)
-#     role_id = Column(PG_UUID(as_uuid=True), ForeignKey("roles.id"), primary_key=True)
 
 class TaskStatus(Base):
     __tablename__ = "task_status"
