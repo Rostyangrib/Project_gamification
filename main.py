@@ -1,4 +1,3 @@
-# main.py
 from fastapi import FastAPI
 from datetime import datetime
 from sqlalchemy import text
