@@ -3,10 +3,56 @@ from sqlalchemy.orm import Session
 from uuid import UUID
 
 from config.db import get_db
-from database import Board, TaskStatus, Category, Tag, Task, TaskTag, RewardType, Reward
+from database import User, Board, TaskStatus, Category, Tag, Task, TaskTag, RewardType, Reward
 from dependencies import get_current_user, require_admin
 
 router = APIRouter(prefix="", tags=["DELETE"])
+
+@router.delete("/users/me", status_code=status.HTTP_204_NO_CONTENT)
+def delete_own_account(
+        current_user: dict = Depends(get_current_user),
+        db: Session = Depends(get_db)
+):
+    user = current_user["user"]
+
+    tasks = db.query(Task).filter(Task.user_id == user.id).all()
+    for task in tasks:
+        db.delete(task)
+
+    db.query(Board).filter(Board.user_id == user.id).delete()
+
+    db.query(Category).filter(Category.user_id == user.id).delete()
+
+    db.query(Reward).filter(Reward.user_id == user.id).delete()
+
+    db.delete(user)
+    db.commit()
+    return
+
+@router.delete("/admin/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user_by_admin(
+    user_id: UUID,
+    current_user: dict = Depends(require_admin),  # ← только админ
+    db: Session = Depends(get_db)
+):
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+
+    tasks = db.query(Task).filter(Task.user_id == user_id).all()
+    for task in tasks:
+        db.delete(task)
+
+    db.query(Board).filter(Board.user_id == user_id).delete()
+
+    db.query(Category).filter(Category.user_id == user_id).delete()
+
+    db.query(Reward).filter(Reward.user_id == user_id).delete()
+
+    db.delete(user)
+    db.commit()
+    return
 
 @router.delete("/boards/{board_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_board(
@@ -37,9 +83,6 @@ def delete_task_status(
     if not status_obj:
         raise HTTPException(status_code=404, detail="TaskStatus не найден")
 
-    if db.query(Task).filter(Task.status_id == status_id).first():
-        raise HTTPException(status_code=400, detail="Нельзя удалить TaskStatus — он используется в задачах")
-
     db.delete(status_obj)
     db.commit()
     return
@@ -56,9 +99,6 @@ def delete_category(
     ).first()
     if not category:
         raise HTTPException(status_code=404, detail="Category не найдена или не принадлежит вам")
-
-    if db.query(Task).filter(Task.category_id == category_id).first():
-        raise HTTPException(status_code=400, detail="Нельзя удалить категорию — в ней есть задачи")
 
     db.delete(category)
     db.commit()
@@ -109,9 +149,6 @@ def delete_reward_type(
     if not rt:
         raise HTTPException(status_code=404, detail="RewardType не найден")
 
-    if db.query(Reward).filter(Reward.type_id == type_id).first():
-        raise HTTPException(status_code=400, detail="Нельзя удалить RewardType — он используется в наградах")
-
     db.delete(rt)
     db.commit()
     return
@@ -128,8 +165,6 @@ def delete_reward(
     ).first()
     if not reward:
         raise HTTPException(status_code=404, detail="Reward не найден или не принадлежит вам")
-
-    current_user["user"].total_points -= reward.points_amount
 
     db.delete(reward)
     db.commit()
