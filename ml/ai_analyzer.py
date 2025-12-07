@@ -13,32 +13,31 @@ def analyze_task(title: str, description: str = "") -> Dict[str, Any]:
     - model_used: str
     - confidence: float (0.0–1.0)
     """
-    prompt = f"""
-Ты — эксперт по оценке сложности и ценности задач для геймификации.
-Оцени задачу по шкале от 1 до 100 баллов, где:
-- 1–20: очень простая/рутинная задача
-- 21–50: средняя задача, требует усилий
-- 51–80: сложная задача, требует времени/навыков
-- 81–100: очень сложная/важная задача
+    prompt = f"""Ты — эксперт по оценке сложности и ценности задач для геймификации.
+    Оцени задачу по шкале от 1 до 100 баллов, где:
+    - 1–20: очень простая/рутинная задача
+    - 21–50: средняя задача, требует усилий
+    - 51–80: сложная задача, требует времени/навыков
+    - 81–100: очень сложная/важная задача
 
-Задача:
-Название: {title}
-Описание: {description}
+    Задача:
+    Название: {title}
+    Описание: {description}
 
-Верни ОДИН JSON объект с полями:
-{
-  "estimated_points": <число от 1 до 100>,
-  "explanation": "<краткое объяснение почему такая оценка>",
-  "model_used": "llama3",
-  "confidence": <число от 0.0 до 1.0>
-}
-"""
+    Верни ОДИН JSON объект с полями:
+    {{
+      "estimated_points": <число от 1 до 100>,
+      "explanation": "<краткое объяснение почему такая оценка>",
+      "model_used": "phi3",
+      "confidence": <число от 0.0 до 1.0>
+    }}
+    """
 
     try:
         response = requests.post(
             OLLAMA_API_BASE,
             json={
-                "model": "qwen2:0.5b",  # можно заменить на другую модель
+                "model": "phi3",
                 "prompt": prompt,
                 "stream": False,
                 "format": "json"
@@ -50,13 +49,12 @@ def analyze_task(title: str, description: str = "") -> Dict[str, Any]:
             raise Exception(f"Ollama API error: {response.text}")
 
         result = response.json()
-        # Ollama может вернуть строку, а не dict — парсим
+
         if isinstance(result.get("response"), str):
             data = json.loads(result["response"])
         else:
             data = result.get("response", {})
 
-        # Валидация ответа
         if not isinstance(data, dict):
             raise Exception("Invalid response format from model")
 
@@ -65,16 +63,13 @@ def analyze_task(title: str, description: str = "") -> Dict[str, Any]:
             if key not in data:
                 raise Exception(f"Missing key in AI response: {key}")
 
-        # Нормализуем баллы (если вышли за пределы)
         data["estimated_points"] = max(1, min(100, int(data["estimated_points"])))
         data["confidence"] = max(0.0, min(1.0, float(data["confidence"])))
 
         return data
 
     except Exception as e:
-        # Логируем ошибку
-        print(f"❌ AI Analysis Error: {e}")
-        # Возвращаем fallback
+        print(f"AI Analysis Error: {e}")
         return {
             "estimated_points": 50,
             "explanation": "Ошибка анализа задачи. Использовано значение по умолчанию.",
