@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from passlib.context import CryptContext
+from ml.ai_analyzer import analyze_task
 
 from config.db import get_db
 from database import (
@@ -47,7 +48,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     return db_user
 
 
-@router.post("/login", response_model=Token)
+@router.post("/token", response_model=Token)
 def login(user: UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
     if not db_user or not verify_password(user.password, db_user.password_hash):
@@ -141,22 +142,29 @@ def create_tag(
     db.refresh(db_tag)
     return db_tag
 
+
 @router.post("/tasks", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
 def create_task(
-    task: TaskCreate,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+        task: TaskCreate,
+        current_user: dict = Depends(get_current_user),
+        db: Session = Depends(get_db)
 ):
     board = db.query(Board).filter(Board.id == task.board_id, Board.user_id == current_user["user"].id).first()
     if not board:
         raise HTTPException(status_code=404, detail="Board не найден или не принадлежит пользователю")
 
-    category = db.query(Category).filter(Category.id == task.category_id, Category.user_id == current_user["user"].id).first()
+    category = db.query(Category).filter(Category.id == task.category_id,
+                                         Category.user_id == current_user["user"].id).first()
     if not category:
         raise HTTPException(status_code=404, detail="Category не найдена или не принадлежит пользователю")
 
     if not db.query(TaskStatus).filter(TaskStatus.id == task.status_id).first():
         raise HTTPException(status_code=404, detail="TaskStatus не найден")
+
+    ai_result = analyze_task(task.title, task.description or "")
+
+    estimated_points = ai_result["estimated_points"]
+    ai_metadata = ai_result
 
     db_task = Task(
         user_id=current_user["user"].id,
@@ -165,8 +173,10 @@ def create_task(
         category_id=task.category_id,
         title=task.title,
         description=task.description,
-        estimated_points=task.estimated_points,
-        due_date=task.due_date
+        estimated_points=estimated_points,
+        ai_analysis_metadata=ai_metadata,
+        due_date=task.due_date,
+        awarded_points=0
     )
     db.add(db_task)
     db.commit()
