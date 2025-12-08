@@ -20,24 +20,24 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
-class BoardCreate(BaseModel):
-    name: str
-    description: Optional[str] = None
-
-class BoardUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-
-class BoardResponse(BaseModel):
-    id: UUID
-    user_id: UUID
-    name: str
-    description: Optional[str]
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
+# class BoardCreate(BaseModel):
+#     name: str
+#     description: Optional[str] = None
+#
+# class BoardUpdate(BaseModel):
+#     name: Optional[str] = None
+#     description: Optional[str] = None
+#
+# class BoardResponse(BaseModel):
+#     id: UUID
+#     user_id: UUID
+#     name: str
+#     description: Optional[str]
+#     created_at: datetime
+#     updated_at: datetime
+#
+#     class Config:
+#         from_attributes = True
 
 class TaskStatusCreate(BaseModel):
     code: str
@@ -55,22 +55,22 @@ class TaskStatusResponse(BaseModel):
     class Config:
         from_attributes = True
 
-class CategoryCreate(BaseModel):
-    name: str
-    color: Optional[str] = None
-
-class CategoryUpdate(BaseModel):
-    name: Optional[str] = None
-    color: Optional[str] = None
-
-class CategoryResponse(BaseModel):
-    id: UUID
-    user_id: UUID
-    name: str
-    color: Optional[str]
-
-    class Config:
-        from_attributes = True
+# class CategoryCreate(BaseModel):
+#     name: str
+#     color: Optional[str] = None
+#
+# class CategoryUpdate(BaseModel):
+#     name: Optional[str] = None
+#     color: Optional[str] = None
+#
+# class CategoryResponse(BaseModel):
+#     id: UUID
+#     user_id: UUID
+#     name: str
+#     color: Optional[str]
+#
+#     class Config:
+#         from_attributes = True
 
 class TagCreate(BaseModel):
     name: str
@@ -90,9 +90,9 @@ class TaskTagCreate(BaseModel):
     tag_id: UUID
 
 class TaskCreate(BaseModel):
-    board_id: UUID
+    #board_id: UUID
     status_id: UUID
-    category_id: UUID
+    #category_id: UUID
     title: str
     description: Optional[str] = None
     ai_analysis_metadata: Optional[dict] = None
@@ -100,9 +100,9 @@ class TaskCreate(BaseModel):
     due_date: Optional[datetime] = None
 
 class TaskUpdate(BaseModel):
-    board_id: Optional[UUID] = None
+    #board_id: Optional[UUID] = None
     status_id: Optional[UUID] = None
-    category_id: Optional[UUID] = None
+    #category_id: Optional[UUID] = None
     title: Optional[str] = None
     description: Optional[str] = None
     ai_analysis_metadata: Optional[dict] = None
@@ -113,9 +113,9 @@ class TaskUpdate(BaseModel):
 class TaskResponse(BaseModel):
     id: UUID
     user_id: UUID
-    board_id: UUID
+    #board_id: UUID
     status_id: UUID
-    category_id: UUID
+    #category_id: UUID
     title: str
     description: Optional[str]
     ai_analysis_metadata: Optional[dict]
@@ -175,8 +175,15 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     user_id: Optional[str] = None
-    role: Optional[str] = None 
+    role: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+class TaskTitleAndDate(BaseModel):
+    title: str
+    due_date: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

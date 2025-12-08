@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from uuid import UUID
 
 from config.db import get_db
-from database import User, Board, TaskStatus, Category, Tag, Task, TaskTag, RewardType, Reward
+from database import User, TaskStatus, Tag, Task, TaskTag, RewardType, Reward
 from dependencies import get_current_user, require_admin
 
 router = APIRouter(prefix="", tags=["DELETE"])
@@ -19,11 +19,13 @@ def delete_own_account(
     for task in tasks:
         db.delete(task)
 
-    db.query(Board).filter(Board.user_id == user.id).delete()
-
-    db.query(Category).filter(Category.user_id == user.id).delete()
+    # db.query(Board).filter(Board.user_id == user.id).delete()
+    #
+    # db.query(Category).filter(Category.user_id == user.id).delete()
 
     db.query(Reward).filter(Reward.user_id == user.id).delete()
+
+    db.query(Task).filter(Task.user_id == user.id).delete()
 
     db.delete(user)
     db.commit()
@@ -32,7 +34,7 @@ def delete_own_account(
 @router.delete("/admin/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user_by_admin(
     user_id: UUID,
-    current_user: dict = Depends(require_admin),  # ← только админ
+    current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
 
@@ -44,34 +46,36 @@ def delete_user_by_admin(
     for task in tasks:
         db.delete(task)
 
-    db.query(Board).filter(Board.user_id == user_id).delete()
-
-    db.query(Category).filter(Category.user_id == user_id).delete()
+    # db.query(Board).filter(Board.user_id == user_id).delete()
+    #
+    # db.query(Category).filter(Category.user_id == user_id).delete()
 
     db.query(Reward).filter(Reward.user_id == user_id).delete()
+
+    db.query(Task).filter(Task.user_id == user_id).delete()
 
     db.delete(user)
     db.commit()
     return
 
-@router.delete("/boards/{board_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_board(
-        board_id: UUID,
-        current_user: dict = Depends(get_current_user),
-        db: Session = Depends(get_db)
-):
-    board = db.query(Board).filter(
-        Board.id == board_id,
-        Board.user_id == current_user["user"].id
-    ).first()
-    if not board:
-        raise HTTPException(status_code=404, detail="Board не найден или не принадлежит вам")
-
-    db.query(Task).filter(Task.board_id == board_id).delete()
-
-    db.delete(board)
-    db.commit()
-    return
+# @router.delete("/boards/{board_id}", status_code=status.HTTP_204_NO_CONTENT)
+# def delete_board(
+#         board_id: UUID,
+#         current_user: dict = Depends(get_current_user),
+#         db: Session = Depends(get_db)
+# ):
+#     # board = db.query(Board).filter(
+#     #     Board.id == board_id,
+#     #     Board.user_id == current_user["user"].id
+#     # ).first()
+#     if not board:
+#         raise HTTPException(status_code=404, detail="Board не найден или не принадлежит вам")
+#
+#     db.query(Task).filter(Task.board_id == board_id).delete()
+#
+#     db.delete(board)
+#     db.commit()
+#     return
 
 @router.delete("/task-statuses/{status_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_task_status(
@@ -87,22 +91,22 @@ def delete_task_status(
     db.commit()
     return
 
-@router.delete("/categories/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_category(
-        category_id: UUID,
-        current_user: dict = Depends(get_current_user),
-        db: Session = Depends(get_db)
-):
-    category = db.query(Category).filter(
-        Category.id == category_id,
-        Category.user_id == current_user["user"].id
-    ).first()
-    if not category:
-        raise HTTPException(status_code=404, detail="Category не найдена или не принадлежит вам")
-
-    db.delete(category)
-    db.commit()
-    return
+# @router.delete("/categories/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
+# def delete_category(
+#         category_id: UUID,
+#         current_user: dict = Depends(get_current_user),
+#         db: Session = Depends(get_db)
+# ):
+#     category = db.query(Category).filter(
+#         Category.id == category_id,
+#         Category.user_id == current_user["user"].id
+#     ).first()
+#     if not category:
+#         raise HTTPException(status_code=404, detail="Category не найдена или не принадлежит вам")
+#
+#     db.delete(category)
+#     db.commit()
+#     return
 
 @router.delete("/tags/{tag_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_tag(

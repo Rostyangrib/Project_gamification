@@ -1,3 +1,7 @@
+import re
+from datetime import datetime
+
+import requests
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -6,13 +10,11 @@ from ml.ai_analyzer import analyze_task
 
 from config.db import get_db
 from database import (
-    User, Board, TaskStatus, Category, Tag, TaskTag, Task, RewardType, Reward
+    User, TaskStatus, Tag, TaskTag, Task, RewardType, Reward
 )
 from schemas import (
     UserCreate, UserResponse, Token, UserLogin,
-    BoardCreate, BoardResponse,
     TaskStatusCreate, TaskStatusResponse,
-    CategoryCreate, CategoryResponse,
     TagCreate, TagResponse,
     TaskCreate, TaskResponse,
     RewardTypeCreate, RewardTypeResponse,
@@ -40,7 +42,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         email=user.email,
         password_hash=hashed_password,
         total_points=0,
-        role="user"
+        role="admin"
     )
     db.add(db_user)
     db.commit()
@@ -83,21 +85,21 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
         )
     return db_user
 
-@router.post("/boards", response_model=BoardResponse, status_code=status.HTTP_201_CREATED)
-def create_board(
-    board: BoardCreate,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    db_board = Board(
-        user_id=current_user["user"].id,
-        name=board.name,
-        description=board.description
-    )
-    db.add(db_board)
-    db.commit()
-    db.refresh(db_board)
-    return db_board
+# @router.post("/boards", response_model=BoardResponse, status_code=status.HTTP_201_CREATED)
+# def create_board(
+#     board: BoardCreate,
+#     current_user: dict = Depends(get_current_user),
+#     db: Session = Depends(get_db)
+# ):
+#     db_board = Board(
+#         user_id=current_user["user"].id,
+#         name=board.name,
+#         description=board.description
+#     )
+#     db.add(db_board)
+#     db.commit()
+#     db.refresh(db_board)
+#     return db_board
 
 @router.post("/task-statuses", response_model=TaskStatusResponse, status_code=status.HTTP_201_CREATED)
 def create_task_status(
@@ -113,21 +115,21 @@ def create_task_status(
     db.refresh(db_status)
     return db_status
 
-@router.post("/categories", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED)
-def create_category(
-    category: CategoryCreate,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    db_category = Category(
-        user_id=current_user["user"].id,
-        name=category.name,
-        color=category.color
-    )
-    db.add(db_category)
-    db.commit()
-    db.refresh(db_category)
-    return db_category
+# @router.post("/categories", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED)
+# def create_category(
+#     category: CategoryCreate,
+#     current_user: dict = Depends(get_current_user),
+#     db: Session = Depends(get_db)
+# ):
+#     db_category = Category(
+#         user_id=current_user["user"].id,
+#         name=category.name,
+#         color=category.color
+#     )
+#     db.add(db_category)
+#     db.commit()
+#     db.refresh(db_category)
+#     return db_category
 
 @router.post("/tags", response_model=TagResponse, status_code=status.HTTP_201_CREATED)
 def create_tag(
@@ -149,14 +151,14 @@ def create_task(
         current_user: dict = Depends(get_current_user),
         db: Session = Depends(get_db)
 ):
-    board = db.query(Board).filter(Board.id == task.board_id, Board.user_id == current_user["user"].id).first()
-    if not board:
-        raise HTTPException(status_code=404, detail="Board не найден или не принадлежит пользователю")
-
-    category = db.query(Category).filter(Category.id == task.category_id,
-                                         Category.user_id == current_user["user"].id).first()
-    if not category:
-        raise HTTPException(status_code=404, detail="Category не найдена или не принадлежит пользователю")
+    # board = db.query(Board).filter(Board.id == task.board_id, Board.user_id == current_user["user"].id).first()
+    # if not board:
+    #     raise HTTPException(status_code=404, detail="Board не найден или не принадлежит пользователю")
+    #
+    # category = db.query(Category).filter(Category.id == task.category_id,
+    #                                      Category.user_id == current_user["user"].id).first()
+    # if not category:
+    #     raise HTTPException(status_code=404, detail="Category не найдена или не принадлежит пользователю")
 
     if not db.query(TaskStatus).filter(TaskStatus.id == task.status_id).first():
         raise HTTPException(status_code=404, detail="TaskStatus не найден")
@@ -168,9 +170,9 @@ def create_task(
 
     db_task = Task(
         user_id=current_user["user"].id,
-        board_id=task.board_id,
+        #board_id=task.board_id,
         status_id=task.status_id,
-        category_id=task.category_id,
+        #category_id=task.category_id,
         title=task.title,
         description=task.description,
         estimated_points=estimated_points,
