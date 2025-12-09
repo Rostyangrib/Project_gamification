@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
-import '../App.css';
 
 const AuthPage = () => {
   const { setToken } = useAuth();
@@ -38,8 +37,12 @@ const AuthPage = () => {
       newErrors.password = 'Пароль должен содержать не менее 6 символов';
     }
     if (!isLogin) {
-      if (!formData.firstName) newErrors.firstName = 'Имя обязательно';
-      if (!formData.lastName) newErrors.lastName = 'Фамилия обязательна';
+      if (!formData.firstName.trim()) {
+        newErrors.firstName = 'Имя обязательно';
+      }
+      if (!formData.lastName.trim()) {
+        newErrors.lastName = 'Фамилия обязательна';
+      }
       if (!formData.confirmPassword) newErrors.confirmPassword = 'Пожалуйста, подтвердите пароль';
       else if (formData.password !== formData.confirmPassword) {
         newErrors.confirmPassword = 'Пароли не совпадают';
@@ -56,11 +59,11 @@ const AuthPage = () => {
     try {
       const endpoint = isLogin ? '/login' : '/register';
       const payload = isLogin
-        ? { email: formData.email, password: formData.password }
+        ? { email: formData.email.trim(), password: formData.password }
         : {
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-            email: formData.email,
+            first_name: formData.firstName.trim(),
+            last_name: formData.lastName.trim(),
+            email: formData.email.trim(),
             password: formData.password
           };
 
@@ -72,24 +75,54 @@ const AuthPage = () => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Ошибка HTTP! Статус: ${response.status}`);
+        // Для статуса 401 при входе показываем сообщение о неверных данных
+        if (response.status === 401 && isLogin) {
+          throw new Error('Неверный email или пароль. Попробуйте снова.');
+        }
+        
+        // FastAPI возвращает ошибки в поле 'detail' (может быть строка или массив)
+        let errorMessage = '';
+        if (errorData.detail) {
+          if (Array.isArray(errorData.detail)) {
+            // Ошибки валидации Pydantic приходят как массив
+            errorMessage = errorData.detail.map(err => err.msg || err.message || JSON.stringify(err)).join(', ');
+          } else {
+            // HTTPException возвращает строку
+            errorMessage = errorData.detail;
+          }
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else {
+          errorMessage = `Ошибка HTTP! Статус: ${response.status}`;
+        }
+        
+        throw new Error(errorMessage);
       }
-      // ✅ Получаем токен из ответа
+      
       const data = await response.json();
 
-      // Ожидаем: { access_token: "...", user: { id, email, ... } }
-      const token = data.access_token || data.token;
-      const user = data.user || { email: formData.email };
+      if (isLogin) {
+        // При входе получаем токен
+        const token = data.access_token || data.token;
+        const user = data.user || { email: formData.email };
 
-      if (!token) {
-        throw new Error('Сервер не вернул токен авторизации');
+        if (!token) {
+          throw new Error('Сервер не вернул токен авторизации');
+        }
+
+        // Сохраняем токен и пользователя
+        setToken(token, user);
+        // Переход на главную страницу
+        navigate('/');
+      } else {
+        // При регистрации показываем сообщение об успехе и перекидываем на страницу входа
+        setErrors({ success: 'Пользователь успешно создан' });
+        setTimeout(() => {
+          setIsLogin(true);
+          setFormData({ email: formData.email, password: '', confirmPassword: '', firstName: '', lastName: '' });
+          setErrors({});
+        }, 2100);
       }
-
-      // Сохраняем токен и пользователя
-      setToken(token, user);
-
-      alert(`${isLogin ? 'Вход' : 'Регистрация'} успешен!`);
-      navigate('/'); // на главную
     } catch (error) {
       console.error('Ошибка авторизации:', error);
       setErrors({ ...errors, submit: error.message || 'Не удалось выполнить операцию' });
@@ -103,94 +136,142 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-form">
-        <h2>{isLogin ? 'Вход' : 'Регистрация'}</h2>
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-600 p-5">
+      <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md">
+        <h2 className="text-center mb-6 text-2xl font-semibold text-gray-800">
+          {isLogin ? 'Вход' : 'Регистрация'}
+        </h2>
         <form onSubmit={handleSubmit}>
-          <div className="input-group">
-            <label htmlFor="email">Электронная почта</label>
+          <div className="mb-4">
+            <label htmlFor="email" className="block mb-2 text-gray-700 font-medium">
+              Электронная почта
+            </label>
             <input
               type="email"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              className={errors.email ? 'error' : ''}
+              className={`w-full px-3 py-3 border rounded-lg text-base transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                errors.email ? 'border-red-500' : 'border-gray-300'
+              }`}
               placeholder="Введите вашу электронную почту"
             />
-            {errors.email && <span className="error-message">{errors.email}</span>}
+            {errors.email && (
+              <span className="block text-red-500 text-sm mt-1">{errors.email}</span>
+            )}
           </div>
 
           {!isLogin && (
             <>
-              <div className="input-group">
-                <label htmlFor="firstName">Имя</label>
+              <div className="mb-4">
+                <label htmlFor="firstName" className="block mb-2 text-gray-700 font-medium">
+                  Имя
+                </label>
                 <input
                   type="text"
                   id="firstName"
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleInputChange}
-                  className={errors.firstName ? 'error' : ''}
+                  className={`w-full px-3 py-3 border rounded-lg text-base transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                    errors.firstName ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder="Введите ваше имя"
                 />
-                {errors.firstName && <span className="error-message">{errors.firstName}</span>}
+                {errors.firstName && (
+                  <span className="block text-red-500 text-sm mt-1">{errors.firstName}</span>
+                )}
               </div>
-              <div className="input-group">
-                <label htmlFor="lastName">Фамилия</label>
+              <div className="mb-4">
+                <label htmlFor="lastName" className="block mb-2 text-gray-700 font-medium">
+                  Фамилия
+                </label>
                 <input
                   type="text"
                   id="lastName"
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleInputChange}
-                  className={errors.lastName ? 'error' : ''}
+                  className={`w-full px-3 py-3 border rounded-lg text-base transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                    errors.lastName ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder="Введите вашу фамилию"
                 />
-                {errors.lastName && <span className="error-message">{errors.lastName}</span>}
+                {errors.lastName && (
+                  <span className="block text-red-500 text-sm mt-1">{errors.lastName}</span>
+                )}
               </div>
             </>
           )}
 
-          <div className="input-group">
-            <label htmlFor="password">Пароль</label>
+          <div className="mb-4">
+            <label htmlFor="password" className="block mb-2 text-gray-700 font-medium">
+              Пароль
+            </label>
             <input
               type="password"
               id="password"
               name="password"
               value={formData.password}
               onChange={handleInputChange}
-              className={errors.password ? 'error' : ''}
+              className={`w-full px-3 py-3 border rounded-lg text-base transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                errors.password ? 'border-red-500' : 'border-gray-300'
+              }`}
               placeholder="Введите ваш пароль"
             />
-            {errors.password && <span className="error-message">{errors.password}</span>}
+            {errors.password && (
+              <span className="block text-red-500 text-sm mt-1">{errors.password}</span>
+            )}
           </div>
 
           {!isLogin && (
-            <div className="input-group">
-              <label htmlFor="confirmPassword">Подтверждение пароля</label>
+            <div className="mb-4">
+              <label htmlFor="confirmPassword" className="block mb-2 text-gray-700 font-medium">
+                Подтверждение пароля
+              </label>
               <input
                 type="password"
                 id="confirmPassword"
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
-                className={errors.confirmPassword ? 'error' : ''}
+                className={`w-full px-3 py-3 border rounded-lg text-base transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                  errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                }`}
                 placeholder="Подтвердите ваш пароль"
               />
-              {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
+              {errors.confirmPassword && (
+                <span className="block text-red-500 text-sm mt-1">{errors.confirmPassword}</span>
+              )}
             </div>
           )}
 
-          {errors.submit && <div className="error-message submit-error">{errors.submit}</div>}
-          <button type="submit" className="submit-btn">
+          {errors.success && (
+            <div className="text-center p-2 bg-green-50 border border-green-200 rounded-lg mb-4 text-green-600 text-sm">
+              {errors.success}
+            </div>
+          )}
+          {errors.submit && (
+            <div className="text-center p-2 bg-red-50 border border-red-200 rounded-lg mb-4 text-red-600 text-sm">
+              {errors.submit}
+            </div>
+          )}
+          <button
+            type="submit"
+            className="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg text-base font-medium cursor-pointer transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          >
             {isLogin ? 'Войти' : 'Зарегистрироваться'}
           </button>
         </form>
 
-        <p className="toggle-text">
+        <p className="text-center mt-6 text-gray-600">
           {isLogin ? 'Нет аккаунта? ' : 'Уже есть аккаунт? '}
-          <button type="button" onClick={toggleMode} className="toggle-btn">
+          <button
+            type="button"
+            onClick={toggleMode}
+            className="bg-transparent border-none text-indigo-600 cursor-pointer font-semibold underline p-0 ml-1 hover:text-purple-600 transition-colors"
+          >
             {isLogin ? 'Зарегистрироваться' : 'Войти'}
           </button>
         </p>

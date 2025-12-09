@@ -3,7 +3,6 @@ import React, { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useApi } from '../api/client.js'; // ✅ ваш существующий client.js
-import styles from '../styles/HomePage.module.css';
 
 const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
 
@@ -20,7 +19,7 @@ const formatDateKey = (date) => {
 };
 
 const HomePage = () => {
-  const { isLoggedIn, logout } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const api = useApi(); // ✅ ваш клиент — уже работает с токеном
   const navigate = useNavigate();
 
@@ -124,22 +123,24 @@ const HomePage = () => {
   };
 
   return (
-    <div className={styles.container}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>🎯 Gamification Dashboard</h1>
+    <div className="p-5 max-w-7xl mx-auto bg-gray-50 min-h-screen">
+      <header className="flex justify-between items-center mb-8 px-2.5">
+        <h1 className="m-0 text-gray-800 font-bold text-2xl">🎯 Gamification Dashboard</h1>
         <button
-          onClick={() => isLoggedIn ? (logout(), navigate('/login')) : navigate('/login')}
-          className={isLoggedIn ? styles.authBtn_logout : styles.authBtn_login}
+          onClick={() => isAuthenticated ? (logout(), navigate('/login')) : navigate('/login')}
+          className={`px-4 py-2 text-sm cursor-pointer border-none rounded font-bold text-white transition-colors ${
+            isAuthenticated ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'
+          }`}
         >
-          {isLoggedIn ? 'Выйти' : 'Войти'}
+          {isAuthenticated ? 'Выйти' : 'Войти'}
         </button>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '30px' }}>
+      <div className="grid grid-cols-1 gap-8">
         {/* ✅ Панель чата — отправка на /chat */}
-        <div className={styles.quickAdd}>
-          <h2 className={styles.quickAddTitle}>💬 Отправить сообщение</h2>
-          <div className={styles.inputGroup}>
+        <div className="bg-white p-5 rounded-lg shadow-md">
+          <h2 className="m-0 mb-5 text-gray-800 font-semibold text-xl">💬 Отправить сообщение</h2>
+          <div className="flex gap-2.5">
             <input
               ref={inputRef}
               type="text"
@@ -153,7 +154,7 @@ const HomePage = () => {
                   }
                 }
               }}
-              className={styles.taskInput}
+              className="flex-1 px-2.5 py-2.5 border border-gray-300 rounded text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <button
               onClick={() => {
@@ -163,63 +164,65 @@ const HomePage = () => {
                   inputRef.current.value = '';
                 }
               }}
-              className={styles.addBtn}
+              className="px-4 py-2.5 bg-green-500 text-white border-none rounded cursor-pointer font-medium hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isSending}
             >
               {isSending ? 'Отправка...' : '➤ Отправить'}
             </button>
           </div>
           {error && (
-            <p className={styles.error} style={{
-              color: '#e74c3c',
-              fontSize: '0.85rem',
-              marginTop: '8px',
-              padding: '6px',
-              backgroundColor: '#fdf2f2',
-              borderRadius: '4px'
-            }}>
+            <p className="text-red-500 text-sm mt-2 p-1.5 bg-red-50 rounded">
               ❌ {error}
             </p>
           )}
-          <p className={styles.hint}>
-            Сообщение отправляется на <code>POST {import.meta.env.VITE_API_BASE_URL || ''}/chat</code>
-            в формате: <code>{"{ \"message\": \"ваш текст\" }"}</code>
+          <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+            Сообщение отправляется на <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">POST {import.meta.env.VITE_API_BASE_URL || ''}/chat</code>
+            {' '}в формате: <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">{"{ \"message\": \"ваш текст\" }"}</code>
           </p>
         </div>
 
-        {/* Календарь — без изменений */}
-        <div className={styles.calendar}>
-          <div className={styles.calendarHeader}>
-            <h2 className={styles.monthTitle}>
+        {/* Календарь */}
+        <div className="bg-white p-5 rounded-lg shadow-md">
+          <div className="flex justify-between items-center mb-5">
+            <h2 className="m-0 text-gray-800 font-semibold text-xl">
               📅 {new Date(year, month).toLocaleString('ru-RU', { month: 'long', year: 'numeric' })}
             </h2>
-            <div className={styles.navBtns}>
-              <button onClick={goToToday} className={styles.navBtn_today}>
+            <div className="flex gap-2">
+              <button
+                onClick={goToToday}
+                className="px-3 py-1.5 rounded cursor-pointer text-sm border border-blue-500 text-blue-500 bg-white hover:bg-blue-50 transition-colors"
+              >
                 Сегодня
               </button>
-              <button onClick={goToPreviousMonth} className={styles.navBtn_month}>
+              <button
+                onClick={goToPreviousMonth}
+                className="px-2.5 py-1.5 rounded cursor-pointer text-xl border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
+              >
                 ‹
               </button>
-              <button onClick={goToNextMonth} className={styles.navBtn_month}>
+              <button
+                onClick={goToNextMonth}
+                className="px-2.5 py-1.5 rounded cursor-pointer text-xl border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
+              >
                 ›
               </button>
             </div>
           </div>
 
-          <div className={styles.weekdays}>
+          <div className="grid grid-cols-7 text-center font-semibold mb-2 text-gray-800">
             {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map(day => (
               <div
                 key={day}
-                className={day === 'Сб' || day === 'Вс' ? styles.weekday_weekend : ''}
+                className={day === 'Сб' || day === 'Вс' ? 'text-red-500' : ''}
               >
                 {day}
               </div>
             ))}
           </div>
 
-          <div className={styles.daysGrid}>
+          <div className="grid grid-cols-7 gap-1">
             {Array.from({ length: startDay }).map((_, i) => (
-              <div key={`empty-${i}`} style={{ height: '120px' }}></div>
+              <div key={`empty-${i}`} className="h-[120px]"></div>
             ))}
 
             {days.map(day => {
@@ -235,56 +238,64 @@ const HomePage = () => {
                   key={day}
                   onClick={() => dayTasks.length > 0 && toggleDay(day)}
                   className={`
-                    ${styles.dayCell}
-                    ${today ? styles.dayCell_today : ''}
-                    ${isExpanded ? styles.dayCell_expanded : ''}
-                    ${dayTasks.length > 0 ? styles.dayCell_interactive : ''}
+                    border border-gray-200 rounded-md min-h-[120px] transition-colors flex flex-col
+                    ${today ? 'bg-blue-50' : ''}
+                    ${isExpanded ? 'bg-gray-50' : ''}
+                    ${dayTasks.length > 0 ? 'cursor-pointer hover:bg-gray-50' : ''}
                   `.trim()}
                 >
                   <div
                     className={`
-                      ${styles.dayHeader}
-                      ${today ? styles.dayHeader_today : ''}
-                      ${weekend ? styles.dayHeader_weekend : ''}
+                      p-2 text-right text-sm
+                      ${today ? 'font-bold' : ''}
+                      ${weekend ? 'text-red-500' : ''}
                     `.trim()}
                   >
                     {day}
-                    {today && <span className={styles.todayDot}>●</span>}
+                    {today && <span className="text-green-600 ml-1">●</span>}
                   </div>
 
-                  <div className={styles.tasksPreview}>
+                  <div className="px-2 pb-2 text-sm flex-1">
                     {dayTasks.length > 0 ? (
                       <div>
                         {dayTasks.map((task, i) => (
-                          <span key={i} className={styles.taskTag}>
+                          <span
+                            key={i}
+                            className="bg-cyan-50 text-cyan-900 px-2 py-1 rounded-full text-xs inline-block max-w-full break-words m-0.5"
+                          >
                             {task.length > 15 ? task.slice(0, 15) + '…' : task}
                           </span>
                         ))}
                       </div>
                     ) : (
-                      <p className={styles.noTasks}>Нет задач</p>
+                      <p className="text-gray-400 text-xs m-1">Нет задач</p>
                     )}
                   </div>
 
                   {dayTasks.length > 0 && !isExpanded && (
-                    <div className={styles.expandHint}>Кликните для просмотра</div>
+                    <div className="text-center text-xs text-gray-600 border-t border-dashed border-gray-200 pt-1 mt-auto">
+                      Кликните для просмотра
+                    </div>
                   )}
 
                   {isExpanded && dayTasks.length > 0 && (
-                    <div className={styles.expandedPanel}>
-                      <div className={styles.expandedTitle}>
+                    <div className="p-2 border-t border-gray-200 bg-white rounded-b-md">
+                      <div className="text-sm text-gray-800 font-bold mb-2.5 text-center">
                         Задачи на {day} {new Date(year, month).toLocaleString('ru-RU', { month: 'long' })}:
                       </div>
-                      <ul className={styles.tasksList}>
+                      <ul className="list-none p-0 m-0 max-h-48 overflow-y-auto">
                         {dayTasks.map((task, idx) => (
-                          <li key={idx} className={styles.taskItem}>
-                            <span>{task}</span>
+                          <li
+                            key={idx}
+                            className="flex justify-between items-start p-2.5 bg-blue-50 rounded mb-2 border-l-4 border-blue-500 break-words"
+                          >
+                            <span className="flex-1">{task}</span>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 removeTask(dateKey, idx);
                               }}
-                              className={styles.deleteBtn}
+                              className="bg-transparent border-none text-red-500 cursor-pointer text-xl leading-none ml-2 flex-shrink-0 hover:text-red-700 transition-colors"
                               title="Удалить задачу"
                             >
                               ×

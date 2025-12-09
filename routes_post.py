@@ -60,7 +60,18 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = create_access_token(str(db_user.id), db_user.role)
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "id": str(db_user.id),
+            "email": db_user.email,
+            "first_name": db_user.first_name,
+            "last_name": db_user.last_name,
+            "total_points": db_user.total_points,
+            "role": db_user.role
+        }
+    }
 
 
 @router.post("/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
