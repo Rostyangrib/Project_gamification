@@ -18,6 +18,15 @@ const formatDateKey = (date) => {
   return `${year}-${month}-${day}`;
 };
 
+// Функция для получения месяца в родительном падеже
+const getMonthInGenitive = (month) => {
+  const months = [
+    'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+    'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+  ];
+  return months[month];
+};
+
 const HomePage = () => {
   const { isAuthenticated, logout } = useAuth();
   const api = useApi(); // ✅ ваш клиент — уже работает с токеном
@@ -281,7 +290,7 @@ const HomePage = () => {
                   {isExpanded && dayTasks.length > 0 && (
                     <div className="p-2 border-t border-gray-200 bg-white rounded-b-md">
                       <div className="text-sm text-gray-800 font-bold mb-2.5 text-center">
-                        Задачи на {day} {new Date(year, month).toLocaleString('ru-RU', { month: 'long' })}:
+                        Задачи на {day} {getMonthInGenitive(month)}:
                       </div>
                       <ul className="list-none p-0 m-0 max-h-48 overflow-y-auto">
                         {dayTasks.map((task, idx) => (
