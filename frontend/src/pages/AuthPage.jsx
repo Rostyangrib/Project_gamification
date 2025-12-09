@@ -15,12 +15,17 @@ const AuthPage = () => {
   });
   const [errors, setErrors] = useState({});
 
+  // Установка заголовка страницы
+  useEffect(() => {
+    document.title = 'Вход | Геймификация предприятий';
+  }, []);
+
   // Предупреждение при попытке закрыть страницу
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       e.preventDefault();
-      e.returnValue = ''; // Для Chrome требуется установить returnValue
-      return ''; // Для других браузеров
+      e.returnValue = '';
+      return '';
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -94,7 +99,6 @@ const AuthPage = () => {
           throw new Error('Неверный email или пароль. Попробуйте снова.');
         }
         
-        // FastAPI возвращает ошибки в поле 'detail' (может быть строка или массив)
         let errorMessage = '';
         if (errorData.detail) {
           if (Array.isArray(errorData.detail)) {
@@ -124,12 +128,9 @@ const AuthPage = () => {
           throw new Error('Сервер не вернул токен авторизации');
         }
 
-        // Сохраняем токен и пользователя
         setToken(token, user);
-        // Переход на главную страницу
         navigate('/');
       } else {
-        // При регистрации показываем сообщение об успехе и перекидываем на страницу входа
         setErrors({ success: 'Пользователь успешно создан' });
         setTimeout(() => {
           setIsLogin(true);
