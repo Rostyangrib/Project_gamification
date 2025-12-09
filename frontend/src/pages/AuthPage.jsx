@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -15,6 +15,20 @@ const AuthPage = () => {
   });
   const [errors, setErrors] = useState({});
 
+  // Предупреждение при попытке закрыть страницу
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = ''; // Для Chrome требуется установить returnValue
+      return ''; // Для других браузеров
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
