@@ -8,7 +8,8 @@ from config.db import get_db
 from database import User, TaskStatus, Tag, Task, RewardType, Reward
 from schemas import (
     UserResponse, TaskStatusResponse,
-    TagResponse, TaskResponse, RewardTypeResponse, RewardResponse
+    TagResponse, TaskResponse, RewardTypeResponse, RewardResponse,
+    AllUsersResponce
 )
 from dependencies import get_current_user, require_admin
 
