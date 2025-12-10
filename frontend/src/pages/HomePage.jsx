@@ -1,7 +1,5 @@
 // src/pages/HomePage.jsx
 import React, { useState, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
 import { useApi } from '../api/client.js'; // ✅ ваш существующий client.js
 
 const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
@@ -28,9 +26,7 @@ const getMonthInGenitive = (month) => {
 };
 
 const HomePage = () => {
-  const { isAuthenticated, logout } = useAuth();
   const api = useApi(); // ✅ ваш клиент — уже работает с токеном
-  const navigate = useNavigate();
 
   // Состояние календаря (для UX-отображения отправленных сообщений)
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -133,16 +129,8 @@ const HomePage = () => {
 
   return (
     <div className="p-5 max-w-7xl mx-auto bg-gray-50 min-h-screen">
-      <header className="flex justify-between items-center mb-8 px-2.5">
+      <header className="mb-8 px-2.5">
         <h1 className="m-0 text-gray-800 font-bold text-2xl">🎯 Gamification Dashboard</h1>
-        <button
-          onClick={() => isAuthenticated ? (logout(), navigate('/login')) : navigate('/login')}
-          className={`px-4 py-2 text-sm cursor-pointer border-none rounded font-bold text-white transition-colors ${
-            isAuthenticated ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'
-          }`}
-        >
-          {isAuthenticated ? 'Выйти' : 'Войти'}
-        </button>
       </header>
 
       <div className="grid grid-cols-1 gap-8">
