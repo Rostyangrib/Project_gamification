@@ -31,6 +31,10 @@ const HomePage = () => {
 
   useEffect(() => {
     document.title = 'Геймификация предприятий';
+    const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
+    link.rel = 'icon';
+    link.href = '/favicon-g.svg';
+    document.head.appendChild(link);
   }, []);
 
   // Состояние календаря (для UX-отображения отправленных сообщений)

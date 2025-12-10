@@ -19,6 +19,10 @@ const ProfilePage = () => {
 
   useEffect(() => {
     document.title = 'Профиль | Геймификация предприятий';
+    const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
+    link.rel = 'icon';
+    link.href = '/favicon-g.svg';
+    document.head.appendChild(link);
 
     if (!isAuthenticated) {
       navigate('/login');

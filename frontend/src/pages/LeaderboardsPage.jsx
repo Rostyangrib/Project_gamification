@@ -3,6 +3,10 @@ import React, { useEffect } from 'react';
 const LeaderboardsPage = () => {
   useEffect(() => {
     document.title = 'Список лидеров | Геймификация предприятий';
+    const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
+    link.rel = 'icon';
+    link.href = '/favicon-trophy.svg';
+    document.head.appendChild(link);
   }, []);
 
   return (

@@ -20,6 +20,10 @@ const AuthPage = () => {
   // Установка заголовка страницы
   useEffect(() => {
     document.title = 'Вход | Геймификация предприятий';
+    const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
+    link.rel = 'icon';
+    link.href = '/favicon-g.svg';
+    document.head.appendChild(link);
   }, []);
 
   // Предупреждение при попытке закрыть страницу
