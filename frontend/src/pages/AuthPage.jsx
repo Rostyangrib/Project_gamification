@@ -155,14 +155,14 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-600 p-5">
-      <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md">
-        <h2 className="text-center mb-6 text-2xl font-semibold text-gray-800">
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-600 dark:from-indigo-900 dark:via-purple-900 dark:to-purple-950 p-5">
+      <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md">
+        <h2 className="text-center mb-6 text-2xl font-semibold text-gray-800 dark:text-gray-100">
           {isLogin ? 'Вход' : 'Регистрация'}
         </h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="email" className="block mb-2 text-gray-700 font-medium">
+            <label htmlFor="email" className="block mb-2 text-gray-700 dark:text-gray-300 font-medium">
               Электронная почта
             </label>
             <input
@@ -171,20 +171,20 @@ const AuthPage = () => {
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              className={`w-full px-3 py-3 border rounded-lg text-base transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                errors.email ? 'border-red-500' : 'border-gray-300'
+              className={`w-full px-3 py-3 border rounded-lg text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                errors.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
               placeholder="Введите вашу электронную почту"
             />
             {errors.email && (
-              <span className="block text-red-500 text-sm mt-1">{errors.email}</span>
+              <span className="block text-red-500 dark:text-red-400 text-sm mt-1">{errors.email}</span>
             )}
           </div>
 
           {!isLogin && (
             <>
               <div className="mb-4">
-                <label htmlFor="firstName" className="block mb-2 text-gray-700 font-medium">
+                <label htmlFor="firstName" className="block mb-2 text-gray-700 dark:text-gray-300 font-medium">
                   Имя
                 </label>
                 <input
@@ -193,8 +193,8 @@ const AuthPage = () => {
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-3 border rounded-lg text-base transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                    errors.firstName ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full px-3 py-3 border rounded-lg text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                    errors.firstName ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                   }`}
                   placeholder="Введите ваше имя"
                 />
@@ -203,7 +203,7 @@ const AuthPage = () => {
                 )}
               </div>
               <div className="mb-4">
-                <label htmlFor="lastName" className="block mb-2 text-gray-700 font-medium">
+                <label htmlFor="lastName" className="block mb-2 text-gray-700 dark:text-gray-300 font-medium">
                   Фамилия
                 </label>
                 <input
@@ -212,8 +212,8 @@ const AuthPage = () => {
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-3 border rounded-lg text-base transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                    errors.lastName ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full px-3 py-3 border rounded-lg text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                    errors.lastName ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                   }`}
                   placeholder="Введите вашу фамилию"
                 />
@@ -225,7 +225,7 @@ const AuthPage = () => {
           )}
 
           <div className="mb-4">
-            <label htmlFor="password" className="block mb-2 text-gray-700 font-medium">
+            <label htmlFor="password" className="block mb-2 text-gray-700 dark:text-gray-300 font-medium">
               Пароль
             </label>
             <div className="relative">
@@ -235,9 +235,9 @@ const AuthPage = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-3 pr-10 border rounded-lg text-base transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                  errors.password ? 'border-red-500' : 'border-gray-300'
-                }`}
+              className={`w-full px-3 py-3 pr-10 border rounded-lg text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                errors.password ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+              }`}
                 placeholder="Введите ваш пароль"
               />
               <button
@@ -265,7 +265,7 @@ const AuthPage = () => {
 
           {!isLogin && (
             <div className="mb-4">
-              <label htmlFor="confirmPassword" className="block mb-2 text-gray-700 font-medium">
+              <label htmlFor="confirmPassword" className="block mb-2 text-gray-700 dark:text-gray-300 font-medium">
                 Подтверждение пароля
               </label>
               <div className="relative">
@@ -276,7 +276,7 @@ const AuthPage = () => {
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-3 pr-10 border rounded-lg text-base transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                    errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                    errors.confirmPassword ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                   }`}
                   placeholder="Подтвердите ваш пароль"
                 />
@@ -305,12 +305,12 @@ const AuthPage = () => {
           )}
 
           {errors.success && (
-            <div className="text-center p-2 bg-green-50 border border-green-200 rounded-lg mb-4 text-green-600 text-sm">
+            <div className="text-center p-2 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg mb-4 text-green-600 dark:text-green-400 text-sm">
               {errors.success}
             </div>
           )}
           {errors.submit && (
-            <div className="text-center p-2 bg-red-50 border border-red-200 rounded-lg mb-4 text-red-600 text-sm">
+            <div className="text-center p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg mb-4 text-red-600 dark:text-red-400 text-sm">
               {errors.submit}
             </div>
           )}
@@ -322,7 +322,7 @@ const AuthPage = () => {
           </button>
         </form>
 
-        <p className="text-center mt-6 text-gray-600">
+        <p className="text-center mt-6 text-gray-600 dark:text-gray-400">
           {isLogin ? 'Нет аккаунта? ' : 'Уже есть аккаунт? '}
           <button
             type="button"

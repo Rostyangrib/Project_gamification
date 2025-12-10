@@ -128,15 +128,15 @@ const HomePage = () => {
   };
 
   return (
-    <div className="p-5 max-w-7xl mx-auto bg-gray-50 min-h-screen">
+    <div className="p-5 max-w-7xl mx-auto bg-gray-50 dark:bg-gray-900 min-h-screen">
       <header className="mb-8 px-2.5">
-        <h1 className="m-0 text-gray-800 font-bold text-2xl">🎯 Gamification Dashboard</h1>
+        <h1 className="m-0 text-gray-800 dark:text-gray-100 font-bold text-2xl">🎯 Gamification Dashboard</h1>
       </header>
 
       <div className="grid grid-cols-1 gap-8">
         {/* ✅ Панель чата — отправка на /chat */}
-        <div className="bg-white p-5 rounded-lg shadow-md">
-          <h2 className="m-0 mb-5 text-gray-800 font-semibold text-xl">💬 Отправить сообщение</h2>
+        <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md">
+          <h2 className="m-0 mb-5 text-gray-800 dark:text-gray-100 font-semibold text-xl">💬 Отправить сообщение</h2>
           <div className="flex gap-2.5">
             <input
               ref={inputRef}
@@ -151,7 +151,7 @@ const HomePage = () => {
                   }
                 }
               }}
-              className="flex-1 px-2.5 py-2.5 border border-gray-300 rounded text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 px-2.5 py-2.5 border border-gray-300 dark:border-gray-600 rounded text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <button
               onClick={() => {
@@ -168,49 +168,49 @@ const HomePage = () => {
             </button>
           </div>
           {error && (
-            <p className="text-red-500 text-sm mt-2 p-1.5 bg-red-50 rounded">
+            <p className="text-red-500 dark:text-red-400 text-sm mt-2 p-1.5 bg-red-50 dark:bg-red-900/30 rounded">
               ❌ {error}
             </p>
           )}
-          <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-            Сообщение отправляется на <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">POST {import.meta.env.VITE_API_BASE_URL || ''}/chat</code>
-            {' '}в формате: <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">{"{ \"message\": \"ваш текст\" }"}</code>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 leading-relaxed">
+            Сообщение отправляется на <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">POST {import.meta.env.VITE_API_BASE_URL || ''}/chat</code>
+            {' '}в формате: <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{"{ \"message\": \"ваш текст\" }"}</code>
           </p>
         </div>
 
         {/* Календарь */}
-        <div className="bg-white p-5 rounded-lg shadow-md">
+        <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md">
           <div className="flex justify-between items-center mb-5">
-            <h2 className="m-0 text-gray-800 font-semibold text-xl">
+            <h2 className="m-0 text-gray-800 dark:text-gray-100 font-semibold text-xl">
               📅 {new Date(year, month).toLocaleString('ru-RU', { month: 'long', year: 'numeric' })}
             </h2>
             <div className="flex gap-2">
               <button
                 onClick={goToToday}
-                className="px-3 py-1.5 rounded cursor-pointer text-sm border border-blue-500 text-blue-500 bg-white hover:bg-blue-50 transition-colors"
+                className="px-3 py-1.5 rounded cursor-pointer text-sm border border-blue-500 text-blue-500 dark:text-blue-400 bg-white dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors"
               >
                 Сегодня
               </button>
               <button
                 onClick={goToPreviousMonth}
-                className="px-2.5 py-1.5 rounded cursor-pointer text-xl border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
+                className="px-2.5 py-1.5 rounded cursor-pointer text-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors text-gray-900 dark:text-gray-100"
               >
                 ‹
               </button>
               <button
                 onClick={goToNextMonth}
-                className="px-2.5 py-1.5 rounded cursor-pointer text-xl border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
+                className="px-2.5 py-1.5 rounded cursor-pointer text-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors text-gray-900 dark:text-gray-100"
               >
                 ›
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-7 text-center font-semibold mb-2 text-gray-800">
+          <div className="grid grid-cols-7 text-center font-semibold mb-2 text-gray-800 dark:text-gray-200">
             {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map(day => (
               <div
                 key={day}
-                className={day === 'Сб' || day === 'Вс' ? 'text-red-500' : ''}
+                className={day === 'Сб' || day === 'Вс' ? 'text-red-500 dark:text-red-400' : ''}
               >
                 {day}
               </div>
@@ -235,21 +235,21 @@ const HomePage = () => {
                   key={day}
                   onClick={() => dayTasks.length > 0 && toggleDay(day)}
                   className={`
-                    border border-gray-200 rounded-md min-h-[120px] transition-colors flex flex-col
-                    ${today ? 'bg-blue-50' : ''}
-                    ${isExpanded ? 'bg-gray-50' : ''}
-                    ${dayTasks.length > 0 ? 'cursor-pointer hover:bg-gray-50' : ''}
+                    border border-gray-200 dark:border-gray-700 rounded-md min-h-[120px] transition-colors flex flex-col
+                    ${today ? 'bg-blue-50 dark:bg-blue-900/30' : 'bg-white dark:bg-gray-800'}
+                    ${isExpanded ? 'bg-gray-50 dark:bg-gray-700' : ''}
+                    ${dayTasks.length > 0 ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700' : ''}
                   `.trim()}
                 >
                   <div
                     className={`
-                      p-2 text-right text-sm
+                      p-2 text-right text-sm text-gray-900 dark:text-gray-100
                       ${today ? 'font-bold' : ''}
-                      ${weekend ? 'text-red-500' : ''}
+                      ${weekend ? 'text-red-500 dark:text-red-400' : ''}
                     `.trim()}
                   >
                     {day}
-                    {today && <span className="text-green-600 ml-1">●</span>}
+                    {today && <span className="text-green-600 dark:text-green-400 ml-1">●</span>}
                   </div>
 
                   <div className="px-2 pb-2 text-sm flex-1">
@@ -258,41 +258,41 @@ const HomePage = () => {
                         {dayTasks.map((task, i) => (
                           <span
                             key={i}
-                            className="bg-cyan-50 text-cyan-900 px-2 py-1 rounded-full text-xs inline-block max-w-full break-words m-0.5"
+                            className="bg-cyan-50 dark:bg-cyan-900/50 text-cyan-900 dark:text-cyan-100 px-2 py-1 rounded-full text-xs inline-block max-w-full break-words m-0.5"
                           >
                             {task.length > 15 ? task.slice(0, 15) + '…' : task}
                           </span>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-gray-400 text-xs m-1">Нет задач</p>
+                      <p className="text-gray-400 dark:text-gray-500 text-xs m-1">Нет задач</p>
                     )}
                   </div>
 
                   {dayTasks.length > 0 && !isExpanded && (
-                    <div className="text-center text-xs text-gray-600 border-t border-dashed border-gray-200 pt-1 mt-auto">
+                    <div className="text-center text-xs text-gray-600 dark:text-gray-400 border-t border-dashed border-gray-200 dark:border-gray-700 pt-1 mt-auto">
                       Кликните для просмотра
                     </div>
                   )}
 
                   {isExpanded && dayTasks.length > 0 && (
-                    <div className="p-2 border-t border-gray-200 bg-white rounded-b-md">
-                      <div className="text-sm text-gray-800 font-bold mb-2.5 text-center">
+                    <div className="p-2 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-b-md">
+                      <div className="text-sm text-gray-800 dark:text-gray-100 font-bold mb-2.5 text-center">
                         Задачи на {day} {getMonthInGenitive(month)}:
                       </div>
                       <ul className="list-none p-0 m-0 max-h-48 overflow-y-auto">
                         {dayTasks.map((task, idx) => (
                           <li
                             key={idx}
-                            className="flex justify-between items-start p-2.5 bg-blue-50 rounded mb-2 border-l-4 border-blue-500 break-words"
+                            className="flex justify-between items-start p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded mb-2 border-l-4 border-blue-500 dark:border-blue-400 break-words"
                           >
-                            <span className="flex-1">{task}</span>
+                            <span className="flex-1 text-gray-900 dark:text-gray-100">{task}</span>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 removeTask(dateKey, idx);
                               }}
-                              className="bg-transparent border-none text-red-500 cursor-pointer text-xl leading-none ml-2 flex-shrink-0 hover:text-red-700 transition-colors"
+                              className="bg-transparent border-none text-red-500 dark:text-red-400 cursor-pointer text-xl leading-none ml-2 flex-shrink-0 hover:text-red-700 dark:hover:text-red-300 transition-colors"
                               title="Удалить задачу"
                             >
                               ×
