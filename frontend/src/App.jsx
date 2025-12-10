@@ -6,6 +6,7 @@ import Navbar from './components/Navbar.jsx';
 import HomePage from './pages/HomePage.jsx';
 import AuthPage from './pages/AuthPage.jsx';
 import LeaderboardsPage from './pages/LeaderboardsPage.jsx';
+import ProfilePage from './pages/ProfilePage.jsx';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<AuthPage />} />
             <Route path="/leaderboards" element={<LeaderboardsPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
           </Routes>
         </Router>
       </AuthProvider>

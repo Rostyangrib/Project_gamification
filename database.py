@@ -18,7 +18,7 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     password_hash = Column(Text, nullable=False)
     total_points = Column(Integer, default=0)
-    role = Column(String, default="admin")
+    role = Column(String, default="user")
     created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     updated_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"), onupdate=text("CURRENT_TIMESTAMP"))
     #boards = relationship("Board", back_populates="user")

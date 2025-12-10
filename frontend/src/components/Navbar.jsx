@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
 
 const Navbar = () => {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
@@ -45,6 +45,20 @@ const Navbar = () => {
             </Link>
           </div>
           <div className="flex items-center space-x-4">
+            {isAuthenticated && user && (
+              <div className="flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-200">
+                <span className="px-2 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-200 font-semibold">
+                  {user.total_points ?? 0} баллов
+                </span>
+                <button
+                  onClick={() => navigate('/profile')}
+                  className="px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-indigo-600 dark:text-indigo-300 font-medium"
+                  title="Профиль"
+                >
+                  {user.email}
+                </button>
+              </div>
+            )}
             <button
               onClick={toggleTheme}
               className="p-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"

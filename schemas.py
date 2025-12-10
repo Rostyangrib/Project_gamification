@@ -20,6 +20,11 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
+class UserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+
 # class BoardCreate(BaseModel):
 #     name: str
 #     description: Optional[str] = None

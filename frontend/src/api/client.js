@@ -1,8 +1,8 @@
 // src/api/client.js
 import { useAuth } from '../context/AuthContext.jsx';
 
-// Базовый URL (можно вынести в .env)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+// Базовый URL (можно вынести в .env). По умолчанию — корень (бек без префикса).
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // Хук для использования в компонентах
 export const useApi = () => {
@@ -33,10 +33,16 @@ export const useApi = () => {
         throw new Error('Сессия истекла. Пожалуйста, войдите снова.');
       }
 
-      const data = await response.json();
+      const contentType = response.headers.get('content-type') || '';
+      const isJson = contentType.includes('application/json');
+      const data = isJson ? await response.json() : await response.text();
 
       if (!response.ok) {
-        throw new Error(data.message || `Ошибка ${response.status}`);
+        const message =
+          (isJson && (data.detail || data.message)) ||
+          (!isJson && data) ||
+          `Ошибка ${response.status}`;
+        throw new Error(message);
       }
 
       return data;

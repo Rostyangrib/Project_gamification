@@ -28,6 +28,18 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
+  // Обновление данных пользователя в состоянии и localStorage
+  const updateUser = (nextUser) => {
+    if (!nextUser) return;
+    const mergedUser = { ...authState.user, ...nextUser };
+    localStorage.setItem('auth_user', JSON.stringify(mergedUser));
+    setAuthState((prev) => ({
+      ...prev,
+      user: mergedUser,
+      isAuthenticated: !!prev.token
+    }));
+  };
+
   // Выход
   const logout = () => {
     localStorage.removeItem('auth_token');
@@ -48,7 +60,7 @@ export const AuthProvider = ({ children }) => {
   }, [authState.token]);
 
   return (
-    <AuthContext.Provider value={{ ...authState, setToken, logout }}>
+    <AuthContext.Provider value={{ ...authState, setToken, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

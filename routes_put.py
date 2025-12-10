@@ -4,17 +4,41 @@ from uuid import UUID
 from typing import Optional
 
 from config.db import get_db
-from database import TaskStatus, Tag, Task, RewardType, Reward
+from database import TaskStatus, Tag, Task, RewardType, Reward, User
 from schemas import (
     TaskStatusUpdate, TaskStatusResponse,
     TagUpdate, TagResponse,
     TaskUpdate, TaskResponse,
     RewardTypeUpdate, RewardTypeResponse,
-    RewardUpdate, RewardResponse
+    RewardUpdate, RewardResponse,
+    UserUpdate, UserResponse
 )
 from dependencies import get_current_user, require_admin
+from auth import get_password_hash
 
 router = APIRouter(prefix="", tags=["PUT"])
+
+@router.put("/users/me", response_model=UserResponse)
+def update_own_user(
+    payload: UserUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user: User = current_user["user"]
+
+    # Обновление email с проверкой уникальности
+    if payload.email and payload.email != user.email:
+        if db.query(User).filter(User.email == payload.email).first():
+            raise HTTPException(status_code=400, detail="Пользователь с таким email уже существует")
+        user.email = payload.email
+
+    # Обновление пароля
+    if payload.password:
+        user.password_hash = get_password_hash(payload.password)
+
+    db.commit()
+    db.refresh(user)
+    return user
 
 # @router.put("/boards/{board_id}", response_model=BoardResponse)
 # def update_board(

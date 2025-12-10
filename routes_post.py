@@ -42,7 +42,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         email=user.email,
         password_hash=hashed_password,
         total_points=0,
-        role="admin"
+        role="user"
     )
     db.add(db_user)
     db.commit()

@@ -54,7 +54,6 @@ const HomePage = () => {
       const response = await api.post('/chat', { message: messageText });
 
       // ✅ Успех
-      alert('✅ Сообщение отправлено!');
       console.log('Ответ от /chat:', response);
 
       // Опционально: добавляем в локальный календарь на сегодня (для мгновенного отклика)

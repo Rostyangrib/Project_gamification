@@ -26,6 +26,7 @@ class ChatResponse(BaseModel):
 
 
 @router.post("/api/chat", response_model=ChatResponse)
+@router.post("/chat", response_model=ChatResponse)
 def chat_with_ai(
     chat: ChatMessage,
     current_user: dict = Depends(get_current_user),
