@@ -14,8 +14,6 @@ from dependencies import get_current_user, require_admin
 
 router = APIRouter()
 
-
-
 @router.get("/tasks/latest", response_model=list[TaskTitleAndDate])
 def get_tasks(
         current_user: dict = Depends(get_current_user),
@@ -31,10 +29,6 @@ def get_tasks(
 @router.get("/users/me", response_model=UserResponse)
 def read_own_info(current_user: dict = Depends(get_current_user)):
     return current_user["user"]
-
-@router.get("/admin/dashboard", dependencies=[Depends(require_admin)])
-def admin_dashboard():
-    return {"message": "поздравляем, вы администратор!!!"}
 
 # @router.get("/", summary="Root endpoint")
 # async def root():
@@ -70,3 +64,19 @@ def get_reward_types(db: Session = Depends(get_db)):
 @router.get("/rewards", response_model=List[RewardResponse])
 def get_rewards(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     return db.query(Reward).filter(Reward.user_id == current_user["user"].id).all()
+
+@router.get("/leaderboard", response_model=AllUsersResponse)
+def get_all_users(
+    db: Session = Depends(get_db)
+):
+    users = db.query(User).all()
+    return {
+        "users": [
+            {
+                "first_name": u.first_name,
+                "last_name": u.last_name,
+                "total_points": u.total_points
+            }
+            for u in users
+        ]
+    }
