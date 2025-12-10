@@ -16,13 +16,14 @@ const formatDateKey = (date) => {
   return `${year}-${month}-${day}`;
 };
 
-// Функция для получения месяца в родительном падеже
-const getMonthInGenitive = (month) => {
-  const months = [
-    'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-    'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
-  ];
-  return months[month];
+// Лёгкое преобразование имени месяца в родительный падеж (только окончание)
+const toGenitiveMonth = (name) => {
+  if (name.endsWith('рь')) return name.slice(0, -1) + 'я'; // январь, сентябрь, октябрь, ноябрь, декабрь
+  if (name.endsWith('ль')) return name.slice(0, -1) + 'я'; // апрель, февраль, июль
+  if (name.endsWith('й')) return name.slice(0, -1) + 'я';  // май
+  if (name.endsWith('нь')) return name.slice(0, -1) + 'я'; // июнь
+  if (name.endsWith('т')) return name + 'а';               // март, август
+  return name;
 };
 
 const HomePage = () => {
@@ -278,7 +279,7 @@ const HomePage = () => {
                   {isExpanded && dayTasks.length > 0 && (
                     <div className="p-2 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-b-md">
                       <div className="text-sm text-gray-800 dark:text-gray-100 font-bold mb-2.5 text-center">
-                        Задачи на {day} {getMonthInGenitive(month)}:
+                        Задачи на {day} {toGenitiveMonth(new Date(year, month).toLocaleString('ru-RU', { month: 'long' }))}:
                       </div>
                       <ul className="list-none p-0 m-0 max-h-48 overflow-y-auto">
                         {dayTasks.map((task, idx) => (
