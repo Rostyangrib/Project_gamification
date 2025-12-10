@@ -36,15 +36,47 @@ const HomePage = () => {
   // Состояние календаря (для UX-отображения отправленных сообщений)
   const [currentDate, setCurrentDate] = useState(new Date());
   const [expandedDay, setExpandedDay] = useState(null);
-  const [tasks, setTasks] = useState(() => {
-    const saved = localStorage.getItem('tasks');
-    return saved ? JSON.parse(saved) : {};
-  });
+  const [tasks, setTasks] = useState({}); // { [dateKey]: [{ id, title }] }
+  const [defaultStatusId, setDefaultStatusId] = useState(null);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(true);
 
   // Состояние отправки
   const inputRef = useRef(null);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
+
+  // Хелпер: сгруппировать задачи по дате
+  const mapTasksByDate = (taskList) => {
+    const mapped = {};
+    (taskList || []).forEach((task) => {
+      const dateSource = task.due_date || task.created_at || new Date().toISOString();
+      const dateKey = formatDateKey(new Date(dateSource));
+      if (!mapped[dateKey]) mapped[dateKey] = [];
+      mapped[dateKey].push({ id: task.id, title: task.title });
+    });
+    return mapped;
+  };
+
+  // Загрузка статусов и задач пользователя
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoadingTasks(true);
+        const statuses = await api.get('/task-statuses');
+        const firstStatusId = Array.isArray(statuses) && statuses.length > 0 ? statuses[0].id : null;
+        setDefaultStatusId(firstStatusId);
+
+        const tasksResp = await api.get('/tasks');
+        setTasks(mapTasksByDate(tasksResp || []));
+      } catch (err) {
+        console.error('Ошибка загрузки задач:', err);
+        setError(err.message || 'Не удалось загрузить задачи');
+      } finally {
+        setIsLoadingTasks(false);
+      }
+    };
+    loadData();
+  }, []); // api стабильный, нет смысла триггерить на каждый рендер
 
   // ✅ Отправка на /chat в нужном формате
   const handleSendMessage = async (messageText) => {
@@ -60,15 +92,21 @@ const HomePage = () => {
       // ✅ Успех
       console.log('Ответ от /chat:', response);
 
-      // Опционально: добавляем в локальный календарь на сегодня (для мгновенного отклика)
-      const today = new Date();
-      const dateKey = formatDateKey(today);
-      const newTasks = {
-        ...tasks,
-        [dateKey]: [...(tasks[dateKey] || []), messageText]
-      };
-      localStorage.setItem('tasks', JSON.stringify(newTasks));
-      setTasks(newTasks);
+      // Создаём задачу на сегодня на бэке
+      if (!defaultStatusId) {
+        throw new Error('Не найден статус задачи. Обновите страницу.');
+      }
+
+      await api.post('/tasks', {
+        status_id: defaultStatusId,
+        title: messageText,
+        description: null,
+        due_date: new Date().toISOString()
+      });
+
+      // Перезагружаем задачи пользователя
+      const tasksResp = await api.get('/tasks');
+      setTasks(mapTasksByDate(tasksResp || []));
     } catch (err) {
       console.error('Ошибка отправки:', err);
       setError(err.message || 'Не удалось отправить сообщение');
@@ -79,13 +117,16 @@ const HomePage = () => {
     }
   };
 
-  // Остальная логика календаря (без изменений)
-  const removeTask = (dateKey, taskIndex) => {
-    const dayTasks = [...(tasks[dateKey] || [])];
-    dayTasks.splice(taskIndex, 1);
-    const newTasks = { ...tasks, [dateKey]: dayTasks };
-    localStorage.setItem('tasks', JSON.stringify(newTasks));
-    setTasks(newTasks);
+  // Удаление задачи через API
+  const removeTask = async (taskId) => {
+    try {
+      await api.delete(`/tasks/${taskId}`);
+      const tasksResp = await api.get('/tasks');
+      setTasks(mapTasksByDate(tasksResp || []));
+    } catch (err) {
+      console.error('Ошибка удаления задачи:', err);
+      setError(err.message || 'Не удалось удалить задачу');
+    }
   };
 
   const { year, month, days, startDay } = useMemo(() => {
@@ -261,10 +302,10 @@ const HomePage = () => {
                       <div>
                         {dayTasks.map((task, i) => (
                           <span
-                            key={i}
+                            key={task.id || i}
                             className="bg-cyan-50 dark:bg-cyan-900/50 text-cyan-900 dark:text-cyan-100 px-2 py-1 rounded-full text-xs inline-block max-w-full break-words m-0.5"
                           >
-                            {task.length > 15 ? task.slice(0, 15) + '…' : task}
+                            {task.title.length > 15 ? task.title.slice(0, 15) + '…' : task.title}
                           </span>
                         ))}
                       </div>
@@ -287,14 +328,16 @@ const HomePage = () => {
                       <ul className="list-none p-0 m-0 max-h-48 overflow-y-auto">
                         {dayTasks.map((task, idx) => (
                           <li
-                            key={idx}
+                            key={task.id || idx}
                             className="flex justify-between items-start p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded mb-2 border-l-4 border-blue-500 dark:border-blue-400 break-words"
                           >
-                            <span className="flex-1 text-gray-900 dark:text-gray-100">{task}</span>
+                            <span className="flex-1 text-gray-900 dark:text-gray-100">{task.title}</span>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                removeTask(dateKey, idx);
+                                if (task.id) {
+                                  removeTask(task.id);
+                                }
                               }}
                               className="bg-transparent border-none text-red-500 dark:text-red-400 cursor-pointer text-xl leading-none ml-2 flex-shrink-0 hover:text-red-700 dark:hover:text-red-300 transition-colors"
                               title="Удалить задачу"

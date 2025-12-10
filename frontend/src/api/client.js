@@ -35,7 +35,15 @@ export const useApi = () => {
 
       const contentType = response.headers.get('content-type') || '';
       const isJson = contentType.includes('application/json');
-      const data = isJson ? await response.json() : await response.text();
+
+      // 204 / пустой ответ — сразу выходим
+      if (response.status === 204) {
+        return null;
+      }
+
+      // Если тело пустое (например, DELETE), не пытаемся парсить JSON
+      const rawText = await response.text();
+      const data = isJson && rawText ? JSON.parse(rawText) : rawText;
 
       if (!response.ok) {
         const message =
