@@ -19,7 +19,17 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+        
+class UserLeaderboard(BaseModel):
+    first_name: str
+    last_name: str
+    total_points: int
 
+    class Config:
+        from_attributes = True
+
+class AllUsersResponse(BaseModel):
+    users: List[UserLeaderboard]
 
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
