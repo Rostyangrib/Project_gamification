@@ -18,6 +18,8 @@ const ProfilePage = () => {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
+    document.title = 'Профиль | Геймификация предприятий';
+
     if (!isAuthenticated) {
       navigate('/login');
     } else if (user?.email) {

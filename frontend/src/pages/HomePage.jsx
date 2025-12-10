@@ -1,5 +1,5 @@
 // src/pages/HomePage.jsx
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useApi } from '../api/client.js'; // ✅ ваш существующий client.js
 
 const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
@@ -28,6 +28,10 @@ const toGenitiveMonth = (name) => {
 
 const HomePage = () => {
   const api = useApi(); // ✅ ваш клиент — уже работает с токеном
+
+  useEffect(() => {
+    document.title = 'Геймификация предприятий';
+  }, []);
 
   // Состояние календаря (для UX-отображения отправленных сообщений)
   const [currentDate, setCurrentDate] = useState(new Date());
