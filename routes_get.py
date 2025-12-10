@@ -9,7 +9,7 @@ from database import User, TaskStatus, Tag, Task, RewardType, Reward
 from schemas import (
     UserResponse, TaskStatusResponse,
     TagResponse, TaskResponse, RewardTypeResponse, RewardResponse,
-    AllUsersResponce
+    AllUsersResponse
 )
 from dependencies import get_current_user, require_admin
 
