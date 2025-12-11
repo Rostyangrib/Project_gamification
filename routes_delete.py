@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from uuid import UUID
 
 from config.db import get_db
-from database import User, TaskStatus, Tag, Task, TaskTag, RewardType, Reward
+from database import User, TaskStatus, Tag, Task, TaskTag, RewardType, Reward, Competition
 from dependencies import get_current_user, require_admin
 
 router = APIRouter(prefix="", tags=["DELETE"])
@@ -173,3 +173,19 @@ def delete_reward(
     db.delete(reward)
     db.commit()
     return
+
+@router.delete("/competitions/{competition_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_competition(
+    competition_id: int,
+    current_user: dict = Depends(require_admin), # Только админ может удалять
+    db: Session = Depends(get_db)
+):
+    competition = db.query(Competition).filter(Competition.id == competition_id).first()
+    if not competition:
+        raise HTTPException(status_code=404, detail="Соревнование не найдено")
+
+    db.query(User).filter(User.cur_comp == competition_id).update({User.cur_comp: None})
+
+    db.delete(competition)
+    db.commit()
+    return # 204 No Content

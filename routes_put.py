@@ -1,17 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from uuid import UUID
-from typing import Optional
 
 from config.db import get_db
-from database import TaskStatus, Tag, Task, RewardType, Reward, User
+from database import TaskStatus, Tag, Task, RewardType, Reward, User, Competition
 from schemas import (
     TaskStatusUpdate, TaskStatusResponse,
     TagUpdate, TagResponse,
     TaskUpdate, TaskResponse,
     RewardTypeUpdate, RewardTypeResponse,
     RewardUpdate, RewardResponse,
-    UserUpdate, UserResponse
+    UserUpdate, UserResponse, CompetitionResponse, CompetitionUpdate
 )
 from dependencies import get_current_user, require_admin
 from auth import get_password_hash
@@ -226,3 +225,22 @@ def update_reward(
     db.commit()
     db.refresh(reward)
     return reward
+
+@router.put("/competitions/{competition_id}", response_model=CompetitionResponse)
+def update_competition(
+    competition_id: int,
+    competition_update: CompetitionUpdate,
+    current_user: dict = Depends(require_admin), # Только админ может обновлять
+    db: Session = Depends(get_db)
+):
+    competition = db.query(Competition).filter(Competition.id == competition_id).first()
+    if not competition:
+        raise HTTPException(status_code=404, detail="Соревнование не найдено")
+
+    # Обновляем поля, которые пришли в запросе
+    for field, value in competition_update.model_dump(exclude_unset=True).items():
+        setattr(competition, field, value)
+
+    db.commit()
+    db.refresh(competition)
+    return competition
