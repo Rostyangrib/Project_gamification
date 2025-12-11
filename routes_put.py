@@ -4,41 +4,63 @@ from uuid import UUID
 from typing import Optional
 
 from config.db import get_db
-from database import Board, TaskStatus, Category, Tag, Task, RewardType, Reward
+from database import TaskStatus, Tag, Task, RewardType, Reward, User
 from schemas import (
-    BoardUpdate, BoardResponse,
     TaskStatusUpdate, TaskStatusResponse,
-    CategoryUpdate, CategoryResponse,
     TagUpdate, TagResponse,
     TaskUpdate, TaskResponse,
     RewardTypeUpdate, RewardTypeResponse,
-    RewardUpdate, RewardResponse
+    RewardUpdate, RewardResponse,
+    UserUpdate, UserResponse
 )
 from dependencies import get_current_user, require_admin
+from auth import get_password_hash
 
 router = APIRouter(prefix="", tags=["PUT"])
 
-@router.put("/boards/{board_id}", response_model=BoardResponse)
-def update_board(
-    board_id: UUID,
-    update_data: BoardUpdate,
+@router.put("/users/me", response_model=UserResponse)
+def update_own_user(
+    payload: UserUpdate,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    board = db.query(Board).filter(
-        Board.id == board_id,
-        Board.user_id == current_user["user"].id
-    ).first()
-    if not board:
-        raise HTTPException(status_code=404, detail="Board не найден или не принадлежит вам")
+    user: User = current_user["user"]
 
-    for field, value in update_data.dict(exclude_unset=True).items():
-        if value is not None:
-            setattr(board, field, value)
+    # Обновление email с проверкой уникальности
+    if payload.email and payload.email != user.email:
+        if db.query(User).filter(User.email == payload.email).first():
+            raise HTTPException(status_code=400, detail="Пользователь с таким email уже существует")
+        user.email = payload.email
+
+    # Обновление пароля
+    if payload.password:
+        user.password_hash = get_password_hash(payload.password)
 
     db.commit()
-    db.refresh(board)
-    return board
+    db.refresh(user)
+    return user
+
+# @router.put("/boards/{board_id}", response_model=BoardResponse)
+# def update_board(
+#     board_id: UUID,
+#     update_data: BoardUpdate,
+#     current_user: dict = Depends(get_current_user),
+#     db: Session = Depends(get_db)
+# ):
+#     board = db.query(Board).filter(
+#         Board.id == board_id,
+#         Board.user_id == current_user["user"].id
+#     ).first()
+#     if not board:
+#         raise HTTPException(status_code=404, detail="Board не найден или не принадлежит вам")
+#
+#     for field, value in update_data.dict(exclude_unset=True).items():
+#         if value is not None:
+#             setattr(board, field, value)
+#
+#     db.commit()
+#     db.refresh(board)
+#     return board
 
 @router.put("/task-statuses/{status_id}", response_model=TaskStatusResponse)
 def update_task_status(
@@ -63,27 +85,27 @@ def update_task_status(
     db.refresh(status_obj)
     return status_obj
 
-@router.put("/categories/{category_id}", response_model=CategoryResponse)
-def update_category(
-    category_id: UUID,
-    update_data: CategoryUpdate,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    category = db.query(Category).filter(
-        Category.id == category_id,
-        Category.user_id == current_user["user"].id
-    ).first()
-    if not category:
-        raise HTTPException(status_code=404, detail="Category не найдена или не принадлежит вам")
-
-    for field, value in update_data.dict(exclude_unset=True).items():
-        if value is not None:
-            setattr(category, field, value)
-
-    db.commit()
-    db.refresh(category)
-    return category
+# @router.put("/categories/{category_id}", response_model=CategoryResponse)
+# def update_category(
+#     category_id: UUID,
+#     update_data: CategoryUpdate,
+#     current_user: dict = Depends(get_current_user),
+#     db: Session = Depends(get_db)
+# ):
+#     category = db.query(Category).filter(
+#         Category.id == category_id,
+#         Category.user_id == current_user["user"].id
+#     ).first()
+#     if not category:
+#         raise HTTPException(status_code=404, detail="Category не найдена или не принадлежит вам")
+#
+#     for field, value in update_data.dict(exclude_unset=True).items():
+#         if value is not None:
+#             setattr(category, field, value)
+#
+#     db.commit()
+#     db.refresh(category)
+#     return category
 
 @router.put("/tags/{tag_id}", response_model=TagResponse)
 def update_tag(
@@ -122,21 +144,21 @@ def update_task(
     if not task:
         raise HTTPException(status_code=404, detail="Task не найдена или не принадлежит вам")
 
-    if update_data.board_id and update_data.board_id != task.board_id:
-        board = db.query(Board).filter(
-            Board.id == update_data.board_id,
-            Board.user_id == current_user["user"].id
-        ).first()
-        if not board:
-            raise HTTPException(status_code=400, detail="Недопустимый board_id")
-
-    if update_data.category_id and update_data.category_id != task.category_id:
-        category = db.query(Category).filter(
-            Category.id == update_data.category_id,
-            Category.user_id == current_user["user"].id
-        ).first()
-        if not category:
-            raise HTTPException(status_code=400, detail="Недопустимый category_id")
+    # if update_data.board_id and update_data.board_id != task.board_id:
+    #     board = db.query(Board).filter(
+    #         Board.id == update_data.board_id,
+    #         Board.user_id == current_user["user"].id
+    #     ).first()
+    #     if not board:
+    #         raise HTTPException(status_code=400, detail="Недопустимый board_id")
+    #
+    # if update_data.category_id and update_data.category_id != task.category_id:
+    #     category = db.query(Category).filter(
+    #         Category.id == update_data.category_id,
+    #         Category.user_id == current_user["user"].id
+    #     ).first()
+    #     if not category:
+    #         raise HTTPException(status_code=400, detail="Недопустимый category_id")
 
     if update_data.status_id and update_data.status_id != task.status_id:
         if not db.query(TaskStatus).filter(TaskStatus.id == update_data.status_id).first():

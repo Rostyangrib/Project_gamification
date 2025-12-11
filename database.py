@@ -6,6 +6,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from config.db import engine
+from sqlalchemy.orm import Session
 
 Base = declarative_base()
 
@@ -20,21 +21,21 @@ class User(Base):
     role = Column(String, default="user")
     created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     updated_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"), onupdate=text("CURRENT_TIMESTAMP"))
-    boards = relationship("Board", back_populates="user")
+    #boards = relationship("Board", back_populates="user")
     tasks = relationship("Task", back_populates="user")
-    categories = relationship("Category", back_populates="user")
+    #categories = relationship("Category", back_populates="user")
     rewards = relationship("Reward", back_populates="user")
 
-class Board(Base):
-    __tablename__ = "boards"
-    id = Column(PG_UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
-    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    name = Column(String, nullable=False)
-    description = Column(Text)
-    created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
-    updated_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"), onupdate=text("CURRENT_TIMESTAMP"))
-    user = relationship("User", back_populates="boards")
-    tasks = relationship("Task", back_populates="board")
+# class Board(Base):
+#     __tablename__ = "boards"
+#     id = Column(PG_UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+#     user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+#     name = Column(String, nullable=False)
+#     description = Column(Text)
+#     created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+#     updated_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"), onupdate=text("CURRENT_TIMESTAMP"))
+#     user = relationship("User", back_populates="boards")
+#     tasks = relationship("Task", back_populates="board")
 
 class TaskStatus(Base):
     __tablename__ = "task_status"
@@ -42,14 +43,14 @@ class TaskStatus(Base):
     code = Column(String, unique=True, nullable=False)
     name = Column(String, nullable=False)
 
-class Category(Base):
-    __tablename__ = "categories"
-    id = Column(PG_UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
-    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    name = Column(String, nullable=False)
-    color = Column(String)
-    user = relationship("User", back_populates="categories")
-    tasks = relationship("Task", back_populates="category")
+# class Category(Base):
+#     __tablename__ = "categories"
+#     id = Column(PG_UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+#     user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+#     name = Column(String, nullable=False)
+#     color = Column(String)
+#     user = relationship("User", back_populates="categories")
+#     tasks = relationship("Task", back_populates="category")
 
 class Tag(Base):
     __tablename__ = "tags"
@@ -66,9 +67,9 @@ class Task(Base):
     __tablename__ = "tasks"
     id = Column(PG_UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    board_id = Column(PG_UUID(as_uuid=True), ForeignKey("boards.id"), nullable=False)
+   # board_id = Column(PG_UUID(as_uuid=True), ForeignKey("boards.id"), nullable=False)
     status_id = Column(PG_UUID(as_uuid=True), ForeignKey("task_status.id"), nullable=False)
-    category_id = Column(PG_UUID(as_uuid=True), ForeignKey("categories.id"), nullable=False)
+    #category_id = Column(PG_UUID(as_uuid=True), ForeignKey("categories.id"), nullable=False)
     title = Column(String, nullable=False)
     description = Column(Text)
     ai_analysis_metadata = Column(JSON)
@@ -79,9 +80,9 @@ class Task(Base):
     created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     updated_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"), onupdate=text("CURRENT_TIMESTAMP"))
     user = relationship("User", back_populates="tasks")
-    board = relationship("Board", back_populates="tasks")
+   # board = relationship("Board", back_populates="tasks")
     status = relationship("TaskStatus")
-    category = relationship("Category", back_populates="tasks")
+    #category = relationship("Category", back_populates="tasks")
     tags = relationship("Tag", secondary="task_tags", back_populates="tasks")
 
 class RewardType(Base):
@@ -104,6 +105,22 @@ class Reward(Base):
     type = relationship("RewardType", back_populates="rewards")
 
 def init_db():
-    print("🔄 Создаём таблицы в базе данных...")
     Base.metadata.create_all(bind=engine)
-    print("✅ Все таблицы успешно созданы!")
+    with Session(engine) as db:
+        if not db.query(TaskStatus).first():
+            statuses = [
+                TaskStatus(code="todo", name="К выполнению"),
+                TaskStatus(code="in_progress", name="В работе"),
+                TaskStatus(code="done", name="Выполнено")
+            ]
+            db.add_all(statuses)
+            db.commit()
+
+        if not db.query(Tag).first():
+            tag = [
+                Tag(name="несрочно"),
+                Tag(name="срочно"),
+                Tag(name="очень срочно")
+            ]
+            db.add_all(tag)
+            db.commit()
