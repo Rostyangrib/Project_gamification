@@ -1,12 +1,12 @@
 // src/pages/HomePage.jsx
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { useApi } from '../api/client.js'; // ✅ ваш существующий client.js
+import { useApi } from '../api/client.js';
 
 const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
 
 const getFirstDayOfMonth = (year, month) => {
   const day = new Date(year, month, 1).getDay();
-  return day === 0 ? 6 : day - 1; // 0 = Пн
+  return day === 0 ? 6 : day - 1;
 };
 
 const formatDateKey = (date) => {
@@ -16,26 +16,41 @@ const formatDateKey = (date) => {
   return `${year}-${month}-${day}`;
 };
 
-// Лёгкое преобразование имени месяца в родительный падеж (только окончание)
 const toGenitiveMonth = (name) => {
-  if (name.endsWith('рь')) return name.slice(0, -1) + 'я'; // январь, сентябрь, октябрь, ноябрь, декабрь
-  if (name.endsWith('ль')) return name.slice(0, -1) + 'я'; // апрель, февраль, июль
-  if (name.endsWith('й')) return name.slice(0, -1) + 'я';  // май
-  if (name.endsWith('нь')) return name.slice(0, -1) + 'я'; // июнь
-  if (name.endsWith('т')) return name + 'а';               // март, август
+  if (name.endsWith('рь')) return name.slice(0, -1) + 'я';
+  if (name.endsWith('ль')) return name.slice(0, -1) + 'я';
+  if (name.endsWith('й')) return name.slice(0, -1) + 'я';
+  if (name.endsWith('нь')) return name.slice(0, -1) + 'я';
+  if (name.endsWith('т')) return name + 'а';
   return name;
 };
 
 const HomePage = () => {
-  const api = useApi(); // ✅ ваш клиент — уже работает с токеном
+  const api = useApi();
 
-  useEffect(() => {
-    document.title = 'Геймификация предприятий';
-    const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
-    link.rel = 'icon';
-    link.href = '/favicon-g.svg';
-    document.head.appendChild(link);
-  }, []);
+useEffect(() => {
+  const loadData = async () => {
+    try {
+      setIsLoadingTasks(true);
+      const statuses = await api.get('/task-statuses');
+
+      const defaultStatus = statuses.find(s => s.code === 'todo') || statuses[0];
+      const completedStatus = statuses.find(s => s.code === 'done');
+
+      setDefaultStatusId(defaultStatus?.id || null);
+      setCompletedStatusId(completedStatus?.id || null);
+
+      const tasksResp = await api.get('/tasks');
+      setTasks(mapTasksByDate(tasksResp || []));
+    } catch (err) {
+      console.error('Ошибка загрузки задач:', err);
+      setError(err.message || 'Не удалось загрузить задачи');
+    } finally {
+      setIsLoadingTasks(false);
+    }
+  };
+  loadData();
+}, []);
 
   // Состояние календаря (для UX-отображения отправленных сообщений)
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -49,40 +64,77 @@ const HomePage = () => {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
 
-  // Хелпер: сгруппировать задачи по дате
-  const mapTasksByDate = (taskList) => {
-    const mapped = {};
-    (taskList || []).forEach((task) => {
-      const dateSource = task.due_date || task.created_at || new Date().toISOString();
-      const dateKey = formatDateKey(new Date(dateSource));
-      if (!mapped[dateKey]) mapped[dateKey] = [];
-      mapped[dateKey].push({ id: task.id, title: task.title });
-    });
-    return mapped;
-  };
+  const [completedStatusId, setCompletedStatusId] = useState(null);
 
-  // Загрузка статусов и задач пользователя
-  useEffect(() => {
-    const loadData = async () => {
+  // Хелпер: сгруппировать задачи по дате
+    const mapTasksByDate = (taskList) => {
+      const mapped = {};
+      (taskList || []).forEach((task) => {
+        const dateSource = task.due_date || task.created_at || new Date().toISOString();
+        const dateKey = formatDateKey(new Date(dateSource));
+        if (!mapped[dateKey]) mapped[dateKey] = [];
+        mapped[dateKey].push(task); // ← сохраняем ВСЮ задачу, а не только id и title
+      });
+      return mapped;
+    };
+
+    const markTaskAsCompleted = async (taskId, estimatedPoints = 0) => {
+      if (!completedStatusId) {
+        setError('Статус "Выполнено" не найден');
+        return;
+      }
+
       try {
-        setIsLoadingTasks(true);
-        const statuses = await api.get('/task-statuses');
-        const firstStatusId = Array.isArray(statuses) && statuses.length > 0 ? statuses[0].id : null;
-        setDefaultStatusId(firstStatusId);
+        // Получаем все задачи и ищем нужную
+        const allTasks = await api.get('/tasks');
+        const task = allTasks.find(t => t.id === taskId);
+        if (!task) {
+          setError('Задача не найдена');
+          return;
+        }
+
+        // 🔒 Проверка: если задача уже завершена — не даём повторно завершить
+        if (task.status_id === completedStatusId) {
+          setError('Задача уже выполнена');
+          return;
+        }
+
+
+        // Обновляем задачу
+        await api.put(`/tasks/${taskId}`, {
+          status_id: completedStatusId,
+          completed_at: new Date().toISOString(),
+          title: task.title,
+          description: task.description,
+          ai_analysis_metadata: task.ai_analysis_metadata,
+          estimated_points: task.estimated_points,
+          due_date: task.due_date,
+        });
+
+        // Начисляем очки ТОЛЬКО если задача была не завершена
+        if (estimatedPoints > 0) {
+          await api.post('/rewards', {
+            type_id: "10db6a95-194a-403e-8ae0-84050cb254e2",
+            points_amount: estimatedPoints,
+            reason: `Выполнена задача (ID: ${taskId})`,
+          });
+        }
 
         const tasksResp = await api.get('/tasks');
         setTasks(mapTasksByDate(tasksResp || []));
       } catch (err) {
-        console.error('Ошибка загрузки задач:', err);
-        setError(err.message || 'Не удалось загрузить задачи');
-      } finally {
-        setIsLoadingTasks(false);
+        console.error('Ошибка завершения задачи:', err);
+        let errorMessage = 'Не удалось завершить задачу';
+        if (err && typeof err === 'object') {
+          errorMessage = err.detail || err.message || JSON.stringify(err, null, 2);
+        } else if (typeof err === 'string') {
+          errorMessage = err;
+        }
+        setError(errorMessage);
       }
     };
-    loadData();
-  }, []); // api стабильный, нет смысла триггерить на каждый рендер
 
-  // ✅ Отправка на /chat в нужном формате
+
   const handleSendMessage = async (messageText) => {
     if (!messageText.trim()) return;
 
@@ -331,24 +383,53 @@ const HomePage = () => {
                       </div>
                       <ul className="list-none p-0 m-0 max-h-48 overflow-y-auto">
                         {dayTasks.map((task, idx) => (
-                          <li
-                            key={task.id || idx}
-                            className="flex justify-between items-start p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded mb-2 border-l-4 border-blue-500 dark:border-blue-400 break-words"
-                          >
-                            <span className="flex-1 text-gray-900 dark:text-gray-100">{task.title}</span>
+                       <li
+                          key={task.id || idx}
+                          className={`flex justify-between items-start p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded mb-2 
+                            border-l-4 
+                            transition-colors duration-300 ease-in-out
+                            ${task.status_id === completedStatusId ? 'border-green-500 dark:border-green-400' : 'border-blue-500 dark:border-blue-400'} 
+                            break-words`}
+                        >
+                          <span className="flex-1 text-gray-900 dark:text-gray-100">{task.title}</span>
+
+                          {/* ✅ Условная галочка */}
+                          {task.status_id !== completedStatusId ? (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (task.id) {
-                                  removeTask(task.id);
+                                  markTaskAsCompleted(task.id, task.estimated_points || 10);
                                 }
                               }}
-                              className="bg-transparent border-none text-red-500 dark:text-red-400 cursor-pointer text-xl leading-none ml-2 flex-shrink-0 hover:text-red-700 dark:hover:text-red-300 transition-colors"
-                              title="Удалить задачу"
+                              className="ml-2 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-colors"
+                              title="Отметить как выполненную"
                             >
-                              ×
+                              ✓
                             </button>
-                          </li>
+                          ) : (
+                            <span
+                              className="ml-2 text-green-500 dark:text-green-400 opacity-70"
+                              title="Задача уже выполнена"
+                            >
+                              ✓
+                            </span>
+                          )}
+
+                          {/* Удаление */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (task.id) {
+                                removeTask(task.id);
+                              }
+                            }}
+                            className="ml-2 text-red-500 dark:text-red-400 cursor-pointer text-xl leading-none flex-shrink-0 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+                            title="Удалить задачу"
+                          >
+                            ×
+                          </button>
+                        </li>
                         ))}
                       </ul>
                     </div>
