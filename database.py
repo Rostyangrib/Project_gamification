@@ -130,25 +130,25 @@ def init_db():
         if not db.query(User).first():
             users = [
                 User(
-                    first_name="admin_name",
-                    last_name="admin_lastname",
+                    first_name="admin",
+                    last_name="admin",
                     email="admin@admin.com",
                     password_hash=get_password_hash("maximadmin"),
                     total_points=52,
                     role="admin"
                 ),
                 User(
-                    first_name="user1_name",
-                    last_name="user1_lastname",
-                    email="user1@user.com",
+                    first_name="u1_name",
+                    last_name="u1_lastname",
+                    email="u1@user.com",
                     password_hash=get_password_hash("rost_user"),
                     total_points=228,
                     role="user"
                 ),
                 User(
-                    first_name="user2_name",
-                    last_name="user2_lastname",
-                    email="user2@user.com",
+                    first_name="u2_name",
+                    last_name="u2_lastname",
+                    email="u2@user.com",
                     password_hash=get_password_hash("rost_user"),
                     total_points=42,
                     role="user"
@@ -172,3 +172,24 @@ def init_db():
             ]
             db.add_all(reward_types)
             db.commit()
+
+            if not db.query(Competition).first():
+                competitions = [
+                    Competition(
+                        title="Мохнатый марафон 2025",
+                        start_date="2025-06-01 00:00:00",
+                        end_date="2025-08-31 23:59:59"
+                    ),
+                    Competition(
+                        title="Кучка",
+                        start_date="2025-01-15 00:00:00",
+                        end_date="2025-03-15 23:59:59"
+                    ),
+                    Competition(
+                        title="Майский жук",
+                        start_date="2025-04-20 00:00:00",
+                        end_date="2025-05-31 23:59:59"
+                    )
+                ]
+                db.add_all(competitions)
+                db.commit()
