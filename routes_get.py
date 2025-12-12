@@ -106,7 +106,7 @@ def get_competitions(
 @router.get("/competitions/{competition_id}", response_model=CompetitionResponse)
 def get_competition(
     competition_id: int,
-    current_user: dict = Depends(require_admin), # Только админ может получить конкретное
+    current_user: dict = Depends(get_current_user), # Только админ может получить конкретное
     db: Session = Depends(get_db)
 ):
     competition = db.query(Competition).filter(Competition.id == competition_id).first()

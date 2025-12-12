@@ -15,8 +15,7 @@ const ManagerPage = () => {
   });
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
-  const [taskStatuses, setTaskStatuses] = useState([]);
-  const [tasks, setTasks] = useState([{ title: '', user_ids: [], status_id: '' }]);
+  const [tasks, setTasks] = useState([{ title: '', user_ids: [] }]);
   const [loading, setLoading] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [error, setError] = useState('');
@@ -40,9 +39,8 @@ const ManagerPage = () => {
       return;
     }
 
-    // Загрузка списка пользователей и статусов задач
+    // Загрузка списка пользователей
     loadUsers();
-    loadTaskStatuses();
   }, [isAuthenticated, user, navigate]);
 
   const loadUsers = async () => {
@@ -59,25 +57,7 @@ const ManagerPage = () => {
     }
   };
 
-  const loadTaskStatuses = async () => {
-    try {
-      const statuses = await api.get('/task-statuses');
-      setTaskStatuses(statuses || []);
-    } catch (err) {
-      console.error('Ошибка загрузки статусов задач:', err);
-    }
-  };
 
-  // Форматирование даты для сообщения
-  const formatDateTime = (date) => {
-    const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    return `${day}.${month}.${year} ${hours}:${minutes}`;
-  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -104,7 +84,7 @@ const ManagerPage = () => {
   };
 
   const addTask = () => {
-    setTasks(prev => [...prev, { title: '', user_ids: [], status_id: '' }]);
+    setTasks(prev => [...prev, { title: '', user_ids: [] }]);
   };
 
   const removeTask = (index) => {
@@ -173,7 +153,7 @@ const ManagerPage = () => {
     }
 
     // Валидация задач
-    const validTasks = tasks.filter(t => t.title.trim() && t.user_ids.length > 0 && t.status_id);
+    const validTasks = tasks.filter(t => t.title.trim() && t.user_ids.length > 0);
     if (validTasks.length === 0) {
       setError('Добавьте хотя бы одну задачу с выбранными пользователями');
       return;
@@ -202,19 +182,19 @@ const ManagerPage = () => {
       await Promise.all(assignPromises);
 
       // Создаем задачи для выбранных пользователей через /chat
-      // Для каждой задачи создаем копию для каждого выбранного пользователя
+      // Для каждой задачи передаем текст и ID выбранных пользователей
       const taskPromises = [];
       validTasks.forEach(task => {
-        task.user_ids.forEach(userId => {
-          // Формируем сообщение для AI, которое создаст задачу
-          const statusName = taskStatuses.find(s => s.id === parseInt(task.status_id))?.name || 'К выполнению';
-          const dueDateFormatted = formatDateTime(endDate);
-          const message = `Создай задачу "${task.title.trim()}" на ${dueDateFormatted}, статус ${statusName}`;
-          
-          taskPromises.push(
-            api.post('/chat', { message })
-          );
-        });
+        // Формируем сообщение для AI, которое создаст задачу
+        const message = `Создай задачу "${task.title.trim()}"`;
+        
+        // Передаем message и user_ids для создания задач для всех выбранных пользователей
+        taskPromises.push(
+          api.post('/chat', { 
+            message,
+            user_ids: task.user_ids
+          })
+        );
       });
 
       await Promise.all(taskPromises);
@@ -224,7 +204,7 @@ const ManagerPage = () => {
       // Очистка формы
       setFormData({ title: '', start_date: '', end_date: '' });
       setSelectedUsers([]);
-      setTasks([{ title: '', user_ids: [], status_id: '' }]);
+      setTasks([{ title: '', user_ids: [] }]);
 
       // Автоматически скрыть сообщение успеха через 5 секунд
       setTimeout(() => setSuccess(''), 5000);
@@ -356,7 +336,7 @@ const ManagerPage = () => {
               <div>
                 <div className="flex justify-between items-center mb-3">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Задачи соревнования ({tasks.filter(t => t.title.trim() && t.user_ids.length > 0 && t.status_id).length} добавлено)
+                    Задачи соревнования ({tasks.filter(t => t.title.trim() && t.user_ids.length > 0).length} добавлено)
                   </label>
                   <button
                     type="button"
@@ -438,24 +418,6 @@ const ManagerPage = () => {
                                 </div>
                               )}
                             </div>
-                          </div>
-                          
-                          <div>
-                            <label className="block mb-1 text-xs font-medium text-gray-600 dark:text-gray-400">
-                              Статус *
-                            </label>
-                            <select
-                              value={task.status_id}
-                              onChange={(e) => updateTask(index, 'status_id', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                            >
-                              <option value="">Выберите статус</option>
-                              {taskStatuses.map((status) => (
-                                <option key={status.id} value={status.id}>
-                                  {status.name}
-                                </option>
-                              ))}
-                            </select>
                           </div>
                         </div>
                       </div>

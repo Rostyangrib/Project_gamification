@@ -51,12 +51,51 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
-  // Автовыход при истечении срока (опционально)
+  // Загрузка актуальных данных пользователя при перезагрузке страницы
   useEffect(() => {
-    if (authState.token) {
-      // Можно декодировать JWT и проверить exp, но для простоты — не делаем
-      // В продакшене: проверяйте `exp` из payload
-    }
+    const loadUserData = async () => {
+      const token = authState.token;
+      if (!token) return;
+
+      try {
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+        const response = await fetch(`${API_BASE_URL}/users/me`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          // Используем функциональное обновление состояния
+          setAuthState((prev) => {
+            const mergedUser = { ...prev.user, ...userData };
+            localStorage.setItem('auth_user', JSON.stringify(mergedUser));
+            return {
+              ...prev,
+              user: mergedUser
+            };
+          });
+        } else if (response.status === 401) {
+          // Токен недействителен - выходим
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('auth_user');
+          setAuthState({
+            token: null,
+            user: null,
+            isAuthenticated: false
+          });
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки данных пользователя:', error);
+        // Не выходим при ошибке сети, просто используем данные из localStorage
+      }
+    };
+
+    loadUserData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authState.token]);
 
   return (

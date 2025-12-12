@@ -1,6 +1,7 @@
 # routes_chat.py
 import re
 from datetime import datetime
+from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -18,6 +19,7 @@ router = APIRouter()
 
 class ChatMessage(BaseModel):
     message: str
+    user_ids: Optional[List[int]] = None
 
 
 class ChatResponse(BaseModel):
@@ -76,49 +78,72 @@ def chat_with_ai(
     ai_analysis = analyze_task(title, description)
     estimated_points = ai_analysis["estimated_points"]
 
-    new_task = Task(
-        user_id=current_user["user"].id,
-        status_id=status_obj.id,
-        title=title,
-        description=description,
-        estimated_points=estimated_points,
-        ai_analysis_metadata=ai_analysis,
-        due_date=due_date,
-        awarded_points=0
-    )
-    db.add(new_task)
-    db.commit()
-    db.refresh(new_task)
+    # Определяем список пользователей для создания задач
+    user_ids_to_create = chat.user_ids if chat.user_ids else [current_user["user"].id]
+    
+    # Проверяем, что все пользователи существуют
+    users = db.query(User).filter(User.id.in_(user_ids_to_create)).all()
+    if len(users) != len(user_ids_to_create):
+        return ChatResponse(reply="Один или несколько указанных пользователей не найдены.")
 
+    created_tasks = []
     attached_tags = []
-    for tag_name in task_data.get("tags", []):
-        if not isinstance(tag_name, str) or not tag_name.strip():
-            continue
-        tag_name = tag_name.strip()
-        tag = db.query(Tag).filter(Tag.name == tag_name).first()
-        if not tag:
-            tag = Tag(name=tag_name)
-            db.add(tag)
-            db.commit()
-            db.refresh(tag)
-        existing = db.query(TaskTag).filter(
-            TaskTag.task_id == new_task.id,
-            TaskTag.tag_id == tag.id
-        ).first()
-        if not existing:
-            db.add(TaskTag(task_id=new_task.id, tag_id=tag.id))
-            attached_tags.append(tag.name)
+    
+    # Создаем задачи для каждого указанного пользователя
+    for user_id in user_ids_to_create:
+        new_task = Task(
+            user_id=user_id,
+            status_id=status_obj.id,
+            title=title,
+            description=description,
+            estimated_points=estimated_points,
+            ai_analysis_metadata=ai_analysis,
+            due_date=due_date,
+            awarded_points=0
+        )
+        db.add(new_task)
+        db.flush()  # Получаем ID задачи без коммита
+        
+        # Добавляем теги к задаче
+        for tag_name in task_data.get("tags", []):
+            if not isinstance(tag_name, str) or not tag_name.strip():
+                continue
+            tag_name = tag_name.strip()
+            tag = db.query(Tag).filter(Tag.name == tag_name).first()
+            if not tag:
+                tag = Tag(name=tag_name)
+                db.add(tag)
+                db.flush()
+            existing = db.query(TaskTag).filter(
+                TaskTag.task_id == new_task.id,
+                TaskTag.tag_id == tag.id
+            ).first()
+            if not existing:
+                db.add(TaskTag(task_id=new_task.id, tag_id=tag.id))
+                if tag_name not in attached_tags:
+                    attached_tags.append(tag_name)
+        
+        created_tasks.append(new_task)
 
     db.commit()
+    
+    # Обновляем объекты после коммита
+    for task in created_tasks:
+        db.refresh(task)
 
     reply = f" Задача «{title}» создана"
+    if len(created_tasks) > 1:
+        reply += f" для {len(created_tasks)} пользователей"
     if due_date:
         reply += f" Срок: {due_date}."
     if attached_tags:
         reply += f" Теги: {', '.join(attached_tags)}."
     reply += f" Статус: {status_obj.name}."
 
+    # Возвращаем первую созданную задачу для обратной совместимости
+    first_task = created_tasks[0] if created_tasks else None
+
     return ChatResponse(
         reply=ai_response["reply"] + " " + reply,
-        task_created=TaskResponse.from_orm(new_task)
+        task_created=TaskResponse.from_orm(first_task) if first_task else None
     )
