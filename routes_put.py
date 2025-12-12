@@ -1,17 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from uuid import UUID
-from typing import Optional
+
 
 from config.db import get_db
-from database import TaskStatus, Tag, Task, RewardType, Reward, User
+from database import TaskStatus, Tag, Task, RewardType, Reward, User, Competition
 from schemas import (
     TaskStatusUpdate, TaskStatusResponse,
     TagUpdate, TagResponse,
     TaskUpdate, TaskResponse,
     RewardTypeUpdate, RewardTypeResponse,
     RewardUpdate, RewardResponse,
-    UserUpdate, UserResponse
+    UserUpdate, UserResponse, CompetitionResponse, CompetitionUpdate,
+    UserCompetitionAssign
 )
 from dependencies import get_current_user, require_admin
 from auth import get_password_hash
@@ -40,9 +40,33 @@ def update_own_user(
     db.refresh(user)
     return user
 
+
+@router.put("/users/{user_id}/competition", response_model=UserResponse)
+def assign_user_to_competition(
+    user_id: int,
+    payload: UserCompetitionAssign,
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+
+    if payload.competition_id is not None:
+        competition = db.query(Competition).filter(Competition.id == payload.competition_id).first()
+        if not competition:
+            raise HTTPException(status_code=404, detail="Соревнование не найдено")
+        user.cur_comp = payload.competition_id
+    else:
+        user.cur_comp = None
+
+    db.commit()
+    db.refresh(user)
+    return user
+
 # @router.put("/boards/{board_id}", response_model=BoardResponse)
 # def update_board(
-#     board_id: UUID,
+#     board_id: int,
 #     update_data: BoardUpdate,
 #     current_user: dict = Depends(get_current_user),
 #     db: Session = Depends(get_db)
@@ -64,7 +88,7 @@ def update_own_user(
 
 @router.put("/task-statuses/{status_id}", response_model=TaskStatusResponse)
 def update_task_status(
-    status_id: UUID,
+    status_id: int,
     update_data: TaskStatusUpdate,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db)
@@ -87,7 +111,7 @@ def update_task_status(
 
 # @router.put("/categories/{category_id}", response_model=CategoryResponse)
 # def update_category(
-#     category_id: UUID,
+#     category_id: int,
 #     update_data: CategoryUpdate,
 #     current_user: dict = Depends(get_current_user),
 #     db: Session = Depends(get_db)
@@ -109,7 +133,7 @@ def update_task_status(
 
 @router.put("/tags/{tag_id}", response_model=TagResponse)
 def update_tag(
-    tag_id: UUID,
+    tag_id: int,
     update_data: TagUpdate,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db)
@@ -132,7 +156,7 @@ def update_tag(
 
 @router.put("/tasks/{task_id}", response_model=TaskResponse)
 def update_task(
-    task_id: UUID,
+    task_id: int,
     update_data: TaskUpdate,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -174,7 +198,7 @@ def update_task(
 
 @router.put("/reward-types/{type_id}", response_model=RewardTypeResponse)
 def update_reward_type(
-    type_id: UUID,
+    type_id: int,
     update_data: RewardTypeUpdate,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db)
@@ -197,7 +221,7 @@ def update_reward_type(
 
 @router.put("/rewards/{reward_id}", response_model=RewardResponse)
 def update_reward(
-    reward_id: UUID,
+    reward_id: int,
     update_data: RewardUpdate,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -226,3 +250,22 @@ def update_reward(
     db.commit()
     db.refresh(reward)
     return reward
+
+@router.put("/competitions/{competition_id}", response_model=CompetitionResponse)
+def update_competition(
+    competition_id: int,
+    competition_update: CompetitionUpdate,
+    current_user: dict = Depends(require_admin), # Только админ может обновлять
+    db: Session = Depends(get_db)
+):
+    competition = db.query(Competition).filter(Competition.id == competition_id).first()
+    if not competition:
+        raise HTTPException(status_code=404, detail="Соревнование не найдено")
+
+    # Обновляем поля, которые пришли в запросе
+    for field, value in competition_update.model_dump(exclude_unset=True).items():
+        setattr(competition, field, value)
+
+    db.commit()
+    db.refresh(competition)
+    return competition

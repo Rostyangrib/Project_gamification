@@ -10,7 +10,7 @@ from ml.ai_analyzer import analyze_task
 
 from config.db import get_db
 from database import (
-    User, TaskStatus, Tag, TaskTag, Task, RewardType, Reward
+    User, TaskStatus, Tag, TaskTag, Task, RewardType, Reward, Competition
 )
 from schemas import (
     UserCreate, UserResponse, Token, UserLogin,
@@ -19,7 +19,8 @@ from schemas import (
     TaskCreate, TaskResponse,
     RewardTypeCreate, RewardTypeResponse,
     RewardCreate, RewardResponse,
-    TaskTagCreate
+    TaskTagCreate, CompetitionCreate,
+    CompetitionResponse
 )
 from auth import verify_password, get_password_hash, create_access_token
 from dependencies import get_current_user, require_admin
@@ -196,6 +197,44 @@ def create_task(
     db.refresh(db_task)
     return db_task
 
+@router.post("/tasks/{user_id}", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
+def create_task(
+        user_id: int,
+        task: TaskCreate,
+        current_user: dict = Depends(require_admin),
+        db: Session = Depends(get_db)
+):
+    # Проверяем, существует ли пользователь с переданным id_user
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+
+    # Проверяем, существует ли статус задачи
+    if not db.query(TaskStatus).filter(TaskStatus.id == task.status_id).first():
+        raise HTTPException(status_code=404, detail="TaskStatus не найден")
+
+    # Анализ задачи через AI
+    ai_result = analyze_task(task.title, task.description or "")
+    estimated_points = ai_result["estimated_points"]
+    ai_metadata = ai_result
+
+    # Создаем задачу для указанного пользователя
+    db_task = Task(
+        user_id=user_id,  # Устанавливаем задачу конкретному пользователю
+        status_id=task.status_id,
+        title=task.title,
+        description=task.description,
+        estimated_points=estimated_points,
+        ai_analysis_metadata=ai_metadata,
+        due_date=task.due_date,
+        awarded_points=0
+    )
+    db.add(db_task)
+    db.commit()
+    db.refresh(db_task)
+    return db_task
+
+
 @router.post("/task-tags", status_code=status.HTTP_201_CREATED)
 def create_task_tag(
     task_tag: TaskTagCreate,
@@ -262,3 +301,20 @@ def create_reward(
     db.commit()
 
     return db_reward
+
+@router.post("/competitions", response_model=CompetitionResponse, status_code=status.HTTP_201_CREATED)
+def create_competition(
+    competition: CompetitionCreate,
+    current_user: dict = Depends(require_admin), # Только админ может создавать
+    db: Session = Depends(get_db)
+):
+    # Проверка уникальности названия (опционально)
+    existing = db.query(Competition).filter(Competition.title == competition.title).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Соревнование с таким названием уже существует")
+
+    db_competition = Competition(**competition.model_dump())
+    db.add(db_competition)
+    db.commit()
+    db.refresh(db_competition)
+    return db_competition

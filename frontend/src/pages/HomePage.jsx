@@ -1,7 +1,10 @@
 // src/pages/HomePage.jsx
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // ✅ добавлено
 import { useApi } from '../api/client.js';
+import { useAuth } from '../context/AuthContext.jsx'; // ✅ добавлено
 
+// --- ВСЕ ХЕЛПЕРЫ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ ---
 const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
 
 const getFirstDayOfMonth = (year, month) => {
@@ -25,155 +28,184 @@ const toGenitiveMonth = (name) => {
   return name;
 };
 
+// --- НОВЫЕ ХЕЛПЕРЫ ---
+const formatDateTime = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+const getTimeRemaining = (endDate) => {
+  if (!endDate) return '';
+  const now = new Date();
+  const end = new Date(endDate);
+  const diff = end - now;
+
+  if (diff < 0) return 'Соревнование завершено';
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (days > 0) return `Осталось: ${days} дн. ${hours} ч.`;
+  if (hours > 0) return `Осталось: ${hours} ч. ${minutes} мин.`;
+  return `Осталось: ${minutes} мин.`;
+};
+
 const HomePage = () => {
   const api = useApi();
+  const { user } = useAuth(); // ✅
+  const navigate = useNavigate(); // ✅
 
-useEffect(() => {
-  const loadData = async () => {
-    try {
-      setIsLoadingTasks(true);
-      const statuses = await api.get('/task-statuses');
+  // --- НОВОЕ СОСТОЯНИЕ ---
+  const [competition, setCompetition] = useState(null);
+  const [isLoadingCompetition, setIsLoadingCompetition] = useState(true);
+  const [chatSuccess, setChatSuccess] = useState(null); // ✅
 
-      const defaultStatus = statuses.find(s => s.code === 'todo') || statuses[0];
-      const completedStatus = statuses.find(s => s.code === 'done');
+  // --- УСТАНОВКА TITLE И FAVICON ---
+  useEffect(() => {
+    document.title = 'Gamification Dashboard';
+    const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
+    link.rel = 'icon';
+    link.href = '/favicon-g.svg';
+    document.head.appendChild(link);
+  }, []);
 
-      setDefaultStatusId(defaultStatus?.id || null);
-      setCompletedStatusId(completedStatus?.id || null);
-
-      const tasksResp = await api.get('/tasks');
-      setTasks(mapTasksByDate(tasksResp || []));
-    } catch (err) {
-      console.error('Ошибка загрузки задач:', err);
-      setError(err.message || 'Не удалось загрузить задачи');
-    } finally {
-      setIsLoadingTasks(false);
-    }
-  };
-  loadData();
-}, []);
-
-  // Состояние календаря (для UX-отображения отправленных сообщений)
+  // --- СУЩЕСТВУЮЩИЕ СОСТОЯНИЯ (БЕЗ ИЗМЕНЕНИЙ) ---
   const [currentDate, setCurrentDate] = useState(new Date());
   const [expandedDay, setExpandedDay] = useState(null);
-  const [tasks, setTasks] = useState({}); // { [dateKey]: [{ id, title }] }
+  const [tasks, setTasks] = useState({});
   const [defaultStatusId, setDefaultStatusId] = useState(null);
   const [isLoadingTasks, setIsLoadingTasks] = useState(true);
-
-  // Состояние отправки
   const inputRef = useRef(null);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
-
   const [completedStatusId, setCompletedStatusId] = useState(null);
 
-  // Хелпер: сгруппировать задачи по дате
-    const mapTasksByDate = (taskList) => {
-      const mapped = {};
-      (taskList || []).forEach((task) => {
-        const dateSource = task.due_date || task.created_at || new Date().toISOString();
-        const dateKey = formatDateKey(new Date(dateSource));
-        if (!mapped[dateKey]) mapped[dateKey] = [];
-        mapped[dateKey].push(task); // ← сохраняем ВСЮ задачу, а не только id и title
-      });
-      return mapped;
-    };
+  // --- СУЩЕСТВУЮЩИЙ ХЕЛПЕР ---
+  const mapTasksByDate = (taskList) => {
+    const mapped = {};
+    (taskList || []).forEach((task) => {
+      const dateSource = task.due_date || task.created_at || new Date().toISOString();
+      const dateKey = formatDateKey(new Date(dateSource));
+      if (!mapped[dateKey]) mapped[dateKey] = [];
+      mapped[dateKey].push(task);
+    });
+    return mapped;
+  };
 
-    const markTaskAsCompleted = async (taskId, estimatedPoints = 0) => {
-      if (!completedStatusId) {
-        setError('Статус "Выполнено" не найден');
-        return;
-      }
-
+  // --- СУЩЕСТВУЮЩИЙ ЭФФЕКТ ЗАГРУЗКИ ЗАДАЧ + СТАТУСОВ ---
+  useEffect(() => {
+    const loadData = async () => {
       try {
-        // Получаем все задачи и ищем нужную
-        const allTasks = await api.get('/tasks');
-        const task = allTasks.find(t => t.id === taskId);
-        if (!task) {
-          setError('Задача не найдена');
-          return;
-        }
-
-        // 🔒 Проверка: если задача уже завершена — не даём повторно завершить
-        if (task.status_id === completedStatusId) {
-          setError('Задача уже выполнена');
-          return;
-        }
-
-
-        // Обновляем задачу
-        await api.put(`/tasks/${taskId}`, {
-          status_id: completedStatusId,
-          completed_at: new Date().toISOString(),
-          title: task.title,
-          description: task.description,
-          ai_analysis_metadata: task.ai_analysis_metadata,
-          estimated_points: task.estimated_points,
-          due_date: task.due_date,
-        });
-
-        // Начисляем очки ТОЛЬКО если задача была не завершена
-        if (estimatedPoints > 0) {
-          await api.post('/rewards', {
-            type_id: "10db6a95-194a-403e-8ae0-84050cb254e2",
-            points_amount: estimatedPoints,
-            reason: `Выполнена задача (ID: ${taskId})`,
-          });
-        }
+        setIsLoadingTasks(true);
+        const statuses = await api.get('/task-statuses');
+        const defaultStatus = statuses.find(s => s.code === 'todo') || statuses[0];
+        const completedStatus = statuses.find(s => s.code === 'done');
+        setDefaultStatusId(defaultStatus?.id || null);
+        setCompletedStatusId(completedStatus?.id || null);
 
         const tasksResp = await api.get('/tasks');
         setTasks(mapTasksByDate(tasksResp || []));
       } catch (err) {
-        console.error('Ошибка завершения задачи:', err);
-        let errorMessage = 'Не удалось завершить задачу';
-        if (err && typeof err === 'object') {
-          errorMessage = err.detail || err.message || JSON.stringify(err, null, 2);
-        } else if (typeof err === 'string') {
-          errorMessage = err;
-        }
-        setError(errorMessage);
+        console.error('Ошибка загрузки задач:', err);
+        setError(err.message || 'Не удалось загрузить задачи');
+      } finally {
+        setIsLoadingTasks(false);
       }
     };
+    loadData();
+  }, []);
 
+  // --- НОВЫЙ ЭФФЕКТ: ЗАГРУЗКА СОРЕВНОВАНИЯ ---
+  useEffect(() => {
+    const loadCompetition = async () => {
+      try {
+        setIsLoadingCompetition(true);
+        const userInfo = await api.get('/users/me');
+        if (userInfo?.cur_comp) {
+          try {
+            const compInfo = await api.get(`/competitions/${userInfo.cur_comp}`);
+            setCompetition(compInfo);
+          } catch (err) {
+            // Fallback: соревнование существует, но детали недоступны
+            setCompetition({
+              id: userInfo.cur_comp,
+              title: 'Соревнование',
+              end_date: null,
+              start_date: null
+            });
+          }
+        } else {
+          setCompetition(null);
+        }
+      } catch (err) {
+        console.error('Ошибка загрузки соревнования:', err);
+        setCompetition(null);
+      } finally {
+        setIsLoadingCompetition(false);
+      }
+    };
+    loadCompetition();
+  }, []);
 
-  const handleSendMessage = async (messageText) => {
-    if (!messageText.trim()) return;
-
-    setIsSending(true);
-    setError(null);
+  // --- СУЩЕСТВУЮЩИЕ ФУНКЦИИ (БЕЗ ИЗМЕНЕНИЙ) ---
+  const markTaskAsCompleted = async (taskId, estimatedPoints = 0) => {
+    if (!completedStatusId) {
+      setError('Статус "Выполнено" не найден');
+      return;
+    }
 
     try {
-      // Отправляем { "message": "текст" } на POST /chat
-      const response = await api.post('/chat', { message: messageText });
-
-      // ✅ Успех
-      console.log('Ответ от /chat:', response);
-
-      // Создаём задачу на сегодня на бэке
-      if (!defaultStatusId) {
-        throw new Error('Не найден статус задачи. Обновите страницу.');
+      const allTasks = await api.get('/tasks');
+      const task = allTasks.find(t => t.id === taskId);
+      if (!task) {
+        setError('Задача не найдена');
+        return;
+      }
+      if (task.status_id === completedStatusId) {
+        setError('Задача уже выполнена');
+        return;
       }
 
-      await api.post('/tasks', {
-        status_id: defaultStatusId,
-        title: messageText,
-        description: null,
-        due_date: new Date().toISOString()
+      await api.put(`/tasks/${taskId}`, {
+        status_id: completedStatusId,
+        completed_at: new Date().toISOString(),
+        title: task.title,
+        description: task.description,
+        ai_analysis_metadata: task.ai_analysis_metadata,
+        estimated_points: task.estimated_points,
+        due_date: task.due_date,
       });
 
-      // Перезагружаем задачи пользователя
+      if (estimatedPoints > 0) {
+        await api.post('/rewards', {
+          type_id: "1",
+          points_amount: estimatedPoints,
+          reason: `Выполнена задача (ID: ${taskId})`,
+        });
+      }
+
       const tasksResp = await api.get('/tasks');
       setTasks(mapTasksByDate(tasksResp || []));
     } catch (err) {
-      console.error('Ошибка отправки:', err);
-      setError(err.message || 'Не удалось отправить сообщение');
-      // Показываем ошибку в интерфейсе
-    } finally {
-      setIsSending(false);
-      inputRef.current?.focus();
+      console.error('Ошибка завершения задачи:', err);
+      let errorMessage = 'Не удалось завершить задачу';
+      if (err && typeof err === 'object') {
+        errorMessage = err.detail || err.message || JSON.stringify(err, null, 2);
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+      setError(errorMessage);
     }
   };
 
-  // Удаление задачи через API
   const removeTask = async (taskId) => {
     try {
       await api.delete(`/tasks/${taskId}`);
@@ -185,6 +217,7 @@ useEffect(() => {
     }
   };
 
+  // --- ВСЁ, ЧТО СВЯЗАНО С КАЛЕНДАРЕМ (БЕЗ ИЗМЕНЕНИЙ) ---
   const { year, month, days, startDay } = useMemo(() => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -228,58 +261,67 @@ useEffect(() => {
     return dayOfWeek === 5 || dayOfWeek === 6;
   };
 
+  // --- RENDER ---
   return (
     <div className="p-5 max-w-7xl mx-auto bg-gray-50 dark:bg-gray-900 min-h-screen">
-      <header className="mb-8 px-2.5">
+      <header className="mb-8 px-2.5 flex justify-between items-center">
         <h1 className="m-0 text-gray-800 dark:text-gray-100 font-bold text-2xl">🎯 Gamification Dashboard</h1>
+        {/* ✅ КНОПКА ДЛЯ АДМИНА */}
+        {user?.role === 'admin' && (
+          <button
+            onClick={() => navigate('/manager')}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Управление соревнованиями
+          </button>
+        )}
       </header>
 
       <div className="grid grid-cols-1 gap-8">
-        {/* ✅ Панель чата — отправка на /chat */}
-        <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md">
-          <h2 className="m-0 mb-5 text-gray-800 dark:text-gray-100 font-semibold text-xl">💬 Отправить сообщение</h2>
-          <div className="flex gap-2.5">
-            <input
-              ref={inputRef}
-              type="text"
-              placeholder="Введите сообщение..."
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const text = e.target.value.trim();
-                  if (text) {
-                    handleSendMessage(text);
-                    e.target.value = '';
-                  }
-                }
-              }}
-              className="flex-1 px-2.5 py-2.5 border border-gray-300 dark:border-gray-600 rounded text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <button
-              onClick={() => {
-                const text = inputRef.current?.value?.trim();
-                if (text) {
-                  handleSendMessage(text);
-                  inputRef.current.value = '';
-                }
-              }}
-              className="px-4 py-2.5 bg-green-500 text-white border-none rounded cursor-pointer font-medium hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isSending}
-            >
-              {isSending ? 'Отправка...' : '➤ Отправить'}
-            </button>
+        {/* ✅ ПЛАШКА С СОРЕВНОВАНИЕМ */}
+        {!isLoadingCompetition && competition && (
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 p-6 rounded-lg shadow-lg text-white">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                  🏆 {competition.title || 'Соревнование'}
+                </h2>
+                {competition.end_date ? (
+                  <div className="space-y-1">
+                    <p className="text-indigo-100 text-sm">
+                      <span className="font-semibold">Дедлайн:</span> {formatDateTime(competition.end_date)}
+                    </p>
+                    <p className="text-indigo-100 text-sm font-medium">
+                      {getTimeRemaining(competition.end_date)}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-indigo-100 text-sm">
+                    Информация о дедлайне недоступна
+                  </p>
+                )}
+                {competition.start_date && (
+                  <p className="text-indigo-100 text-sm mt-2">
+                    <span className="font-semibold">Начало:</span> {formatDateTime(competition.start_date)}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
-          {error && (
-            <p className="text-red-500 dark:text-red-400 text-sm mt-2 p-1.5 bg-red-50 dark:bg-red-900/30 rounded">
-              ❌ {error}
-            </p>
-          )}
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 leading-relaxed">
-            Сообщение отправляется на <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">POST {import.meta.env.VITE_API_BASE_URL || ''}/chat</code>
-            {' '}в формате: <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{"{ \"message\": \"ваш текст\" }"}</code>
-          </p>
-        </div>
+        )}
 
-        {/* Календарь */}
+        {!isLoadingCompetition && !competition && (
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+            <p className="text-gray-600 dark:text-gray-400 text-center">
+              Вы не участвуете в соревновании
+            </p>
+          </div>
+        )}
+
+        {/* ✅ КАЛЕНДАРЬ (БЕЗ ИЗМЕНЕНИЙ) */}
         <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md">
           <div className="flex justify-between items-center mb-5">
             <h2 className="m-0 text-gray-800 dark:text-gray-100 font-semibold text-xl">
@@ -383,53 +425,51 @@ useEffect(() => {
                       </div>
                       <ul className="list-none p-0 m-0 max-h-48 overflow-y-auto">
                         {dayTasks.map((task, idx) => (
-                       <li
-                          key={task.id || idx}
-                          className={`flex justify-between items-start p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded mb-2 
-                            border-l-4 
-                            transition-colors duration-300 ease-in-out
-                            ${task.status_id === completedStatusId ? 'border-green-500 dark:border-green-400' : 'border-blue-500 dark:border-blue-400'} 
-                            break-words`}
-                        >
-                          <span className="flex-1 text-gray-900 dark:text-gray-100">{task.title}</span>
+                          <li
+                            key={task.id || idx}
+                            className={`flex justify-between items-start p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded mb-2 
+                              border-l-4 
+                              transition-colors duration-300 ease-in-out
+                              ${task.status_id === completedStatusId ? 'border-green-500 dark:border-green-400' : 'border-blue-500 dark:border-blue-400'} 
+                              break-words`}
+                          >
+                            <span className="flex-1 text-gray-900 dark:text-gray-100">{task.title}</span>
 
-                          {/* ✅ Условная галочка */}
-                          {task.status_id !== completedStatusId ? (
+                            {task.status_id !== completedStatusId ? (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (task.id) {
+                                    markTaskAsCompleted(task.id, task.estimated_points || 10);
+                                  }
+                                }}
+                                className="ml-2 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-colors"
+                                title="Отметить как выполненную"
+                              >
+                                ✓
+                              </button>
+                            ) : (
+                              <span
+                                className="ml-2 text-green-500 dark:text-green-400 opacity-70"
+                                title="Задача уже выполнена"
+                              >
+                                ✓
+                              </span>
+                            )}
+
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (task.id) {
-                                  markTaskAsCompleted(task.id, task.estimated_points || 10);
+                                  removeTask(task.id);
                                 }
                               }}
-                              className="ml-2 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-colors"
-                              title="Отметить как выполненную"
+                              className="ml-2 text-red-500 dark:text-red-400 cursor-pointer text-xl leading-none flex-shrink-0 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+                              title="Удалить задачу"
                             >
-                              ✓
+                              ×
                             </button>
-                          ) : (
-                            <span
-                              className="ml-2 text-green-500 dark:text-green-400 opacity-70"
-                              title="Задача уже выполнена"
-                            >
-                              ✓
-                            </span>
-                          )}
-
-                          {/* Удаление */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (task.id) {
-                                removeTask(task.id);
-                              }
-                            }}
-                            className="ml-2 text-red-500 dark:text-red-400 cursor-pointer text-xl leading-none flex-shrink-0 hover:text-red-700 dark:hover:text-red-300 transition-colors"
-                            title="Удалить задачу"
-                          >
-                            ×
-                          </button>
-                        </li>
+                          </li>
                         ))}
                       </ul>
                     </div>

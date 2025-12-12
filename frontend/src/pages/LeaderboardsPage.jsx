@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from 'react';
+import { useApi } from '../api/client.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const LeaderboardsPage = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [competitionId, setCompetitionId] = useState(null);
+  const api = useApi();
+  const { user } = useAuth();
 
   useEffect(() => {
     document.title = 'Список лидеров | Геймификация предприятий';
@@ -15,12 +20,37 @@ const LeaderboardsPage = () => {
     const fetchLeaderboard = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/leaderboard');
-        if (!response.ok) {
-          throw new Error(`Ошибка ${response.status}: ${await response.text()}`);
+        setError(null);
+
+        // Определяем competition_id для текущего пользователя.
+        // 1) Пробуем взять из контекста (после логина фронт там хранит пользователя)
+        // 2) Пробуем получить свежий /users/me
+        // 3) Фоллбек — 1 (чтобы страница не падала)
+        let resolvedCompId = user?.cur_comp ?? null;
+        try {
+          const me = await api.get('/users/me');
+          if (me?.cur_comp != null) {
+            resolvedCompId = me.cur_comp;
+          }
+        } catch (meErr) {
+          console.warn('Не удалось получить /users/me:', meErr);
         }
-        const data = await response.json();
-        const sortedUsers = data.users.sort((a, b) => b.total_points - a.total_points);
+        if (resolvedCompId == null) {
+          resolvedCompId = 1;
+        }
+        setCompetitionId(resolvedCompId);
+
+        const data = await api.get(`/leaderboard/${resolvedCompId}`);
+
+        const usersArray = Array.isArray(data) ? data : [];
+        const sortedUsers = usersArray
+          .map((u) => ({
+            first_name: u.first_name || '',
+            last_name: u.last_name || '',
+            total_points: Number(u.total_points) || 0,
+          }))
+          .sort((a, b) => b.total_points - a.total_points);
+
         setUsers(sortedUsers);
       } catch (err) {
         console.error('Ошибка загрузки лидеров:', err);
