@@ -33,6 +33,14 @@ def get_all_users(
     users = db.query(User).all()
     return users
 
+@router.get("/users/only", response_model=List[UserResponse])
+def get_all_users(
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    users = db.query(User).filter(User.role == "user").all()
+    return users
+
 @router.get("/users/me", response_model=UserResponse)
 def read_own_info(current_user: dict = Depends(get_current_user)):
     return current_user["user"]
