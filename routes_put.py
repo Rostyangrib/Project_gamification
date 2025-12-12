@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from uuid import UUID
+
 
 from config.db import get_db
 from database import TaskStatus, Tag, Task, RewardType, Reward, User, Competition
@@ -41,7 +41,7 @@ def update_own_user(
 
 # @router.put("/boards/{board_id}", response_model=BoardResponse)
 # def update_board(
-#     board_id: UUID,
+#     board_id: int,
 #     update_data: BoardUpdate,
 #     current_user: dict = Depends(get_current_user),
 #     db: Session = Depends(get_db)
@@ -63,7 +63,7 @@ def update_own_user(
 
 @router.put("/task-statuses/{status_id}", response_model=TaskStatusResponse)
 def update_task_status(
-    status_id: UUID,
+    status_id: int,
     update_data: TaskStatusUpdate,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db)
@@ -86,7 +86,7 @@ def update_task_status(
 
 # @router.put("/categories/{category_id}", response_model=CategoryResponse)
 # def update_category(
-#     category_id: UUID,
+#     category_id: int,
 #     update_data: CategoryUpdate,
 #     current_user: dict = Depends(get_current_user),
 #     db: Session = Depends(get_db)
@@ -108,7 +108,7 @@ def update_task_status(
 
 @router.put("/tags/{tag_id}", response_model=TagResponse)
 def update_tag(
-    tag_id: UUID,
+    tag_id: int,
     update_data: TagUpdate,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db)
@@ -131,7 +131,7 @@ def update_tag(
 
 @router.put("/tasks/{task_id}", response_model=TaskResponse)
 def update_task(
-    task_id: UUID,
+    task_id: int,
     update_data: TaskUpdate,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -173,7 +173,7 @@ def update_task(
 
 @router.put("/reward-types/{type_id}", response_model=RewardTypeResponse)
 def update_reward_type(
-    type_id: UUID,
+    type_id: int,
     update_data: RewardTypeUpdate,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db)
@@ -196,7 +196,7 @@ def update_reward_type(
 
 @router.put("/rewards/{reward_id}", response_model=RewardResponse)
 def update_reward(
-    reward_id: UUID,
+    reward_id: int,
     update_data: RewardUpdate,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)

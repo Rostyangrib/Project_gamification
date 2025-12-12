@@ -83,6 +83,10 @@ class TaskUpdate(BaseModel):
     estimated_points: Optional[int] = None
     due_date: Optional[datetime] = None
     completed_at: Optional[datetime] = None
+    awarded_points: Optional[int] = None
+
+    class Config:
+        extra = "ignore"
 
 class TaskResponse(BaseModel):
     id: int

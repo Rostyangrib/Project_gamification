@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from uuid import UUID
 
 from config.db import get_db
 from database import User, TaskStatus, Tag, Task, TaskTag, RewardType, Reward, Competition
@@ -33,7 +32,7 @@ def delete_own_account(
 
 @router.delete("/admin/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user_by_admin(
-    user_id: UUID,
+    user_id: int,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
@@ -60,7 +59,8 @@ def delete_user_by_admin(
 
 # @router.delete("/boards/{board_id}", status_code=status.HTTP_204_NO_CONTENT)
 # def delete_board(
-#         board_id: UUID,
+#         board_id: int
+#      ,
 #         current_user: dict = Depends(get_current_user),
 #         db: Session = Depends(get_db)
 # ):
@@ -79,7 +79,7 @@ def delete_user_by_admin(
 
 @router.delete("/task-statuses/{status_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_task_status(
-        status_id: UUID,
+        status_id: int,
         current_user: dict = Depends(require_admin),
         db: Session = Depends(get_db)
 ):
@@ -93,7 +93,8 @@ def delete_task_status(
 
 # @router.delete("/categories/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
 # def delete_category(
-#         category_id: UUID,
+#         category_id: int
+#      ,
 #         current_user: dict = Depends(get_current_user),
 #         db: Session = Depends(get_db)
 # ):
@@ -110,7 +111,7 @@ def delete_task_status(
 
 @router.delete("/tags/{tag_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_tag(
-        tag_id: UUID,
+        tag_id: int,
         current_user: dict = Depends(require_admin),
         db: Session = Depends(get_db)
 ):
@@ -126,7 +127,7 @@ def delete_tag(
 
 @router.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_task(
-        task_id: UUID,
+        task_id: int,
         current_user: dict = Depends(get_current_user),
         db: Session = Depends(get_db)
 ):
@@ -145,7 +146,7 @@ def delete_task(
 
 @router.delete("/reward-types/{type_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_reward_type(
-        type_id: UUID,
+        type_id: int,
         current_user: dict = Depends(require_admin),
         db: Session = Depends(get_db)
 ):
@@ -159,7 +160,7 @@ def delete_reward_type(
 
 @router.delete("/rewards/{reward_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_reward(
-        reward_id: UUID,
+        reward_id: int,
         current_user: dict = Depends(get_current_user),
         db: Session = Depends(get_db)
 ):
