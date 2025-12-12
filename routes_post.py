@@ -10,7 +10,7 @@ from ml.ai_analyzer import analyze_task
 
 from config.db import get_db
 from database import (
-    User, TaskStatus, Tag, TaskTag, Task, RewardType, Reward
+    User, TaskStatus, Tag, TaskTag, Task, RewardType, Reward, Competition
 )
 from schemas import (
     UserCreate, UserResponse, Token, UserLogin,
@@ -19,7 +19,8 @@ from schemas import (
     TaskCreate, TaskResponse,
     RewardTypeCreate, RewardTypeResponse,
     RewardCreate, RewardResponse,
-    TaskTagCreate
+    TaskTagCreate, CompetitionCreate,
+    CompetitionResponse
 )
 from auth import verify_password, get_password_hash, create_access_token
 from dependencies import get_current_user, require_admin
@@ -69,7 +70,8 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
             "first_name": db_user.first_name,
             "last_name": db_user.last_name,
             "total_points": db_user.total_points,
-            "role": db_user.role
+            "role": db_user.role,
+            "cur_comp": db_user.cur_comp
         }
     }
 
@@ -262,3 +264,20 @@ def create_reward(
     db.commit()
 
     return db_reward
+
+@router.post("/competitions", response_model=CompetitionResponse, status_code=status.HTTP_201_CREATED)
+def create_competition(
+    competition: CompetitionCreate,
+    current_user: dict = Depends(require_admin), # Только админ может создавать
+    db: Session = Depends(get_db)
+):
+    # Проверка уникальности названия (опционально)
+    existing = db.query(Competition).filter(Competition.title == competition.title).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Соревнование с таким названием уже существует")
+
+    db_competition = Competition(**competition.model_dump())
+    db.add(db_competition)
+    db.commit()
+    db.refresh(db_competition)
+    return db_competition
