@@ -20,6 +20,7 @@ router = APIRouter()
 class ChatMessage(BaseModel):
     message: str
     user_ids: Optional[List[int]] = None
+    due_date: Optional[datetime] = None  # Опциональная дата дедлайна задачи (если не указана, AI попытается определить из сообщения)
 
 
 class ChatResponse(BaseModel):
@@ -71,8 +72,13 @@ def chat_with_ai(
             db.commit()
             db.refresh(status_obj)
 
-    due_date_raw = task_data.get("due_date")
-    due_date = due_date_raw
+    # Используем явно переданную дату или дату из ответа AI
+    due_date = chat.due_date if chat.due_date else task_data.get("due_date")
+    
+    # Конвертируем datetime с timezone в naive datetime (локальное время)
+    # Это нужно, чтобы PostgreSQL DateTime column правильно сохранил время
+    if due_date and hasattr(due_date, 'tzinfo') and due_date.tzinfo is not None:
+        due_date = due_date.replace(tzinfo=None)
 
     description = str(task_data.get("description", "")).strip()
     ai_analysis = analyze_task(title, description)

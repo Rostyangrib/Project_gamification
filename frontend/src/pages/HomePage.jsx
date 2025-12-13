@@ -93,7 +93,35 @@ const HomePage = () => {
     const mapped = {};
     (taskList || []).forEach((task) => {
       const dateSource = task.due_date || task.created_at || new Date().toISOString();
-      const dateKey = formatDateKey(new Date(dateSource));
+      
+      // Парсим дату правильно, учитывая разные форматы (с timezone и без)
+      let date;
+      if (typeof dateSource === 'string') {
+        // Если строка содержит timezone (Z или +HH:MM), парсим как есть
+        if (dateSource.includes('Z') || dateSource.match(/[+-]\d{2}:\d{2}$/)) {
+          date = new Date(dateSource);
+        } else {
+          // Если нет timezone, интерпретируем как локальное время
+          const dateMatch = dateSource.match(/(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?)?/);
+          if (dateMatch) {
+            const [, year, month, day, hours = '0', minutes = '0', seconds = '0'] = dateMatch;
+            date = new Date(
+              parseInt(year),
+              parseInt(month) - 1,
+              parseInt(day),
+              parseInt(hours),
+              parseInt(minutes),
+              parseInt(seconds)
+            );
+          } else {
+            date = new Date(dateSource);
+          }
+        }
+      } else {
+        date = new Date(dateSource);
+      }
+      
+      const dateKey = formatDateKey(date);
       if (!mapped[dateKey]) mapped[dateKey] = [];
       mapped[dateKey].push(task);
     });

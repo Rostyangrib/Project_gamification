@@ -20,6 +20,18 @@ const ManagerPage = () => {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [competitions, setCompetitions] = useState([]);
+  const [loadingCompetitions, setLoadingCompetitions] = useState(false);
+  const [editingCompetition, setEditingCompetition] = useState(null);
+  const [editFormData, setEditFormData] = useState({ title: '', start_date: '', end_date: '' });
+  const [expandedCompetitionId, setExpandedCompetitionId] = useState(null);
+  const [leaderboardData, setLeaderboardData] = useState({});
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [managingParticipants, setManagingParticipants] = useState(null); // ID соревнования, для которого управляем участниками
+  const [competitionParticipants, setCompetitionParticipants] = useState({}); // {competitionId: [userIds]}
+  const [loadingParticipants, setLoadingParticipants] = useState(false);
+  const [participantSearchText, setParticipantSearchText] = useState('');
 
   useEffect(() => {
     document.title = 'Управление соревнованиями | Геймификация предприятий';
@@ -41,6 +53,8 @@ const ManagerPage = () => {
 
     // Загрузка списка пользователей
     loadUsers();
+    // Загрузка списка соревнований
+    loadCompetitions();
   }, [isAuthenticated, user, navigate]);
 
   const loadUsers = async () => {
@@ -54,6 +68,19 @@ const ManagerPage = () => {
       setError('Не удалось загрузить список пользователей');
     } finally {
       setLoadingUsers(false);
+    }
+  };
+
+  const loadCompetitions = async () => {
+    try {
+      setLoadingCompetitions(true);
+      const comps = await api.get('/competitions');
+      setCompetitions(comps || []);
+    } catch (err) {
+      console.error('Ошибка загрузки соревнований:', err);
+      setError('Не удалось загрузить список соревнований');
+    } finally {
+      setLoadingCompetitions(false);
     }
   };
 
@@ -81,6 +108,22 @@ const ManagerPage = () => {
       
       return newSelected;
     });
+  };
+
+  const selectAllUsers = () => {
+    const allFilteredUserIds = filteredUsers.map(user => user.id);
+    setSelectedUsers(allFilteredUserIds);
+  };
+
+  const deselectAllUsers = () => {
+    setSelectedUsers([]);
+    // Очищаем выбранных пользователей в задачах
+    setTasks(currentTasks => 
+      currentTasks.map(task => ({
+        ...task,
+        user_ids: []
+      }))
+    );
   };
 
   const addTask = () => {
@@ -112,6 +155,30 @@ const ManagerPage = () => {
     });
   };
 
+  // Функция для форматирования даты для отправки на сервер
+  // Отправляем дату в ISO формате с указанием, что это локальное время (без конвертации в UTC)
+  const formatLocalDateTime = (dateInput) => {
+    // dateInput может быть Date объектом или строкой из datetime-local input
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    
+    // Получаем компоненты локального времени
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+    // Отправляем как ISO строка с явным указанием локального offset
+    // Это позволит серверу правильно интерпретировать время
+    const offset = -date.getTimezoneOffset();
+    const offsetHours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
+    const offsetMinutes = String(Math.abs(offset) % 60).padStart(2, '0');
+    const offsetSign = offset >= 0 ? '+' : '-';
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${offsetSign}${offsetHours}:${offsetMinutes}`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -133,12 +200,13 @@ const ManagerPage = () => {
       return;
     }
 
+    // Создаем даты в локальном времени (datetime-local уже в локальном часовом поясе)
     const startDate = new Date(formData.start_date);
     const endDate = new Date(formData.end_date);
     const now = new Date();
     
     if (startDate < now) {
-      setError('Дата начала должна быть в будущем или сегодня');
+      setError('Дата начала должна быть в будущем');
       return;
     }
 
@@ -162,11 +230,11 @@ const ManagerPage = () => {
     try {
       setLoading(true);
 
-      // Создаем соревнование
+      // Создаем соревнование с датами в локальном часовом поясе
       const competition = await api.post('/competitions', {
         title: formData.title.trim(),
-        start_date: startDate.toISOString(),
-        end_date: endDate.toISOString()
+        start_date: formatLocalDateTime(startDate),
+        end_date: formatLocalDateTime(endDate)
       });
 
       // Убеждаемся, что ID соревнования - число
@@ -183,21 +251,28 @@ const ManagerPage = () => {
 
       // Создаем задачи для выбранных пользователей через /chat
       // Для каждой задачи передаем текст и ID выбранных пользователей
-      const taskPromises = [];
-      validTasks.forEach(task => {
+      // Добавляем задержку между запросами, чтобы избежать превышения лимита
+      // Устанавливаем due_date равным дате окончания соревнования
+      for (let i = 0; i < validTasks.length; i++) {
+        const task = validTasks[i];
         // Формируем сообщение для AI, которое создаст задачу
         const message = `Создай задачу "${task.title.trim()}"`;
         
-        // Передаем message и user_ids для создания задач для всех выбранных пользователей
-        taskPromises.push(
-          api.post('/chat', { 
-            message,
-            user_ids: task.user_ids
-          })
-        );
-      });
-
-      await Promise.all(taskPromises);
+        // Обновляем сообщение о прогрессе
+        setSuccess(`Создание задач: ${i + 1} из ${validTasks.length}...`);
+        
+        // Отправляем запрос на создание задачи с явно указанной датой окончания соревнования
+        await api.post('/chat', { 
+          message,
+          user_ids: task.user_ids,
+          due_date: formatLocalDateTime(endDate)  // Устанавливаем дату дедлайна задачи равной дате окончания соревнования
+        });
+        
+        // Добавляем задержку между запросами (кроме последнего)
+        if (i < validTasks.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 300)); // 300ms задержка
+        }
+      }
 
       setSuccess('Соревнование и задачи успешно созданы!');
       
@@ -205,6 +280,9 @@ const ManagerPage = () => {
       setFormData({ title: '', start_date: '', end_date: '' });
       setSelectedUsers([]);
       setTasks([{ title: '', user_ids: [] }]);
+
+      // Обновляем список соревнований
+      await loadCompetitions();
 
       // Автоматически скрыть сообщение успеха через 5 секунд
       setTimeout(() => setSuccess(''), 5000);
@@ -216,23 +294,591 @@ const ManagerPage = () => {
     }
   };
 
+  const handleEditCompetition = (competition) => {
+    setEditingCompetition(competition);
+    const startDate = new Date(competition.start_date);
+    const endDate = new Date(competition.end_date);
+    // Форматируем даты для input datetime-local (YYYY-MM-DDTHH:mm)
+    const formatDateTimeLocal = (date) => {
+      const d = new Date(date);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+    setEditFormData({
+      title: competition.title,
+      start_date: formatDateTimeLocal(startDate),
+      end_date: formatDateTimeLocal(endDate)
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCompetition(null);
+    setEditFormData({ title: '', start_date: '', end_date: '' });
+    setError('');
+  };
+
+  // Загрузка участников соревнования
+  const loadCompetitionParticipants = async (competitionId) => {
+    try {
+      setLoadingParticipants(true);
+      // Получаем всех пользователей
+      const users = await api.get('/users/only');
+      // Фильтруем тех, кто участвует в данном соревновании
+      const participants = users.filter(user => user.cur_comp === competitionId).map(user => user.id);
+      setCompetitionParticipants(prev => ({
+        ...prev,
+        [competitionId]: participants
+      }));
+    } catch (err) {
+      console.error('Ошибка загрузки участников:', err);
+      setError('Не удалось загрузить участников соревнования');
+    } finally {
+      setLoadingParticipants(false);
+    }
+  };
+
+  // Открытие управления участниками
+  const handleManageParticipants = async (competitionId) => {
+    setManagingParticipants(competitionId);
+    setParticipantSearchText('');
+    await loadCompetitionParticipants(competitionId);
+  };
+
+  // Закрытие управления участниками
+  const handleCloseManageParticipants = () => {
+    setManagingParticipants(null);
+    setParticipantSearchText('');
+  };
+
+  // Добавление участника в соревнование
+  const handleAddParticipant = async (competitionId, userId) => {
+    try {
+      setLoading(true);
+      await api.put(`/users/${userId}/competition`, {
+        competition_id: competitionId
+      });
+      
+      // Обновляем список участников
+      await loadCompetitionParticipants(competitionId);
+      setSuccess('Участник успешно добавлен в соревнование!');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      console.error('Ошибка добавления участника:', err);
+      setError(err.message || 'Не удалось добавить участника');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Удаление участника из соревнования
+  const handleRemoveParticipant = async (competitionId, userId) => {
+    try {
+      setLoading(true);
+      await api.put(`/users/${userId}/competition`, {
+        competition_id: null
+      });
+      
+      // Обновляем список участников
+      await loadCompetitionParticipants(competitionId);
+      setSuccess('Участник успешно удалён из соревнования!');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      console.error('Ошибка удаления участника:', err);
+      setError(err.message || 'Не удалось удалить участника');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Получение отфильтрованных пользователей для управления участниками
+  const getFilteredUsersForParticipants = () => {
+    if (!allUsers.length) return [];
+    
+    return allUsers.filter(user => {
+      const matchesSearch = participantSearchText.trim() === '' || 
+        `${user.first_name} ${user.last_name} ${user.email}`.toLowerCase().includes(participantSearchText.toLowerCase());
+      return matchesSearch;
+    });
+  };
+
+  const handleUpdateCompetition = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (!editFormData.title.trim()) {
+      setError('Введите название соревнования');
+      return;
+    }
+
+    if (!editFormData.start_date || !editFormData.end_date) {
+      setError('Заполните все поля дат');
+      return;
+    }
+
+    const startDate = new Date(editFormData.start_date);
+    const endDate = new Date(editFormData.end_date);
+
+    if (endDate <= startDate) {
+      setError('Дедлайн должен быть позже даты начала');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await api.put(`/competitions/${editingCompetition.id}`, {
+        title: editFormData.title.trim(),
+        start_date: formatLocalDateTime(startDate),
+        end_date: formatLocalDateTime(endDate)
+      });
+      
+      setSuccess('Соревнование успешно обновлено!');
+      setEditingCompetition(null);
+      setEditFormData({ title: '', start_date: '', end_date: '' });
+      await loadCompetitions();
+      
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (err) {
+      console.error('Ошибка обновления соревнования:', err);
+      setError(err.message || 'Не удалось обновить соревнование');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteCompetition = async (competitionId) => {
+    if (!window.confirm('Вы уверены, что хотите удалить это соревнование? Все пользователи будут отписаны от него.')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await api.delete(`/competitions/${competitionId}`);
+      setSuccess('Соревнование успешно удалено!');
+      await loadCompetitions();
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (err) {
+      console.error('Ошибка удаления соревнования:', err);
+      setError(err.message || 'Не удалось удалить соревнование');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Функция для форматирования даты при отображении
+  // Обрабатывает даты, которые приходят с сервера как naive datetime (без timezone)
+  // Интерпретируем их как локальное время пользователя
+  const formatDateTime = (dateString) => {
+    if (!dateString) return '';
+    
+    // Если строка не имеет timezone info (формат "YYYY-MM-DDTHH:mm:ss" или "YYYY-MM-DDTHH:mm:ss.ffff"),
+    // то интерпретируем её как локальное время
+    let date;
+    if (dateString.includes('Z') || dateString.match(/[+-]\d{2}:\d{2}$/)) {
+      // Есть timezone info, используем как есть
+      date = new Date(dateString);
+    } else {
+      // Нет timezone info - интерпретируем как локальное время
+      // Добавляем явно, что это локальное время, создавая Date через компоненты
+      const dateMatch = dateString.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
+      if (dateMatch) {
+        const [, year, month, day, hours, minutes, seconds] = dateMatch;
+        date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 
+                       parseInt(hours), parseInt(minutes), parseInt(seconds || 0));
+      } else {
+        date = new Date(dateString);
+      }
+    }
+    
+    // Проверяем, что дата валидна
+    if (isNaN(date.getTime())) return dateString;
+    
+    // Форматируем в локальное время пользователя
+    return date.toLocaleString('ru-RU', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getCompetitionStatus = (competition) => {
+    const now = new Date();
+    const startDate = new Date(competition.start_date);
+    const endDate = new Date(competition.end_date);
+    
+    if (now < startDate) {
+      return { text: 'Не началось', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' };
+    } else if (now >= startDate && now <= endDate) {
+      return { text: 'Идёт', color: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' };
+    } else {
+      return { text: 'Завершено', color: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' };
+    }
+  };
+
+  const toggleLeaderboard = async (competitionId) => {
+    if (expandedCompetitionId === competitionId) {
+      setExpandedCompetitionId(null);
+      return;
+    }
+
+    if (leaderboardData[competitionId]) {
+      setExpandedCompetitionId(competitionId);
+      return;
+    }
+
+    try {
+      setLoadingLeaderboard(true);
+      const data = await api.get(`/leaderboard/${competitionId}`);
+      setLeaderboardData(prev => ({ ...prev, [competitionId]: data || [] }));
+      setExpandedCompetitionId(competitionId);
+    } catch (err) {
+      console.error('Ошибка загрузки рейтинга:', err);
+      setError('Не удалось загрузить рейтинг соревнования');
+    } finally {
+      setLoadingLeaderboard(false);
+    }
+  };
+
+  // Фильтрация пользователей по поисковому запросу
+  const filteredUsers = allUsers.filter((user) => {
+    if (!searchText.trim()) {
+      return true;
+    }
+
+    const query = searchText.trim().toLowerCase();
+    const fullName = `${user.first_name} ${user.last_name}`.toLowerCase();
+    const email = (user.email || '').toLowerCase();
+    
+    return fullName.includes(query) || email.includes(query);
+  });
+
   if (!isAuthenticated || user?.role !== 'admin') {
     return null;
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-6">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 dark:text-gray-100 mb-2">
             🏆 Управление соревнованиями
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Создайте новое соревнование и выберите участников
+            Просматривайте, редактируйте и создавайте новые соревнования
           </p>
         </div>
 
+        {/* Список существующих соревнований */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sm:p-8 mb-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+              Существующие соревнования
+            </h2>
+            <button
+              onClick={loadCompetitions}
+              disabled={loadingCompetitions}
+              className="px-4 py-2 text-sm bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              <svg className={`w-4 h-4 ${loadingCompetitions ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Обновить
+            </button>
+          </div>
+
+          {loadingCompetitions ? (
+            <div className="text-center py-8">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent"></div>
+              <p className="mt-2 text-gray-600 dark:text-gray-400">Загрузка соревнований...</p>
+            </div>
+          ) : competitions.length === 0 ? (
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+              Нет созданных соревнований
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {competitions.map((competition) => (
+                <div
+                  key={competition.id}
+                  className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
+                  {editingCompetition?.id === competition.id ? (
+                    // Форма редактирования
+                    <form onSubmit={handleUpdateCompetition} className="space-y-4">
+                      <div>
+                        <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Название *
+                        </label>
+                        <input
+                          type="text"
+                          value={editFormData.title}
+                          onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          required
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Дата начала *
+                          </label>
+                          <input
+                            type="datetime-local"
+                            value={editFormData.start_date}
+                            onChange={(e) => setEditFormData({ ...editFormData, start_date: e.target.value })}
+                            min="1900-01-01T00:00"
+                            max="9999-12-31T23:59"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Дедлайн *
+                          </label>
+                          <input
+                            type="datetime-local"
+                            value={editFormData.end_date}
+                            onChange={(e) => setEditFormData({ ...editFormData, end_date: e.target.value })}
+                            min={editFormData.start_date || "1900-01-01T00:00"}
+                            max="9999-12-31T23:59"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                        >
+                          Сохранить
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCancelEdit}
+                          disabled={loading}
+                          className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                        >
+                          Отмена
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    // Отображение соревнования
+                    <div>
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                              {competition.title}
+                            </h3>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCompetitionStatus(competition).color}`}>
+                              {getCompetitionStatus(competition).text}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600 dark:text-gray-400">
+                            <div>
+                              <span className="font-semibold">Начало:</span> {formatDateTime(competition.start_date)}
+                            </div>
+                            <div>
+                              <span className="font-semibold">Дедлайн:</span> {formatDateTime(competition.end_date)}
+                            </div>
+                            <div>
+                              <span className="font-semibold">Создано:</span> {formatDateTime(competition.created_at)}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 ml-4">
+                          <button
+                            onClick={() => handleManageParticipants(competition.id)}
+                            disabled={loading}
+                            className="px-3 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors disabled:opacity-50"
+                            title="Управление участниками"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => toggleLeaderboard(competition.id)}
+                            disabled={loading || loadingLeaderboard}
+                            className="px-3 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors disabled:opacity-50"
+                            title="Показать рейтинг"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleEditCompetition(competition)}
+                            disabled={loading}
+                            className="px-3 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors disabled:opacity-50"
+                            title="Редактировать"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCompetition(competition.id)}
+                            disabled={loading}
+                            className="px-3 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
+                            title="Удалить"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Рейтинг соревнования */}
+                      {expandedCompetitionId === competition.id && (
+                        <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
+                          <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">
+                            🏆 Рейтинг участников
+                          </h4>
+                          {loadingLeaderboard ? (
+                            <div className="text-center py-4">
+                              <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent"></div>
+                              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Загрузка рейтинга...</p>
+                            </div>
+                          ) : leaderboardData[competition.id]?.length > 0 ? (
+                            <div className="space-y-2">
+                              {leaderboardData[competition.id].map((user, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400 w-8">
+                                      {index + 1}
+                                    </span>
+                                    <span className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                                      {user.first_name} {user.last_name}
+                                    </span>
+                                  </div>
+                                  <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
+                                    {user.total_points} баллов
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                              Нет участников в этом соревновании
+                            </p>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Управление участниками */}
+                      {managingParticipants === competition.id && (
+                        <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
+                          <div className="flex justify-between items-center mb-4">
+                            <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                              👥 Управление участниками
+                            </h4>
+                            <button
+                              onClick={handleCloseManageParticipants}
+                              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                          
+                          {/* Поиск пользователей */}
+                          <div className="mb-4">
+                            <input
+                              type="text"
+                              placeholder="Найти участника"
+                              value={participantSearchText}
+                              onChange={(e) => setParticipantSearchText(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                          </div>
+
+                          {loadingParticipants ? (
+                            <div className="text-center py-4">
+                              <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent"></div>
+                              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Загрузка участников...</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-2 max-h-64 overflow-y-auto">
+                              {getFilteredUsersForParticipants().map((user) => {
+                                const isParticipant = competitionParticipants[competition.id]?.includes(user.id) || false;
+                                return (
+                                  <div
+                                    key={user.id}
+                                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg"
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <div>
+                                        <span className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                                          {user.first_name} {user.last_name}
+                                        </span>
+                                        <span className="text-xs text-gray-500 dark:text-gray-400 block">
+                                          {user.email}
+                                        </span>
+                                      </div>
+                                      {isParticipant && (
+                                        <span className="px-2 py-1 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded">
+                                          Участник
+                                        </span>
+                                      )}
+                                    </div>
+                                    {isParticipant ? (
+                                      <button
+                                        onClick={() => handleRemoveParticipant(competition.id, user.id)}
+                                        disabled={loading}
+                                        className="px-3 py-1 text-sm bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
+                                      >
+                                        Удалить
+                                      </button>
+                                    ) : (
+                                      <button
+                                        onClick={() => handleAddParticipant(competition.id, user.id)}
+                                        disabled={loading}
+                                        className="px-3 py-1 text-sm bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors disabled:opacity-50"
+                                      >
+                                        Добавить
+                                      </button>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                              {getFilteredUsersForParticipants().length === 0 && (
+                                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                                  Пользователи не найдены
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Форма создания нового соревнования */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sm:p-8">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
+            Создать новое соревнование
+          </h2>
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Название соревнования */}
             <div>
@@ -262,6 +908,8 @@ const ManagerPage = () => {
                 name="start_date"
                 value={formData.start_date}
                 onChange={handleInputChange}
+                min="1900-01-01T00:00"
+                max="9999-12-31T23:59"
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 required
               />
@@ -278,7 +926,8 @@ const ManagerPage = () => {
                 name="end_date"
                 value={formData.end_date}
                 onChange={handleInputChange}
-                min={formData.start_date || undefined}
+                min={formData.start_date || "1900-01-01T00:00"}
+                max="9999-12-31T23:59"
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 required
               />
@@ -286,9 +935,49 @@ const ManagerPage = () => {
 
             {/* Выбор участников */}
             <div>
-              <label className="block mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
-                Участники соревнования * ({selectedUsers.length} выбрано)
-              </label>
+              <div className="flex justify-between items-center mb-3">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Участники соревнования * ({selectedUsers.length} выбрано)
+                </label>
+                {!loadingUsers && filteredUsers.length > 0 && (
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={selectAllUsers}
+                      className="px-3 py-1.5 text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors"
+                    >
+                      Выбрать всех
+                    </button>
+                    {selectedUsers.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={deselectAllUsers}
+                        className="px-3 py-1.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                      >
+                        Снять выбор
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              {/* Поиск */}
+              {!loadingUsers && allUsers.length > 0 && (
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    placeholder="Найти участника"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                  {searchText && (
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Найдено: {filteredUsers.length} из {allUsers.length}
+                    </p>
+                  )}
+                </div>
+              )}
               
               {loadingUsers ? (
                 <div className="text-center py-8">
@@ -299,10 +988,16 @@ const ManagerPage = () => {
                 <p className="text-gray-500 dark:text-gray-400 text-center py-4">
                   Нет доступных пользователей
                 </p>
+              ) : filteredUsers.length === 0 ? (
+                <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-700/30">
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+                    Пользователи не найдены по заданным критериям
+                  </p>
+                </div>
               ) : (
                 <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 max-h-96 overflow-y-auto bg-gray-50 dark:bg-gray-700/30">
                   <div className="space-y-2">
-                    {allUsers.map((userItem) => (
+                    {filteredUsers.map((userItem) => (
                       <label
                         key={userItem.id}
                         className="flex items-center p-3 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"

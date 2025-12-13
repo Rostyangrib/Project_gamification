@@ -263,7 +263,20 @@ def update_competition(
         raise HTTPException(status_code=404, detail="Соревнование не найдено")
 
     # Обновляем поля, которые пришли в запросе
-    for field, value in competition_update.model_dump(exclude_unset=True).items():
+    update_data = competition_update.model_dump(exclude_unset=True)
+    
+    # Конвертируем datetime с timezone в naive datetime (локальное время)
+    if 'start_date' in update_data and update_data['start_date'] is not None:
+        start_date = update_data['start_date']
+        if start_date.tzinfo is not None:
+            update_data['start_date'] = start_date.replace(tzinfo=None)
+    
+    if 'end_date' in update_data and update_data['end_date'] is not None:
+        end_date = update_data['end_date']
+        if end_date.tzinfo is not None:
+            update_data['end_date'] = end_date.replace(tzinfo=None)
+    
+    for field, value in update_data.items():
         setattr(competition, field, value)
 
     db.commit()

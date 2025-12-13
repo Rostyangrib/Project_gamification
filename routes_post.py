@@ -313,7 +313,22 @@ def create_competition(
     if existing:
         raise HTTPException(status_code=400, detail="Соревнование с таким названием уже существует")
 
-    db_competition = Competition(**competition.model_dump())
+    # Конвертируем datetime с timezone в naive datetime (локальное время)
+    # Это нужно, чтобы PostgreSQL DateTime column правильно сохранил время
+    competition_data = competition.model_dump()
+    if competition_data.get('start_date'):
+        start_date = competition_data['start_date']
+        if start_date.tzinfo is not None:
+            # Если есть timezone info, конвертируем в naive datetime (убираем timezone)
+            # Это сохранит локальное время пользователя как есть
+            competition_data['start_date'] = start_date.replace(tzinfo=None)
+    
+    if competition_data.get('end_date'):
+        end_date = competition_data['end_date']
+        if end_date.tzinfo is not None:
+            competition_data['end_date'] = end_date.replace(tzinfo=None)
+
+    db_competition = Competition(**competition_data)
     db.add(db_competition)
     db.commit()
     db.refresh(db_competition)
