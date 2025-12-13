@@ -10,7 +10,7 @@ from schemas import (
     TagResponse, TaskResponse, RewardTypeResponse, RewardResponse,
     CompetitionResponse, CompetitionDatesResponse
 )
-from dependencies import get_current_user, require_admin
+from dependencies import get_current_user, require_admin, require_manager
 
 router = APIRouter()
 
@@ -48,7 +48,7 @@ def get_competition_dates(
 
 @router.get("/users/only", response_model=List[UserResponse])
 def get_all_users(
-    current_user: dict = Depends(require_admin),
+    current_user: dict = Depends(require_manager),
     db: Session = Depends(get_db)
 ):
     users = db.query(User).filter(User.role == "user").all()
@@ -96,7 +96,7 @@ def get_rewards(current_user: dict = Depends(get_current_user), db: Session = De
 # Получение списка всех соревнований
 @router.get("/competitions", response_model=List[CompetitionResponse])
 def get_competitions(
-    current_user: dict = Depends(require_admin),
+    current_user: dict = Depends(require_manager),
     db: Session = Depends(get_db)
 ):
     competitions = db.query(Competition).all()

@@ -1,10 +1,8 @@
-// src/pages/HomePage.jsx
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // ✅ добавлено
+import { useNavigate } from 'react-router-dom';
 import { useApi } from '../api/client.js';
-import { useAuth } from '../context/AuthContext.jsx'; // ✅ добавлено
+import { useAuth } from '../context/AuthContext.jsx';
 
-// --- ВСЕ ХЕЛПЕРЫ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ ---
 const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
 
 const getFirstDayOfMonth = (year, month) => {
@@ -28,7 +26,6 @@ const toGenitiveMonth = (name) => {
   return name;
 };
 
-// --- НОВЫЕ ХЕЛПЕРЫ ---
 const formatDateTime = (dateString) => {
   if (!dateString) return '';
   const date = new Date(dateString);
@@ -60,24 +57,26 @@ const getTimeRemaining = (endDate) => {
 
 const HomePage = () => {
   const api = useApi();
-  const { user } = useAuth(); // ✅
-  const navigate = useNavigate(); // ✅
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
-  // --- НОВОЕ СОСТОЯНИЕ ---
   const [competition, setCompetition] = useState(null);
   const [isLoadingCompetition, setIsLoadingCompetition] = useState(true);
-  const [chatSuccess, setChatSuccess] = useState(null); // ✅
+  const [chatSuccess, setChatSuccess] = useState(null);
+  const [competitions, setCompetitions] = useState([]);
+  const [loadingCompetitions, setLoadingCompetitions] = useState(false);
+  const [allUsers, setAllUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const dashboardDataLoadedRef = useRef(false);
 
-  // --- УСТАНОВКА TITLE И FAVICON ---
   useEffect(() => {
-    document.title = 'Gamification Dashboard';
+    document.title = 'Панель геймификации';
     const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
     link.rel = 'icon';
     link.href = '/favicon-g.svg';
     document.head.appendChild(link);
   }, []);
 
-  // --- СУЩЕСТВУЮЩИЕ СОСТОЯНИЯ (БЕЗ ИЗМЕНЕНИЙ) ---
   const [currentDate, setCurrentDate] = useState(new Date());
   const [expandedDay, setExpandedDay] = useState(null);
   const [tasks, setTasks] = useState({});
@@ -88,20 +87,16 @@ const HomePage = () => {
   const [error, setError] = useState(null);
   const [completedStatusId, setCompletedStatusId] = useState(null);
 
-  // --- СУЩЕСТВУЮЩИЙ ХЕЛПЕР ---
   const mapTasksByDate = (taskList) => {
     const mapped = {};
     (taskList || []).forEach((task) => {
       const dateSource = task.due_date || task.created_at || new Date().toISOString();
       
-      // Парсим дату правильно, учитывая разные форматы (с timezone и без)
       let date;
       if (typeof dateSource === 'string') {
-        // Если строка содержит timezone (Z или +HH:MM), парсим как есть
         if (dateSource.includes('Z') || dateSource.match(/[+-]\d{2}:\d{2}$/)) {
           date = new Date(dateSource);
         } else {
-          // Если нет timezone, интерпретируем как локальное время
           const dateMatch = dateSource.match(/(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?)?/);
           if (dateMatch) {
             const [, year, month, day, hours = '0', minutes = '0', seconds = '0'] = dateMatch;
@@ -128,7 +123,6 @@ const HomePage = () => {
     return mapped;
   };
 
-  // --- СУЩЕСТВУЮЩИЙ ЭФФЕКТ ЗАГРУЗКИ ЗАДАЧ + СТАТУСОВ ---
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -151,8 +145,12 @@ const HomePage = () => {
     loadData();
   }, []);
 
-  // --- НОВЫЙ ЭФФЕКТ: ЗАГРУЗКА СОРЕВНОВАНИЯ ---
   useEffect(() => {
+    if (user?.role === 'admin' || user?.role === 'manager') {
+      setIsLoadingCompetition(false);
+      return;
+    }
+    
     const loadCompetition = async () => {
       try {
         setIsLoadingCompetition(true);
@@ -162,7 +160,6 @@ const HomePage = () => {
             const compInfo = await api.get(`/competitions/${userInfo.cur_comp}`);
             setCompetition(compInfo);
           } catch (err) {
-            // Fallback: соревнование существует, но детали недоступны
             setCompetition({
               id: userInfo.cur_comp,
               title: 'Соревнование',
@@ -181,9 +178,48 @@ const HomePage = () => {
       }
     };
     loadCompetition();
-  }, []);
+  }, [user]);
 
-  // --- СУЩЕСТВУЮЩИЕ ФУНКЦИИ (БЕЗ ИЗМЕНЕНИЙ) ---
+  useEffect(() => {
+    if (user?.role !== 'admin' && user?.role !== 'manager') {
+      dashboardDataLoadedRef.current = false;
+      return;
+    }
+
+    if (dashboardDataLoadedRef.current || loadingCompetitions || loadingUsers) {
+      return;
+    }
+
+    dashboardDataLoadedRef.current = true;
+
+    const loadDashboardData = async () => {
+      try {
+        setLoadingCompetitions(true);
+        setLoadingUsers(true);
+        
+        const [comps, users] = await Promise.all([
+          api.get('/competitions'),
+          api.get('/users/only')
+        ]);
+        
+        setCompetitions(comps || []);
+        setAllUsers(users || []);
+      } catch (err) {
+        if (err.message && !err.message.includes('Нет подключения')) {
+          console.error('Ошибка загрузки данных дашборда:', err);
+        }
+        setCompetitions([]);
+        setAllUsers([]);
+      } finally {
+        setLoadingCompetitions(false);
+        setLoadingUsers(false);
+        dashboardDataLoadedRef.current = false;
+      }
+    };
+
+    loadDashboardData();
+  }, [user?.role]);
+
   const markTaskAsCompleted = async (taskId, estimatedPoints = 0) => {
     if (!completedStatusId) {
       setError('Статус "Выполнено" не найден');
@@ -245,7 +281,6 @@ const HomePage = () => {
     }
   };
 
-  // --- ВСЁ, ЧТО СВЯЗАНО С КАЛЕНДАРЕМ (БЕЗ ИЗМЕНЕНИЙ) ---
   const { year, month, days, startDay } = useMemo(() => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -289,27 +324,220 @@ const HomePage = () => {
     return dayOfWeek === 5 || dayOfWeek === 6;
   };
 
-  // --- RENDER ---
+  if (user?.role === 'admin' || user?.role === 'manager') {
+    const now = new Date();
+    const activeCompetitions = competitions.filter(comp => {
+      const start = new Date(comp.start_date);
+      const end = new Date(comp.end_date);
+      return now >= start && now <= end;
+    });
+    const upcomingCompetitions = competitions.filter(comp => {
+      const start = new Date(comp.start_date);
+      return now < start;
+    });
+    const completedCompetitions = competitions.filter(comp => {
+      const end = new Date(comp.end_date);
+      return now > end;
+    });
+
+    return (
+      <div className="p-5 max-w-7xl mx-auto bg-gray-50 dark:bg-gray-900 min-h-screen">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">Всего соревнований</p>
+                <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-1">
+                  {loadingCompetitions ? '...' : competitions.length}
+                </p>
+              </div>
+              <div className="text-4xl">🏆</div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">Активных</p>
+                <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-1">
+                  {loadingCompetitions ? '...' : activeCompetitions.length}
+                </p>
+              </div>
+              <div className="text-4xl">🟢</div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">Участников</p>
+                <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">
+                  {loadingUsers ? '...' : allUsers.length}
+                </p>
+              </div>
+              <div className="text-4xl">👥</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Быстрые действия */}
+        <div className={`grid grid-cols-1 ${user?.role === 'admin' ? 'md:grid-cols-2' : ''} gap-6 mb-8`}>
+          <button
+            onClick={() => navigate('/manager')}
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 p-6 rounded-xl shadow-lg text-white hover:from-indigo-600 hover:to-purple-700 dark:hover:from-indigo-700 dark:hover:to-purple-800 transition-all transform hover:scale-105 w-full"
+          >
+            <div className="flex items-center gap-4">
+              <div className="text-4xl">🎯</div>
+              <div className="text-left">
+                <h3 className="text-xl font-bold mb-1">Управление соревнованиями</h3>
+                <p className="text-indigo-100 text-sm">Создавайте и управляйте соревнованиями</p>
+              </div>
+            </div>
+          </button>
+
+          {user?.role === 'admin' && (
+            <button
+              onClick={() => navigate('/admin')}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-500 dark:to-pink-500 p-6 rounded-xl shadow-lg text-white hover:from-purple-700 hover:to-pink-700 dark:hover:from-purple-600 dark:hover:to-pink-600 transition-all transform hover:scale-105"
+            >
+              <div className="flex items-center gap-4">
+                <div className="text-4xl">⚙️</div>
+                <div className="text-left">
+                  <h3 className="text-xl font-bold mb-1">Админ-панель</h3>
+                  <p className="text-purple-100 text-sm">Управление пользователями и настройками</p>
+                </div>
+              </div>
+            </button>
+          )}
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
+            Соревнования
+          </h2>
+
+          {loadingCompetitions ? (
+            <div className="text-center py-8">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent"></div>
+            </div>
+          ) : competitions.length === 0 ? (
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+              Нет созданных соревнований
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {activeCompetitions.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-green-600 dark:text-green-400 mb-3">
+                    🟢 Активные ({activeCompetitions.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {activeCompetitions.map((comp) => (
+                      <div
+                        key={comp.id}
+                        className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-semibold text-gray-800 dark:text-gray-100">
+                              {comp.title}
+                            </h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                              {formatDateTime(comp.start_date)} - {formatDateTime(comp.end_date)}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => navigate(`/manager?competitionId=${comp.id}`)}
+                            className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-sm"
+                          >
+                            Управлять
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {upcomingCompetitions.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-3">
+                    🔵 Предстоящие ({upcomingCompetitions.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {upcomingCompetitions.map((comp) => (
+                      <div
+                        key={comp.id}
+                        className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-semibold text-gray-800 dark:text-gray-100">
+                              {comp.title}
+                            </h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                              Начало: {formatDateTime(comp.start_date)}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => navigate(`/manager?competitionId=${comp.id}`)}
+                            className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-sm"
+                          >
+                            Управлять
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {completedCompetitions.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-3">
+                    ⚫ Завершённые ({completedCompetitions.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {completedCompetitions.slice(0, 5).map((comp) => (
+                      <div
+                        key={comp.id}
+                        className="p-4 bg-gray-50 dark:bg-gray-700/30 border border-gray-200 dark:border-gray-700 rounded-lg"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-semibold text-gray-800 dark:text-gray-100">
+                              {comp.title}
+                            </h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                              {formatDateTime(comp.start_date)} - {formatDateTime(comp.end_date)}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => navigate(`/manager?competitionId=${comp.id}`)}
+                            className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm"
+                          >
+                            Просмотр
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-5 max-w-7xl mx-auto bg-gray-50 dark:bg-gray-900 min-h-screen">
       <header className="mb-8 px-2.5 flex justify-between items-center">
-        <h1 className="m-0 text-gray-800 dark:text-gray-100 font-bold text-2xl">🎯 Gamification Dashboard</h1>
-        {/* ✅ КНОПКА ДЛЯ АДМИНА */}
-        {user?.role === 'admin' && (
-          <button
-            onClick={() => navigate('/manager')}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            Управление соревнованиями
-          </button>
-        )}
+        <h1 className="m-0 text-gray-800 dark:text-gray-100 font-bold text-2xl">🎯 Панель геймификации</h1>
       </header>
 
       <div className="grid grid-cols-1 gap-8">
-        {/* ✅ ПЛАШКА С СОРЕВНОВАНИЕМ */}
         {!isLoadingCompetition && competition && (
           <div className="bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 p-6 rounded-lg shadow-lg text-white">
             <div className="flex items-start justify-between">
@@ -349,7 +577,6 @@ const HomePage = () => {
           </div>
         )}
 
-        {/* ✅ КАЛЕНДАРЬ (БЕЗ ИЗМЕНЕНИЙ) */}
         <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md">
           <div className="flex justify-between items-center mb-5">
             <h2 className="m-0 text-gray-800 dark:text-gray-100 font-semibold text-xl">

@@ -13,7 +13,7 @@ from schemas import (
     UserUpdate, UserResponse, CompetitionResponse, CompetitionUpdate,
     UserCompetitionAssign
 )
-from dependencies import get_current_user, require_admin
+from dependencies import get_current_user, require_admin, require_manager
 from auth import get_password_hash
 
 router = APIRouter(prefix="", tags=["PUT"])
@@ -36,6 +36,48 @@ def update_own_user(
     if payload.password:
         user.password_hash = get_password_hash(payload.password)
 
+    # Роль можно менять только через админский endpoint
+    # Здесь игнорируем payload.role для безопасности
+
+    db.commit()
+    db.refresh(user)
+    return user
+
+@router.put("/admin/users/{user_id}", response_model=UserResponse)
+def update_user_by_admin(
+    user_id: int,
+    payload: UserUpdate,
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+
+    # Обновление имени
+    if payload.first_name is not None:
+        user.first_name = payload.first_name
+
+    # Обновление фамилии
+    if payload.last_name is not None:
+        user.last_name = payload.last_name
+
+    # Обновление email с проверкой уникальности
+    if payload.email and payload.email != user.email:
+        if db.query(User).filter(User.email == payload.email).first():
+            raise HTTPException(status_code=400, detail="Пользователь с таким email уже существует")
+        user.email = payload.email
+
+    # Обновление пароля
+    if payload.password:
+        user.password_hash = get_password_hash(payload.password)
+
+    # Обновление роли
+    if payload.role:
+        if payload.role not in ['user', 'manager', 'admin']:
+            raise HTTPException(status_code=400, detail="Недопустимая роль. Используйте 'user', 'manager' или 'admin'")
+        user.role = payload.role
+
     db.commit()
     db.refresh(user)
     return user
@@ -45,7 +87,7 @@ def update_own_user(
 def assign_user_to_competition(
     user_id: int,
     payload: UserCompetitionAssign,
-    current_user: dict = Depends(require_admin),
+    current_user: dict = Depends(require_manager),
     db: Session = Depends(get_db)
 ):
     user = db.query(User).filter(User.id == user_id).first()
@@ -255,7 +297,7 @@ def update_reward(
 def update_competition(
     competition_id: int,
     competition_update: CompetitionUpdate,
-    current_user: dict = Depends(require_admin), # Только админ может обновлять
+    current_user: dict = Depends(require_manager), # Админ или менеджер может обновлять
     db: Session = Depends(get_db)
 ):
     competition = db.query(Competition).filter(Competition.id == competition_id).first()

@@ -1,10 +1,7 @@
-// src/api/client.js
 import { useAuth } from '../context/AuthContext.jsx';
 
-// Базовый URL (можно вынести в .env). По умолчанию — корень (бек без префикса).
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
-// Хук для использования в компонентах
 export const useApi = () => {
   const { token } = useAuth();
 
@@ -19,7 +16,6 @@ export const useApi = () => {
       ...options
     };
 
-    // ✅ Добавляем токен, если есть
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -27,21 +23,17 @@ export const useApi = () => {
     try {
       const response = await fetch(url, config);
 
-      // Обработка 401 — токен недействителен
       if (response.status === 401) {
-        // Можно вызвать logout(), но пока просто пробросим ошибку
         throw new Error('Сессия истекла. Пожалуйста, войдите снова.');
       }
 
       const contentType = response.headers.get('content-type') || '';
       const isJson = contentType.includes('application/json');
 
-      // 204 / пустой ответ — сразу выходим
       if (response.status === 204) {
         return null;
       }
 
-      // Если тело пустое (например, DELETE), не пытаемся парсить JSON
       const rawText = await response.text();
       const data = isJson && rawText ? JSON.parse(rawText) : rawText;
 
@@ -55,7 +47,6 @@ export const useApi = () => {
 
       return data;
     } catch (error) {
-      // Перехватываем сетевые ошибки
       if (error.name === 'TypeError') {
         throw new Error('Нет подключения к серверу');
       }

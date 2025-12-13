@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useApi } from '../api/client.js';
 
@@ -7,6 +7,7 @@ const ManagerPage = () => {
   const { isAuthenticated, user } = useAuth();
   const api = useApi();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -28,8 +29,8 @@ const ManagerPage = () => {
   const [leaderboardData, setLeaderboardData] = useState({});
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const [managingParticipants, setManagingParticipants] = useState(null); // ID соревнования, для которого управляем участниками
-  const [competitionParticipants, setCompetitionParticipants] = useState({}); // {competitionId: [userIds]}
+  const [managingParticipants, setManagingParticipants] = useState(null);
+  const [competitionParticipants, setCompetitionParticipants] = useState({});
   const [loadingParticipants, setLoadingParticipants] = useState(false);
   const [participantSearchText, setParticipantSearchText] = useState('');
 
@@ -40,27 +41,89 @@ const ManagerPage = () => {
     link.href = '/favicon-g.svg';
     document.head.appendChild(link);
 
-    // Проверка авторизации и прав администратора
+    // Проверка авторизации и прав менеджера/администратора
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
 
-    if (user?.role !== 'admin') {
+    if (user?.role !== 'admin' && user?.role !== 'manager') {
       navigate('/');
       return;
     }
 
-    // Загрузка списка пользователей
     loadUsers();
-    // Загрузка списка соревнований
     loadCompetitions();
   }, [isAuthenticated, user, navigate]);
+
+  // Обработка параметра competitionId из URL для автоматического раскрытия соревнования
+  useEffect(() => {
+    const competitionIdParam = searchParams.get('competitionId');
+    if (competitionIdParam && competitions.length > 0) {
+      const competitionId = parseInt(competitionIdParam);
+      const competition = competitions.find(c => c.id === competitionId);
+      if (competition) {
+        const shouldLoadLeaderboard = !leaderboardData[competitionId] || expandedCompetitionId !== competitionId;
+        
+        const loadLeaderboardForCompetition = async () => {
+          try {
+            if (!leaderboardData[competitionId]) {
+              setLoadingLeaderboard(true);
+              const data = await api.get(`/leaderboard/${competitionId}`);
+              setLeaderboardData(prev => ({ ...prev, [competitionId]: data || [] }));
+            }
+            if (expandedCompetitionId !== competitionId) {
+              setExpandedCompetitionId(competitionId);
+            }
+            setTimeout(() => {
+              const element = document.getElementById(`competition-${competitionId}`);
+              if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }, 300);
+            
+            setTimeout(() => {
+              setSearchParams({});
+            }, 500);
+          } catch (err) {
+            console.error('Ошибка загрузки рейтинга:', err);
+            if (expandedCompetitionId !== competitionId) {
+              setExpandedCompetitionId(competitionId);
+            }
+            setTimeout(() => {
+              setSearchParams({});
+            }, 500);
+          } finally {
+            setLoadingLeaderboard(false);
+          }
+        };
+        
+        if (shouldLoadLeaderboard) {
+          loadLeaderboardForCompetition();
+        } else {
+          if (expandedCompetitionId !== competitionId) {
+            setExpandedCompetitionId(competitionId);
+          }
+          setTimeout(() => {
+            const element = document.getElementById(`competition-${competitionId}`);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            // Удаляем параметр competitionId из URL
+            setSearchParams({});
+          }, 300);
+        }
+      } else {
+        // Если соревнование не найдено, все равно удаляем параметр
+        setSearchParams({});
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, competitions]);
 
   const loadUsers = async () => {
     try {
       setLoadingUsers(true);
-      // Берём только обычных пользователей, которых можно добавить в соревнование
       const users = await api.get('/users/only');
       setAllUsers(users || []);
     } catch (err) {
@@ -230,17 +293,14 @@ const ManagerPage = () => {
     try {
       setLoading(true);
 
-      // Создаем соревнование с датами в локальном часовом поясе
       const competition = await api.post('/competitions', {
         title: formData.title.trim(),
         start_date: formatLocalDateTime(startDate),
         end_date: formatLocalDateTime(endDate)
       });
 
-      // Убеждаемся, что ID соревнования - число
       const competitionId = typeof competition.id === 'string' ? parseInt(competition.id) : competition.id;
 
-      // Назначаем пользователей на соревнование
       const assignPromises = selectedUsers.map(userId =>
         api.put(`/users/${userId}/competition`, {
           competition_id: competitionId
@@ -249,10 +309,6 @@ const ManagerPage = () => {
 
       await Promise.all(assignPromises);
 
-      // Создаем задачи для выбранных пользователей через /chat
-      // Для каждой задачи передаем текст и ID выбранных пользователей
-      // Добавляем задержку между запросами, чтобы избежать превышения лимита
-      // Устанавливаем due_date равным дате окончания соревнования
       for (let i = 0; i < validTasks.length; i++) {
         const task = validTasks[i];
         // Формируем сообщение для AI, которое создаст задачу
@@ -265,10 +321,9 @@ const ManagerPage = () => {
         await api.post('/chat', { 
           message,
           user_ids: task.user_ids,
-          due_date: formatLocalDateTime(endDate)  // Устанавливаем дату дедлайна задачи равной дате окончания соревнования
+          due_date: formatLocalDateTime(endDate)
         });
-        
-        // Добавляем задержку между запросами (кроме последнего)
+
         if (i < validTasks.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 300)); // 300ms задержка
         }
@@ -341,17 +396,17 @@ const ManagerPage = () => {
     }
   };
 
-  // Открытие управления участниками
+  // Открытие/закрытие управления участниками (toggle)
   const handleManageParticipants = async (competitionId) => {
+    // Если уже открыто для этого соревнования - закрываем
+    if (managingParticipants === competitionId) {
+      setManagingParticipants(null);
+      setParticipantSearchText('');
+      return;
+    }
     setManagingParticipants(competitionId);
     setParticipantSearchText('');
     await loadCompetitionParticipants(competitionId);
-  };
-
-  // Закрытие управления участниками
-  const handleCloseManageParticipants = () => {
-    setManagingParticipants(null);
-    setParticipantSearchText('');
   };
 
   // Добавление участника в соревнование
@@ -362,7 +417,6 @@ const ManagerPage = () => {
         competition_id: competitionId
       });
       
-      // Обновляем список участников
       await loadCompetitionParticipants(competitionId);
       setSuccess('Участник успешно добавлен в соревнование!');
       setTimeout(() => setSuccess(''), 3000);
@@ -374,7 +428,6 @@ const ManagerPage = () => {
     }
   };
 
-  // Удаление участника из соревнования
   const handleRemoveParticipant = async (competitionId, userId) => {
     try {
       setLoading(true);
@@ -382,7 +435,6 @@ const ManagerPage = () => {
         competition_id: null
       });
       
-      // Обновляем список участников
       await loadCompetitionParticipants(competitionId);
       setSuccess('Участник успешно удалён из соревнования!');
       setTimeout(() => setSuccess(''), 3000);
@@ -394,7 +446,6 @@ const ManagerPage = () => {
     }
   };
 
-  // Получение отфильтрованных пользователей для управления участниками
   const getFilteredUsersForParticipants = () => {
     if (!allUsers.length) return [];
     
@@ -494,10 +545,8 @@ const ManagerPage = () => {
       }
     }
     
-    // Проверяем, что дата валидна
     if (isNaN(date.getTime())) return dateString;
     
-    // Форматируем в локальное время пользователя
     return date.toLocaleString('ru-RU', {
       year: 'numeric',
       month: '2-digit',
@@ -545,7 +594,6 @@ const ManagerPage = () => {
     }
   };
 
-  // Фильтрация пользователей по поисковому запросу
   const filteredUsers = allUsers.filter((user) => {
     if (!searchText.trim()) {
       return true;
@@ -558,7 +606,7 @@ const ManagerPage = () => {
     return fullName.includes(query) || email.includes(query);
   });
 
-  if (!isAuthenticated || user?.role !== 'admin') {
+  if (!isAuthenticated || (user?.role !== 'admin' && user?.role !== 'manager')) {
     return null;
   }
 
@@ -606,6 +654,7 @@ const ManagerPage = () => {
               {competitions.map((competition) => (
                 <div
                   key={competition.id}
+                  id={`competition-${competition.id}`}
                   className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 hover:shadow-md transition-shadow"
                 >
                   {editingCompetition?.id === competition.id ? (
@@ -672,7 +721,6 @@ const ManagerPage = () => {
                       </div>
                     </form>
                   ) : (
-                    // Отображение соревнования
                     <div>
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex-1">
@@ -783,19 +831,9 @@ const ManagerPage = () => {
                       {/* Управление участниками */}
                       {managingParticipants === competition.id && (
                         <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
-                          <div className="flex justify-between items-center mb-4">
-                            <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                              👥 Управление участниками
-                            </h4>
-                            <button
-                              onClick={handleCloseManageParticipants}
-                              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-                            >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
-                          </div>
+                          <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
+                            👥 Управление участниками
+                          </h4>
                           
                           {/* Поиск пользователей */}
                           <div className="mb-4">

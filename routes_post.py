@@ -23,7 +23,7 @@ from schemas import (
     CompetitionResponse
 )
 from auth import verify_password, get_password_hash, create_access_token
-from dependencies import get_current_user, require_admin
+from dependencies import get_current_user, require_admin, require_manager
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -305,7 +305,7 @@ def create_reward(
 @router.post("/competitions", response_model=CompetitionResponse, status_code=status.HTTP_201_CREATED)
 def create_competition(
     competition: CompetitionCreate,
-    current_user: dict = Depends(require_admin), # Только админ может создавать
+    current_user: dict = Depends(require_manager), # Админ или менеджер может создавать
     db: Session = Depends(get_db)
 ):
     # Проверка уникальности названия (опционально)

@@ -35,8 +35,11 @@ class UserCompetitionAssign(BaseModel):
     competition_id: Optional[int] = None
 
 class UserUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = None
+    role: Optional[str] = None  # Для админа: возможность менять роль
 
 class TaskStatusCreate(BaseModel):
     code: str
