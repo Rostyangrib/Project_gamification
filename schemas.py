@@ -1,6 +1,4 @@
 from datetime import datetime
-from uuid import UUID
-
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 
@@ -11,15 +9,17 @@ class UserCreate(BaseModel):
     password: str
 
 class UserResponse(BaseModel):
-    id: UUID
+    id: int
     first_name: str
     last_name: str
     email: str
     total_points: int
+    role: Optional[str] = None
+    cur_comp: Optional[int] = None
 
     class Config:
         from_attributes = True
-        
+
 class UserLeaderboard(BaseModel):
     first_name: str
     last_name: str
@@ -31,28 +31,12 @@ class UserLeaderboard(BaseModel):
 class AllUsersResponse(BaseModel):
     users: List[UserLeaderboard]
 
+class UserCompetitionAssign(BaseModel):
+    competition_id: Optional[int] = None
+
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     password: Optional[str] = None
-
-# class BoardCreate(BaseModel):
-#     name: str
-#     description: Optional[str] = None
-#
-# class BoardUpdate(BaseModel):
-#     name: Optional[str] = None
-#     description: Optional[str] = None
-#
-# class BoardResponse(BaseModel):
-#     id: UUID
-#     user_id: UUID
-#     name: str
-#     description: Optional[str]
-#     created_at: datetime
-#     updated_at: datetime
-#
-#     class Config:
-#         from_attributes = True
 
 class TaskStatusCreate(BaseModel):
     code: str
@@ -63,29 +47,12 @@ class TaskStatusUpdate(BaseModel):
     name: Optional[str] = None
 
 class TaskStatusResponse(BaseModel):
-    id: UUID
+    id: int
     code: str
     name: str
 
     class Config:
         from_attributes = True
-
-# class CategoryCreate(BaseModel):
-#     name: str
-#     color: Optional[str] = None
-#
-# class CategoryUpdate(BaseModel):
-#     name: Optional[str] = None
-#     color: Optional[str] = None
-#
-# class CategoryResponse(BaseModel):
-#     id: UUID
-#     user_id: UUID
-#     name: str
-#     color: Optional[str]
-#
-#     class Config:
-#         from_attributes = True
 
 class TagCreate(BaseModel):
     name: str
@@ -94,20 +61,18 @@ class TagUpdate(BaseModel):
     name: Optional[str] = None
 
 class TagResponse(BaseModel):
-    id: UUID
+    id: int
     name: str
 
     class Config:
         from_attributes = True
 
 class TaskTagCreate(BaseModel):
-    task_id: UUID
-    tag_id: UUID
+    task_id: int
+    tag_id: int
 
 class TaskCreate(BaseModel):
-    #board_id: UUID
-    status_id: UUID
-    #category_id: UUID
+    status_id: int
     title: str
     description: Optional[str] = None
     ai_analysis_metadata: Optional[dict] = None
@@ -115,9 +80,7 @@ class TaskCreate(BaseModel):
     due_date: Optional[datetime] = None
 
 class TaskUpdate(BaseModel):
-    #board_id: Optional[UUID] = None
-    status_id: Optional[UUID] = None
-    #category_id: Optional[UUID] = None
+    status_id: Optional[int] = None
     title: Optional[str] = None
     description: Optional[str] = None
     ai_analysis_metadata: Optional[dict] = None
@@ -126,11 +89,9 @@ class TaskUpdate(BaseModel):
     completed_at: Optional[datetime] = None
 
 class TaskResponse(BaseModel):
-    id: UUID
-    user_id: UUID
-    #board_id: UUID
-    status_id: UUID
-    #category_id: UUID
+    id: int
+    user_id: int
+    status_id: int
     title: str
     description: Optional[str]
     ai_analysis_metadata: Optional[dict]
@@ -155,7 +116,7 @@ class RewardTypeUpdate(BaseModel):
     description: Optional[str] = None
 
 class RewardTypeResponse(BaseModel):
-    id: UUID
+    id: int
     code: str
     name: str
     description: Optional[str]
@@ -164,22 +125,43 @@ class RewardTypeResponse(BaseModel):
         from_attributes = True
 
 class RewardCreate(BaseModel):
-    type_id: UUID
+    type_id: int
     points_amount: int
     reason: Optional[str] = None
 
 class RewardUpdate(BaseModel):
-    type_id: Optional[UUID] = None
+    type_id: Optional[int] = None
     points_amount: Optional[int] = None
     reason: Optional[str] = None
 
 class RewardResponse(BaseModel):
-    id: UUID
-    user_id: UUID
-    type_id: UUID
+    id: int
+    user_id: int
+    type_id: int
     points_amount: int
     awarded_at: datetime
     reason: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+class CompetitionCreate(BaseModel):
+    title: str
+    start_date: datetime
+    end_date: datetime
+
+class CompetitionUpdate(BaseModel):
+    title: Optional[str] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+
+class CompetitionResponse(BaseModel):
+    id: int
+    title: str
+    start_date: datetime
+    end_date: datetime
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
@@ -203,3 +185,7 @@ class TaskTitleAndDate(BaseModel):
 
     class Config:
         from_attributes = True
+
+class CompetitionDatesResponse(BaseModel):
+    start_date: datetime
+    end_date: datetime
