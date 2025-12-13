@@ -134,7 +134,7 @@ const LeaderboardsPage = () => {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 text-center">
           <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent mb-2">
-            🏆 Список лидеров
+            Список лидеров
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
             Рейтинг участников по набранным очкам
