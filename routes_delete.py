@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from config.db import get_db
 from database import User, TaskStatus, Tag, Task, TaskTag, RewardType, Reward, Competition
-from dependencies import get_current_user, require_admin
+from dependencies import get_current_user, require_admin, require_manager
 
 router = APIRouter(prefix="", tags=["DELETE"])
 
@@ -178,7 +178,7 @@ def delete_reward(
 @router.delete("/competitions/{competition_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_competition(
     competition_id: int,
-    current_user: dict = Depends(require_admin), # Только админ может удалять
+    current_user: dict = Depends(require_manager), # Админ или менеджер может удалять
     db: Session = Depends(get_db)
 ):
     competition = db.query(Competition).filter(Competition.id == competition_id).first()

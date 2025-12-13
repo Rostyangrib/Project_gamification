@@ -71,8 +71,14 @@ def chat_with_ai(
             db.commit()
             db.refresh(status_obj)
 
-    due_date_raw = task_data.get("due_date")
-    due_date = due_date_raw
+    # Используем дату из ответа AI (если она есть)
+    due_date = task_data.get("due_date")
+    
+    # Конвертируем datetime с timezone в naive datetime (локальное время)
+    # Это нужно, чтобы PostgreSQL DateTime column правильно сохранил время
+    if due_date and hasattr(due_date, 'tzinfo') and due_date.tzinfo is not None:
+        due_date = due_date.replace(tzinfo=None)
+
 
     description = str(task_data.get("description", "")).strip()
     ai_analysis = analyze_task(title, description)

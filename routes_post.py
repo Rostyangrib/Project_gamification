@@ -23,7 +23,7 @@ from schemas import (
     CompetitionResponse
 )
 from auth import verify_password, get_password_hash, create_access_token
-from dependencies import get_current_user, require_admin
+from dependencies import get_current_user, require_admin, require_manager
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -305,7 +305,7 @@ def create_reward(
 @router.post("/competitions", response_model=CompetitionResponse, status_code=status.HTTP_201_CREATED)
 def create_competition(
     competition: CompetitionCreate,
-    current_user: dict = Depends(require_admin), # Только админ может создавать
+    current_user: dict = Depends(require_manager), # Админ или менеджер может создавать
     db: Session = Depends(get_db)
 ):
     # Проверка уникальности названия (опционально)
@@ -313,7 +313,22 @@ def create_competition(
     if existing:
         raise HTTPException(status_code=400, detail="Соревнование с таким названием уже существует")
 
-    db_competition = Competition(**competition.model_dump())
+    # Конвертируем datetime с timezone в naive datetime (локальное время)
+    # Это нужно, чтобы PostgreSQL DateTime column правильно сохранил время
+    competition_data = competition.model_dump()
+    if competition_data.get('start_date'):
+        start_date = competition_data['start_date']
+        if start_date.tzinfo is not None:
+            # Если есть timezone info, конвертируем в naive datetime (убираем timezone)
+            # Это сохранит локальное время пользователя как есть
+            competition_data['start_date'] = start_date.replace(tzinfo=None)
+    
+    if competition_data.get('end_date'):
+        end_date = competition_data['end_date']
+        if end_date.tzinfo is not None:
+            competition_data['end_date'] = end_date.replace(tzinfo=None)
+
+    db_competition = Competition(**competition_data)
     db.add(db_competition)
     db.commit()
     db.refresh(db_competition)

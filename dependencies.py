@@ -44,3 +44,11 @@ def require_admin(current_user: dict = Depends(get_current_user)):
             detail="Требуются права администратора"
         )
     return current_user
+
+def require_manager(current_user: dict = Depends(get_current_user)):
+    if current_user["role"] not in ["admin", "manager"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Требуются права менеджера или администратора"
+        )
+    return current_user

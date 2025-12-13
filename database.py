@@ -160,6 +160,56 @@ def init_db():
                     password_hash=get_password_hash("999999"),
                     total_points=32,
                     role="admin"
+                ),
+                # Добавленные пользователи
+                User(
+                    first_name="Анна",
+                    last_name="Иванова",
+                    email="manager@work.com",
+                    password_hash=get_password_hash("999999"),
+                    total_points=150,
+                    role="manager"
+                ),
+                User(
+                    first_name="Дмитрий",
+                    last_name="Сидоров",
+                    email="dmitry@work.com",
+                    password_hash=get_password_hash("999999"),
+                    total_points=180,
+                    role="user"
+                ),
+                User(
+                    first_name="Елена",
+                    last_name="Петрова",
+                    email="elena@work.com",
+                    password_hash=get_password_hash("password123"),
+                    total_points=210,
+                    role="user"
+                ),
+                User(
+                    first_name="Михаил",
+                    last_name="Козлов",
+                    email="mikhail@work.com",
+                    password_hash=get_password_hash("password123"),
+                    total_points=95,
+                    role="user"
+                ),
+                User(
+                    first_name="Ольга",
+                    last_name="Смирнова",
+                    email="olga@work.com",
+                    password_hash=get_password_hash("password123"),
+                    total_points=300,
+                    role="user"
+                ),
+                User(
+                    first_name="Сергей",
+                    last_name="Волков",
+                    email="sergey@work.com",
+
+                    password_hash=get_password_hash("password123"),
+                    total_points=110,
+                    role="user"
                 )
             ]
             db.add_all(users)
@@ -176,17 +226,17 @@ def init_db():
             if not db.query(Competition).first():
                 competitions = [
                     Competition(
-                        title="Мохнатый марафон 2025",
+                        title="ИРНИТУ марафон 2025",
                         start_date="2025-06-01 00:00:00",
                         end_date="2025-08-31 23:59:59"
                     ),
                     Competition(
-                        title="Кучка",
+                        title="Кучка умников",
                         start_date="2025-01-15 00:00:00",
                         end_date="2025-03-15 23:59:59"
                     ),
                     Competition(
-                        title="Майский жук",
+                        title="Майский праздник",
                         start_date="2025-04-20 00:00:00",
                         end_date="2025-05-31 23:59:59"
                     )

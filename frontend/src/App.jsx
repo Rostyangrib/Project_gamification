@@ -8,6 +8,7 @@ import AuthPage from './pages/AuthPage.jsx';
 import LeaderboardsPage from './pages/LeaderboardsPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import ManagerPage from './pages/ManagerPage.jsx';
+import AdminPage from './pages/AdminPage.jsx';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <Route path="/leaderboards" element={<LeaderboardsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/manager" element={<ManagerPage />} />
+            <Route path="/admin" element={<AdminPage />} />
           </Routes>
         </Router>
       </AuthProvider>

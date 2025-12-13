@@ -31,25 +31,55 @@ const Navbar = () => {
                   : 'text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
-              Gamification Dashboard
+              {isAuthenticated && (user?.role === 'admin' || user?.role === 'manager') 
+                ? 'Главная' 
+                : 'Панель геймификации'}
             </Link>
-            <Link
-              to="/leaderboards"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive('/leaderboards')
-                  ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30'
-                  : 'text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-              }`}
-            >
-              Список лидеров
-            </Link>
+            {isAuthenticated && user?.role === 'user' && (
+              <Link
+                to="/leaderboards"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive('/leaderboards')
+                    ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30'
+                    : 'text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                Список лидеров
+              </Link>
+            )}
+            {isAuthenticated && (user?.role === 'admin' || user?.role === 'manager') && (
+              <Link
+                to="/manager"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive('/manager')
+                    ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30'
+                    : 'text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                Управление соревнованиями
+              </Link>
+            )}
+            {isAuthenticated && user?.role === 'admin' && (
+              <Link
+                to="/admin"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive('/admin')
+                    ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30'
+                    : 'text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                Админ-панель
+              </Link>
+            )}
           </div>
           <div className="flex items-center space-x-4">
             {isAuthenticated && user && (
               <div className="flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-200">
-                <span className="px-2 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-200 font-semibold">
-                  {user.total_points ?? 0} баллов
-                </span>
+                {user.role !== 'admin' && user.role !== 'manager' && (
+                  <span className="px-2 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-200 font-semibold">
+                    {user.total_points ?? 0} баллов
+                  </span>
+                )}
                 <button
                   onClick={() => navigate('/profile')}
                   className="px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-indigo-600 dark:text-indigo-300 font-medium"

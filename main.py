@@ -6,7 +6,7 @@ from sqlalchemy import text
 from config.db import engine
 from database import init_db
 from routes import router
-from fastapi.middleware.cors import CORSMiddleware
+
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
@@ -20,14 +20,6 @@ app = FastAPI(
     version="0.1.0"
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 app.include_router(router)
 
 app.mount("/assets", StaticFiles(directory="frontend/dist/assets"), name="assets")
@@ -39,4 +31,3 @@ async def serve_frontend(full_path: str = ""):
         return FileResponse(f"frontend/dist/{full_path}")
 
     return FileResponse("frontend/dist/index.html")
-

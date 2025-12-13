@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApi } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -8,9 +9,21 @@ const LeaderboardsPage = () => {
   const [error, setError] = useState(null);
   const [competitionId, setCompetitionId] = useState(null);
   const api = useApi();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
+    // Проверка доступа: страница доступна только для обычных пользователей
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+
+    if (user?.role !== 'user') {
+      navigate('/');
+      return;
+    }
+
     document.title = 'Список лидеров | Геймификация предприятий';
     const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
     link.rel = 'icon';
@@ -61,7 +74,7 @@ const LeaderboardsPage = () => {
     };
 
     fetchLeaderboard();
-  }, []);
+  }, [isAuthenticated, user?.role, navigate]);
 
   const getRankIcon = (rank) => {
     if (rank === 1) {
@@ -110,6 +123,11 @@ const LeaderboardsPage = () => {
     }
     return 'hover:bg-gray-50 dark:hover:bg-gray-700/30';
   };
+
+  // Проверка доступа перед рендерингом
+  if (!isAuthenticated || user?.role !== 'user') {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 sm:p-6">
