@@ -351,7 +351,7 @@ const HomePage = () => {
                   {loadingCompetitions ? '...' : competitions.length}
                 </p>
               </div>
-              <div className="text-4xl">🏆</div>
+              <div className="text-4xl"></div>
             </div>
           </div>
 
@@ -363,7 +363,7 @@ const HomePage = () => {
                   {loadingCompetitions ? '...' : activeCompetitions.length}
                 </p>
               </div>
-              <div className="text-4xl">🟢</div>
+              <div className="text-4xl"></div>
             </div>
           </div>
 
@@ -375,7 +375,7 @@ const HomePage = () => {
                   {loadingUsers ? '...' : allUsers.length}
                 </p>
               </div>
-              <div className="text-4xl">👥</div>
+              <div className="text-4xl"></div>
             </div>
           </div>
         </div>
@@ -387,7 +387,7 @@ const HomePage = () => {
             className="bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 p-6 rounded-xl shadow-lg text-white hover:from-indigo-600 hover:to-purple-700 dark:hover:from-indigo-700 dark:hover:to-purple-800 transition-all transform hover:scale-105 w-full"
           >
             <div className="flex items-center gap-4">
-              <div className="text-4xl">🎯</div>
+              <div className="text-4xl"></div>
               <div className="text-left">
                 <h3 className="text-xl font-bold mb-1">Управление соревнованиями</h3>
                 <p className="text-indigo-100 text-sm">Создавайте и управляйте соревнованиями</p>
@@ -429,7 +429,7 @@ const HomePage = () => {
               {activeCompetitions.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold text-green-600 dark:text-green-400 mb-3">
-                    🟢 Активные ({activeCompetitions.length})
+                    Активные ({activeCompetitions.length})
                   </h3>
                   <div className="space-y-2">
                     {activeCompetitions.map((comp) => (
@@ -462,7 +462,7 @@ const HomePage = () => {
               {upcomingCompetitions.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-3">
-                    🔵 Предстоящие ({upcomingCompetitions.length})
+                    Предстоящие ({upcomingCompetitions.length})
                   </h3>
                   <div className="space-y-2">
                     {upcomingCompetitions.map((comp) => (
@@ -534,7 +534,7 @@ const HomePage = () => {
   return (
     <div className="p-5 max-w-7xl mx-auto bg-gray-50 dark:bg-gray-900 min-h-screen">
       <header className="mb-8 px-2.5 flex justify-between items-center">
-        <h1 className="m-0 text-gray-800 dark:text-gray-100 font-bold text-2xl">🎯 Панель геймификации</h1>
+        <h1 className="m-0 text-gray-800 dark:text-gray-100 font-bold text-2xl"></h1>
       </header>
 
       <div className="grid grid-cols-1 gap-8">
@@ -543,7 +543,7 @@ const HomePage = () => {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
-                  🏆 {competition.title || 'Соревнование'}
+                   {competition.title || 'Соревнование'}
                 </h2>
                 {competition.end_date ? (
                   <div className="space-y-1">
@@ -580,7 +580,7 @@ const HomePage = () => {
         <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md">
           <div className="flex justify-between items-center mb-5">
             <h2 className="m-0 text-gray-800 dark:text-gray-100 font-semibold text-xl">
-              📅 {new Date(year, month).toLocaleString('ru-RU', { month: 'long', year: 'numeric' })}
+               {new Date(year, month).toLocaleString('ru-RU', { month: 'long', year: 'numeric' })}
             </h2>
             <div className="flex gap-2">
               <button
