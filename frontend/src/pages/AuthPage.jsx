@@ -279,9 +279,12 @@ const AuthPage = () => {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-3 pr-10 border rounded-lg text-base transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                    errors.confirmPassword ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  className={`w-full px-3 py-3 pr-10 border rounded-lg text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                    errors.confirmPassword
+                      ? "border-red-500"
+                      : "border-gray-300 dark:border-gray-600"
                   }`}
+
                   placeholder="Подтвердите ваш пароль"
                 />
                 <button
@@ -340,5 +343,6 @@ const AuthPage = () => {
     </div>
   );
 };
+
 
 export default AuthPage;
