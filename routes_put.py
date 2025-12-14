@@ -99,8 +99,10 @@ def assign_user_to_competition(
         if not competition:
             raise HTTPException(status_code=404, detail="Соревнование не найдено")
         user.cur_comp = payload.competition_id
+        user.total_points = 0
     else:
         user.cur_comp = None
+    
 
     db.commit()
     db.refresh(user)
@@ -323,4 +325,5 @@ def update_competition(
 
     db.commit()
     db.refresh(competition)
+
     return competition
