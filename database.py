@@ -78,7 +78,7 @@ class Task(Base):
     tags = relationship("Tag", secondary="task_tags", back_populates="tasks")
 
 class RewardType(Base):
-    __tablename__ = "reward_types"
+        __tablename__ = "reward_types"
     id = Column(Integer, primary_key=True, autoincrement=True)
     code = Column(String, unique=True, nullable=False)
     name = Column(String, nullable=False)
@@ -99,15 +99,8 @@ class Reward(Base):
 def init_db():
     Base.metadata.create_all(bind=engine)
     with Session(engine) as db:
-        # db.execute(text("DELETE FROM users"))
-        # db.execute(text("DELETE FROM reward_types"))
-        # #db.execute(text("DELETE FROM competitions"))
-        # db.execute(text("DELETE FROM tasks"))
-        # #db.execute(text("DELETE FROM rewards"))
-        # db.execute(text("DELETE FROM task_status"))
-        # db.execute(text("DELETE FROM tags"))
-        # db.execute(text("DELETE FROM task_tags"))
-        # db.commit()
+        db.execute(text("TRUNCATE TABLE users, reward_types, tasks, task_status, tags, task_tags, rewards, competitions RESTART IDENTITY CASCADE;"))
+        db.commit()
 
         if not db.query(TaskStatus).first():
             statuses = [
@@ -161,7 +154,7 @@ def init_db():
                     total_points=32,
                     role="admin"
                 ),
-                # Добавленные пользователи
+ # Добавленные пользователи
                 User(
                     first_name="Анна",
                     last_name="Иванова",
@@ -236,10 +229,11 @@ def init_db():
                         end_date="2025-03-15 23:59:59"
                     ),
                     Competition(
-                        title="Майский праздник",
+           title="Майский праздник",
                         start_date="2025-04-20 00:00:00",
                         end_date="2025-05-31 23:59:59"
                     )
                 ]
                 db.add_all(competitions)
                 db.commit()
+                                                   
