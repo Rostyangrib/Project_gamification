@@ -99,8 +99,8 @@ class Reward(Base):
 def init_db():
     Base.metadata.create_all(bind=engine)
     with Session(engine) as db:
-    db.execute(text("TRUNCATE TABLE users, reward_types, tasks, task_status, tags, task_tags, rewards, competitions RESTART IDENTITY CASCADE;"))
-    db.commit()
+        db.execute(text("TRUNCATE TABLE users, reward_types, tasks, task_status, tags, task_tags, rewards, competitions RESTART IDENTITY CASCADE;"))
+        db.commit()
 
         if not db.query(TaskStatus).first():
             statuses = [
@@ -236,4 +236,5 @@ def init_db():
                 ]
                 db.add_all(competitions)
                 db.commit()
+
 
