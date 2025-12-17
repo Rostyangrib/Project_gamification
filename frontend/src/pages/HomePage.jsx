@@ -227,6 +227,24 @@ const HomePage = () => {
     }
 
     try {
+      // Проверка даты начала соревнования
+      if (competition && competition.start_date) {
+        const startDate = new Date(competition.start_date);
+        const now = new Date();
+        
+        if (now < startDate) {
+          const formattedDate = startDate.toLocaleString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          setError(`Нельзя пометить задачу выполненной до начала соревнования. Соревнование начинается ${formattedDate}`);
+          return;
+        }
+      }
+
       const allTasks = await api.get('/tasks');
       const task = allTasks.find(t => t.id === taskId);
       if (!task) {

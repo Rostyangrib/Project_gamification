@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 
 from config.db import get_db
@@ -231,6 +232,25 @@ def update_task(
     if update_data.status_id and update_data.status_id != task.status_id:
         if not db.query(TaskStatus).filter(TaskStatus.id == update_data.status_id).first():
             raise HTTPException(status_code=400, detail="Недопустимый status_id")
+
+        new_status = db.query(TaskStatus).filter(TaskStatus.id == update_data.status_id).first()
+        if new_status and new_status.code == "done":
+            # Проверяем, есть ли у пользователя соревнование
+            user = db.query(User).filter(User.id == current_user["user"].id).first()
+            if user and user.cur_comp:
+                competition = db.query(Competition).filter(Competition.id == user.cur_comp).first()
+                if competition:
+                    now = datetime.utcnow()
+                    # Если start_date имеет timezone info, убираем его для сравнения
+                    start_date = competition.start_date
+                    if hasattr(start_date, 'replace') and start_date.tzinfo is not None:
+                        start_date = start_date.replace(tzinfo=None)
+                    
+                    if now < start_date:
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Нельзя пометить задачу выполненной до начала соревнования. Соревнование начинается {start_date.strftime('%d.%m.%Y %H:%M')}"
+                        )
 
     for field, value in update_data.dict(exclude_unset=True).items():
         if value is not None:
