@@ -34,6 +34,7 @@ const ManagerPage = () => {
   const [loadingParticipants, setLoadingParticipants] = useState(false);
   const [participantSearchText, setParticipantSearchText] = useState('');
   const [editTasks, setEditTasks] = useState([{ title: '', user_ids: [] }]);
+  const [failedChatTasks, setFailedChatTasks] = useState([]);
 
   useEffect(() => {
     document.title = 'Управление соревнованиями | Геймификация предприятий';
@@ -42,7 +43,6 @@ const ManagerPage = () => {
     link.href = '/favicon-g.svg';
     document.head.appendChild(link);
 
-    // Проверка авторизации и прав менеджера/администратора
     if (!isAuthenticated) {
       navigate('/login');
       return;
@@ -57,7 +57,6 @@ const ManagerPage = () => {
     loadCompetitions();
   }, [isAuthenticated, user, navigate]);
 
-  // Обработка параметра competitionId из URL для автоматического раскрытия соревнования
   useEffect(() => {
     const competitionIdParam = searchParams.get('competitionId');
     if (competitionIdParam && competitions.length > 0) {
@@ -110,16 +109,13 @@ const ManagerPage = () => {
             if (element) {
               element.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
-            // Удаляем параметр competitionId из URL
             setSearchParams({});
           }, 300);
         }
       } else {
-        // Если соревнование не найдено, все равно удаляем параметр
         setSearchParams({});
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, competitions]);
 
   const loadUsers = async () => {
@@ -162,7 +158,6 @@ const ManagerPage = () => {
         ? prev.filter(id => id !== userId)
         : [...prev, userId];
       
-      // Очищаем выбранных пользователей в задачах, если они больше не в списке участников
       setTasks(currentTasks => 
         currentTasks.map(task => ({
           ...task,
@@ -181,7 +176,6 @@ const ManagerPage = () => {
 
   const deselectAllUsers = () => {
     setSelectedUsers([]);
-    // Очищаем выбранных пользователей в задачах
     setTasks(currentTasks => 
       currentTasks.map(task => ({
         ...task,
@@ -219,7 +213,6 @@ const ManagerPage = () => {
     });
   };
 
-  // Функции для управления задачами в режиме редактирования
   const addEditTask = () => {
     setEditTasks(prev => [...prev, { title: '', user_ids: [] }]);
   };
@@ -249,13 +242,10 @@ const ManagerPage = () => {
     });
   };
 
-  // Функция для форматирования даты для отправки на сервер
-  // Отправляем дату в ISO формате с указанием, что это локальное время (без конвертации в UTC)
+
   const formatLocalDateTime = (dateInput) => {
-    // dateInput может быть Date объектом или строкой из datetime-local input
     const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
     
-    // Получаем компоненты локального времени
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -263,8 +253,6 @@ const ManagerPage = () => {
     const minutes = String(date.getMinutes()).padStart(2, '0');
     const seconds = String(date.getSeconds()).padStart(2, '0');
     
-    // Отправляем как ISO строка с явным указанием локального offset
-    // Это позволит серверу правильно интерпретировать время
     const offset = -date.getTimezoneOffset();
     const offsetHours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
     const offsetMinutes = String(Math.abs(offset) % 60).padStart(2, '0');
@@ -278,7 +266,6 @@ const ManagerPage = () => {
     setError('');
     setSuccess('');
 
-    // Валидация
     if (!formData.title.trim()) {
       setError('Введите название соревнования');
       return;
@@ -294,7 +281,6 @@ const ManagerPage = () => {
       return;
     }
 
-    // Создаем даты в локальном времени (datetime-local уже в локальном часовом поясе)
     const startDate = new Date(formData.start_date);
     const endDate = new Date(formData.end_date);
 
@@ -308,7 +294,6 @@ const ManagerPage = () => {
       return;
     }
 
-    // Валидация задач
     const validTasks = tasks.filter(t => t.title.trim() && t.user_ids.length > 0);
     if (validTasks.length === 0) {
       setError('Добавьте хотя бы одну задачу с выбранными пользователями');
@@ -334,37 +319,49 @@ const ManagerPage = () => {
 
       await Promise.all(assignPromises);
 
+      const failedTasks = [];
+
       for (let i = 0; i < validTasks.length; i++) {
         const task = validTasks[i];
-        // Формируем сообщение для AI, которое создаст задачу
         const message = `Создай задачу "${task.title.trim()}"`;
         
-        // Обновляем сообщение о прогрессе
         setSuccess(`Создание задач: ${i + 1} из ${validTasks.length}...`);
         
-        // Отправляем запрос на создание задачи
-        await api.post('/chat', { 
+        const chatResponse = await api.post('/chat', { 
           message,
           user_ids: task.user_ids
         });
+
+        if (!chatResponse || !chatResponse.task_created) {
+          failedTasks.push({
+            title: task.title.trim(),
+            reply: chatResponse?.reply || 'Задача не была создана.'
+          });
+        }
 
         if (i < validTasks.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 300)); // 300ms задержка
         }
       }
 
-      setSuccess('Соревнование и задачи успешно созданы!');
+      if (failedTasks.length > 0) {
+        const failedTitles = failedTasks.map(t => `«${t.title}»`).join(', ');
+        setSuccess(`Соревнование создано. Некоторые задачи не были созданы: ${failedTitles}.`);
+        setFailedChatTasks(failedTasks);
+      } else {
+        setSuccess('Соревнование и все задачи успешно созданы!');
+        setFailedChatTasks([]);
+      }
       
-      // Очистка формы
       setFormData({ title: '', start_date: '', end_date: '' });
       setSelectedUsers([]);
       setTasks([{ title: '', user_ids: [] }]);
 
-      // Обновляем список соревнований
       await loadCompetitions();
 
-      // Автоматически скрыть сообщение успеха через 5 секунд
-      setTimeout(() => setSuccess(''), 5000);
+      if (failedTasks.length === 0) {
+        setTimeout(() => setSuccess(''), 5000);
+      }
     } catch (err) {
       console.error('Ошибка создания соревнования:', err);
       setError(err.message || 'Не удалось создать соревнование');
@@ -375,9 +372,11 @@ const ManagerPage = () => {
 
   const handleEditCompetition = async (competition) => {
     setEditingCompetition(competition);
+    setError('');
+    setSuccess('');
+    setFailedChatTasks([]);
     const startDate = new Date(competition.start_date);
     const endDate = new Date(competition.end_date);
-    // Форматируем даты для input datetime-local (YYYY-MM-DDTHH:mm)
     const formatDateTimeLocal = (date) => {
       const d = new Date(date);
       const year = d.getFullYear();
@@ -392,9 +391,7 @@ const ManagerPage = () => {
       start_date: formatDateTimeLocal(startDate),
       end_date: formatDateTimeLocal(endDate)
     });
-    // Инициализируем задачи для редактирования
     setEditTasks([{ title: '', user_ids: [] }]);
-    // Загружаем участников соревнования
     await loadCompetitionParticipants(competition.id);
   };
 
@@ -403,15 +400,14 @@ const ManagerPage = () => {
     setEditFormData({ title: '', start_date: '', end_date: '' });
     setEditTasks([{ title: '', user_ids: [] }]);
     setError('');
+    setSuccess('');
+    setFailedChatTasks([]);
   };
 
-  // Загрузка участников соревнования
   const loadCompetitionParticipants = async (competitionId) => {
     try {
       setLoadingParticipants(true);
-      // Получаем всех пользователей
       const users = await api.get('/users/only');
-      // Фильтруем тех, кто участвует в данном соревновании
       const participants = users.filter(user => user.cur_comp === competitionId).map(user => user.id);
       setCompetitionParticipants(prev => ({
         ...prev,
@@ -425,9 +421,7 @@ const ManagerPage = () => {
     }
   };
 
-  // Открытие/закрытие управления участниками (toggle)
   const handleManageParticipants = async (competitionId) => {
-    // Если уже открыто для этого соревнования - закрываем
     if (managingParticipants === competitionId) {
       setManagingParticipants(null);
       setParticipantSearchText('');
@@ -438,7 +432,6 @@ const ManagerPage = () => {
     await loadCompetitionParticipants(competitionId);
   };
 
-  // Добавление участника в соревнование
   const handleAddParticipant = async (competitionId, userId) => {
     try {
       setLoading(true);
@@ -508,7 +501,6 @@ const ManagerPage = () => {
       return;
     }
 
-    // Валидация задач (если они добавлены)
     const validEditTasks = editTasks.filter(t => t.title.trim() && t.user_ids.length > 0);
     if (editTasks.some(t => t.title.trim() || t.user_ids.length > 0) && validEditTasks.length === 0) {
       setError('Заполните все добавленные задачи: укажите название и выберите пользователей');
@@ -523,35 +515,53 @@ const ManagerPage = () => {
         end_date: formatLocalDateTime(endDate)
       });
       
-      // Отправляем задачи через /chat, если они были добавлены
-      // Используем дедлайн из формы редактирования (endDate), который был указан пользователем
       if (validEditTasks.length > 0) {
+        const failedTasks = [];
+
         for (let i = 0; i < validEditTasks.length; i++) {
           const task = validEditTasks[i];
           const message = `Создай задачу "${task.title.trim()}"`;
           
           setSuccess(`Обновление соревнования и создание задач: ${i + 1} из ${validEditTasks.length}...`);
           
-          await api.post('/chat', { 
+          const chatResponse = await api.post('/chat', { 
             message,
             user_ids: task.user_ids
           });
+
+          if (!chatResponse || !chatResponse.task_created) {
+            failedTasks.push({
+              title: task.title.trim(),
+              reply: chatResponse?.reply || 'Задача не была создана.'
+            });
+          }
 
           if (i < validEditTasks.length - 1) {
             await new Promise(resolve => setTimeout(resolve, 300));
           }
         }
-        setSuccess('Соревнование успешно обновлено и задачи добавлены!');
+        if (failedTasks.length > 0) {
+          const failedTitles = failedTasks.map(t => `«${t.title}»`).join(', ');
+          setSuccess(`Соревнование обновлено. Некоторые задачи не были созданы: ${failedTitles}.`);
+          setFailedChatTasks(failedTasks);
+        } else {
+          setSuccess('Соревнование успешно обновлено и все задачи добавлены!');
+          setFailedChatTasks([]);
+          setEditingCompetition(null);
+          setEditFormData({ title: '', start_date: '', end_date: '' });
+          setEditTasks([{ title: '', user_ids: [] }]);
+          setTimeout(() => setSuccess(''), 5000);
+        }
       } else {
         setSuccess('Соревнование успешно обновлено!');
+        setFailedChatTasks([]);
+        setEditingCompetition(null);
+        setEditFormData({ title: '', start_date: '', end_date: '' });
+        setEditTasks([{ title: '', user_ids: [] }]);
+        setTimeout(() => setSuccess(''), 5000);
       }
       
-      setEditingCompetition(null);
-      setEditFormData({ title: '', start_date: '', end_date: '' });
-      setEditTasks([{ title: '', user_ids: [] }]);
       await loadCompetitions();
-      
-      setTimeout(() => setSuccess(''), 5000);
     } catch (err) {
       console.error('Ошибка обновления соревнования:', err);
       setError(err.message || 'Не удалось обновить соревнование');
@@ -579,21 +589,14 @@ const ManagerPage = () => {
     }
   };
 
-  // Функция для форматирования даты при отображении
-  // Обрабатывает даты, которые приходят с сервера как naive datetime (без timezone)
-  // Интерпретируем их как локальное время пользователя
+
   const formatDateTime = (dateString) => {
     if (!dateString) return '';
     
-    // Если строка не имеет timezone info (формат "YYYY-MM-DDTHH:mm:ss" или "YYYY-MM-DDTHH:mm:ss.ffff"),
-    // то интерпретируем её как локальное время
     let date;
     if (dateString.includes('Z') || dateString.match(/[+-]\d{2}:\d{2}$/)) {
-      // Есть timezone info, используем как есть
       date = new Date(dateString);
     } else {
-      // Нет timezone info - интерпретируем как локальное время
-      // Добавляем явно, что это локальное время, создавая Date через компоненты
       const dateMatch = dateString.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
       if (dateMatch) {
         const [, year, month, day, hours, minutes, seconds] = dateMatch;
@@ -857,6 +860,56 @@ const ManagerPage = () => {
                           ))}
                         </div>
                       </div>
+                      
+                      {/* Сообщения об ошибках и успехе прямо в форме редактирования */}
+                      {error && (
+                        <div className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg relative">
+                          <button
+                            onClick={() => setError('')}
+                            className="absolute top-2 right-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xl leading-none"
+                            title="Закрыть"
+                          >
+                            ×
+                          </button>
+                          <p className="text-red-600 dark:text-red-400 text-sm pr-6">{error}</p>
+                        </div>
+                      )}
+
+                      {success && (
+                        <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg space-y-2 relative">
+                          <button
+                            onClick={() => {
+                              setSuccess('');
+                              setFailedChatTasks([]);
+                            }}
+                            className="absolute top-2 right-2 text-green-500 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 text-xl leading-none"
+                            title="Закрыть"
+                          >
+                            ×
+                          </button>
+                          <p className="text-green-600 dark:text-green-400 text-sm pr-6">{success}</p>
+
+                          {failedChatTasks.length > 0 && (
+                            <div className="mt-2 border-t border-green-200 dark:border-green-800 pt-2">
+                              <p className="text-xs text-green-700 dark:text-green-300 mb-1">
+                                Некоторые задачи не были созданы. Проверьте формулировки:
+                              </p>
+                              <ul className="list-disc pl-4 space-y-1">
+                                {failedChatTasks.map((task, idx) => (
+                                  <li key={idx} className="text-xs text-green-800 dark:text-green-200">
+                                    <span className="font-semibold">«{task.title}»</span>
+                                    {task.reply && (
+                                      <span className="ml-1 text-[11px] text-green-700 dark:text-green-300">
+                                        — {task.reply}
+                                      </span>
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       
                       <div className="flex gap-2">
                         <button
@@ -1324,16 +1377,49 @@ const ManagerPage = () => {
               </div>
             )}
 
-            {/* Сообщения об ошибках и успехе */}
-            {error && (
+            {/* Сообщения об ошибках и успехе - показываем только при создании нового соревнования (не при редактировании) */}
+            {!editingCompetition && error && (
               <div className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
                 <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
               </div>
             )}
 
-            {success && (
-              <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
-                <p className="text-green-600 dark:text-green-400 text-sm">{success}</p>
+            {!editingCompetition && success && (
+              <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-green-600 dark:text-green-400 text-sm flex-1">{success}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSuccess('');
+                      setFailedChatTasks([]);
+                    }}
+                    className="text-green-700 dark:text-green-300 hover:text-green-900 dark:hover:text-green-100 text-xs font-semibold"
+                    aria-label="Закрыть сообщение"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {failedChatTasks.length > 0 && (
+                  <div className="mt-1 border-t border-green-200 dark:border-green-800 pt-2">
+                    <p className="text-xs text-green-700 dark:text-green-300 mb-1">
+                      Некоторые задачи не были созданы. Проверьте формулировки:
+                    </p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      {failedChatTasks.map((task, idx) => (
+                        <li key={idx} className="text-xs text-green-800 dark:text-green-200">
+                          <span className="font-semibold">«{task.title}»</span>
+                          {task.reply && (
+                            <span className="ml-1 text-[11px] text-green-700 dark:text-green-300">
+                              — {task.reply}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
 
