@@ -297,12 +297,6 @@ const ManagerPage = () => {
     // Создаем даты в локальном времени (datetime-local уже в локальном часовом поясе)
     const startDate = new Date(formData.start_date);
     const endDate = new Date(formData.end_date);
-    const now = new Date();
-    
-    if (startDate < now) {
-      setError('Дата начала должна быть в будущем');
-      return;
-    }
 
     if (endDate <= startDate) {
       setError('Дедлайн должен быть позже даты начала');
