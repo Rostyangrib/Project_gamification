@@ -71,23 +71,60 @@ def chat_with_ai(
             db.commit()
             db.refresh(status_obj)
 
-    # Используем дату из ответа AI (если она есть)
     due_date = task_data.get("due_date")
     
-    # Конвертируем datetime с timezone в naive datetime (локальное время)
-    # Это нужно, чтобы PostgreSQL DateTime column правильно сохранил время
     if due_date and hasattr(due_date, 'tzinfo') and due_date.tzinfo is not None:
         due_date = due_date.replace(tzinfo=None)
 
+    if not due_date:
+        return ChatResponse(
+            reply=(
+                ai_response.get("reply", "")
+                + " В запросе не указана конкретная дата выполнения задачи. "
+                  "Пожалуйста, добавьте дату в формате ДД.ММ.ГГГГ и повторите запрос."
+            ).strip()
+        )
 
     description = str(task_data.get("description", "")).strip()
+
+    normalized_title = re.sub(r"\s+", " ", title.lower())
+    normalized_desc = re.sub(r"\s+", " ", description.lower())
+
+    banned_fragments = [
+        "покур", "раскур", "курить", "курев", "сигарет", "кальян",
+    ]
+    if any(frag in normalized_title or frag in normalized_desc for frag in banned_fragments):
+        return ChatResponse(
+            reply=(
+                ai_response.get("reply", "")
+                + " Я не могу создавать задачи, связанные с курением или подобными действиями. "
+                  "Пожалуйста, переформулируйте запрос в безопасном и рабочем контексте."
+            ).strip()
+        )
+
+    if not description:
+        return ChatResponse(
+            reply=(
+                ai_response.get("reply", "")
+                + " Описание задачи отсутствует или получилось пустым. "
+                  "Пожалуйста, добавьте краткое, понятное описание: что именно нужно сделать и к какому результату прийти."
+            ).strip()
+        )
+
+    if normalized_desc == normalized_title and len(normalized_desc.split()) <= 3:
+        return ChatResponse(
+            reply=(
+                ai_response.get("reply", "")
+                + " Описание задачи слишком короткое и повторяет заголовок. "
+                  "Пожалуйста, уточните, что именно нужно сделать, где и к какому результату прийти."
+            ).strip()
+        )
+
     ai_analysis = analyze_task(title, description)
     estimated_points = ai_analysis["estimated_points"]
 
-    # Определяем список пользователей для создания задач
     user_ids_to_create = chat.user_ids if chat.user_ids else [current_user["user"].id]
     
-    # Проверяем, что все пользователи существуют
     users = db.query(User).filter(User.id.in_(user_ids_to_create)).all()
     if len(users) != len(user_ids_to_create):
         return ChatResponse(reply="Один или несколько указанных пользователей не найдены.")
@@ -95,7 +132,6 @@ def chat_with_ai(
     created_tasks = []
     attached_tags = []
     
-    # Создаем задачи для каждого указанного пользователя
     for user_id in user_ids_to_create:
         new_task = Task(
             user_id=user_id,
@@ -108,9 +144,8 @@ def chat_with_ai(
             awarded_points=0
         )
         db.add(new_task)
-        db.flush()  # Получаем ID задачи без коммита
+        db.flush()  
         
-        # Добавляем теги к задаче
         for tag_name in task_data.get("tags", []):
             if not isinstance(tag_name, str) or not tag_name.strip():
                 continue
@@ -133,7 +168,6 @@ def chat_with_ai(
 
     db.commit()
     
-    # Обновляем объекты после коммита
     for task in created_tasks:
         db.refresh(task)
 
@@ -146,7 +180,6 @@ def chat_with_ai(
         reply += f" Теги: {', '.join(attached_tags)}."
     reply += f" Статус: {status_obj.name}."
 
-    # Возвращаем первую созданную задачу для обратной совместимости
     first_task = created_tasks[0] if created_tasks else None
 
     return ChatResponse(
