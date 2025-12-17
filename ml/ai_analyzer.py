@@ -11,6 +11,19 @@ if not GROQ_API_KEY:
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 MODEL_NAME = "llama-3.1-8b-instant"
 
+_EXAMPLES_PATH = os.path.join(os.path.dirname(__file__), "task_examples.txt")
+try:
+    with open(_EXAMPLES_PATH, "r", encoding="utf-8") as f:
+        TASK_EXAMPLES = f.read()
+except Exception:
+    TASK_EXAMPLES = ""
+
+_COMPLEXITY_EXAMPLES_PATH = os.path.join(os.path.dirname(__file__), "complexity_examples.txt")
+try:
+    with open(_COMPLEXITY_EXAMPLES_PATH, "r", encoding="utf-8") as f:
+        COMPLEXITY_EXAMPLES = f.read()
+except Exception:
+    COMPLEXITY_EXAMPLES = ""
 
 def _call_groq_with_messages(messages: list, temperature: float = 0.3, max_tokens: int = 1024, json_mode: bool = False) -> dict:
     """выполняет запрос к грок и возвращает нормальный json."""
@@ -38,20 +51,23 @@ def _call_groq_with_messages(messages: list, temperature: float = 0.3, max_token
 
 
 def analyze_task(title: str, description: str = "") -> Dict[str, Any]:
-    """оценивает сложность задачи от 1до 100 и возвращает ответ"""
-    system_prompt = """Ты — эксперт по оценке задач для геймификации.
-Оцени задачу по шкале от 1 до 100 баллов:
-- 1–20: очень простая (бытовые дела, рутина)
-- 21–50: средняя (рабочие задачи, требует времени)
-- 51–80: сложная (проекты, аналитика, креатив)
-- 81–100: очень важная/сложная (стратегические, срочные, сложные проекты)
+    system_prompt = f"""Ты — эксперт по оценке задач для геймификации.
+Оцени сложность ВЫПОЛНЕНИЯ задачи (не срочность и не важность!) по шкале от 1 до 100:
 
-Верни ТОЛЬКО JSON в формате:
-{
+- 1–20: можно сделать за 5–15 минут, не требует специальных знаний (например: «отправить отчёт», «купить молоко»)
+- 21–50: занимает 30+ минут или требует базовых профессиональных навыков (например: «написать отчёт», «настроить Wi-Fi»)
+- 51–80: требует анализа, проектирования или нескольких этапов (например: «разработать API», «провести A/B-тест»)
+- 81–100: сложный проект с неопределённостью, требует координации, экспертизы и/или инноваций
+
+Верни ТОЛЬКО корректный JSON в формате:
+{{
   "estimated_points": 42,
   "explanation": "Краткое обоснование",
   "confidence": 0.95
-}"""
+}}
+
+Примеры:
+{COMPLEXITY_EXAMPLES}"""
 
     user_prompt = f"Название: {title}\nОписание: {description}"
 
@@ -60,7 +76,7 @@ def analyze_task(title: str, description: str = "") -> Dict[str, Any]:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
         ]
-        data = _call_groq_with_messages(messages, temperature=0.2, max_tokens=500, json_mode=True)
+        data = _call_groq_with_messages(messages, temperature=0.2, max_tokens=400, json_mode=True)
 
         points = max(1, min(100, int(data.get("estimated_points", 50))))
         conf = max(0.0, min(1.0, float(data.get("confidence", 0.7))))
@@ -73,7 +89,7 @@ def analyze_task(title: str, description: str = "") -> Dict[str, Any]:
         }
 
     except Exception as e:
-        print(f"️ analyze_task error: {e}")
+        print(f"analyze_task error: {e}")
         return {
             "estimated_points": 50,
             "explanation": "Ошибка анализа задачи. Использовано значение по умолчанию.",
@@ -84,17 +100,17 @@ def analyze_task(title: str, description: str = "") -> Dict[str, Any]:
 
 def analyze_task_with_commands(
     user_message: str,
-    available_statuses: list,
-    available_tags: list
+    available_statuses: list = None,  
+    available_tags: list = None       
 ) -> dict:
-    """преобразует запрос пользователя в промпт для модели"""
+    """Преобразует запрос пользователя в промпт для модели и добавляет оценку сложности."""
+    
     FIXED_TAGS = ["несрочно", "срочно", "очень срочно"]
     FIXED_STATUSES = [
         {"code": "todo", "name": "К выполнению"},
         {"code": "in_progress", "name": "В работе"},
         {"code": "done", "name": "Выполнено"}
     ]
-
     status_codes = [s["code"] for s in FIXED_STATUSES]
     status_str = ", ".join([f"{s['code']} ({s['name']})" for s in FIXED_STATUSES])
     tags_str = ", ".join(FIXED_TAGS)
@@ -108,198 +124,67 @@ def analyze_task_with_commands(
 {tags_str}
 
 ПРАВИЛА:
-1. due_date: только если указана точная дата ДД.ММ.ГГГГ → преобразуй в "ГГГГ-ММ-ДДT00:00:00". Иначе null.
-2. title — краткий, ясный, без "создай задачу".
-3. В поле "tags" указывай **ТОЛЬКО один тег срочности**, если он явно упомянут:
+1. Если запрос содержит оскорбления, травлю, дискриминацию, насилие, незаконные действия или призывы к ним:
+   - НЕ СОЗДАВАЙ никаких задач.
+   - Возвращай JSON ТОЛЬКО в виде:
+     {{
+       "reply": "Я не могу помочь с задачами, связанными с оскорблениями, травлей, дискриминацией или вредом другим.",
+       "commands": []
+     }}
+
+2. due_date: только если указана точная дата ДД.ММ.ГГГГ → преобразуй в "ГГГГ-ММ-ДДT00:00:00". Иначе null.
+3. title — краткий, ясный, без "создай задачу".
+4. В поле "tags" указывай ТОЛЬКО один тег срочности, если он явно упомянут:
    - "срочно", "важно", "надо срочно" → ["срочно"]
    - "очень срочно", "критично", "немедленно" → ["очень срочно"]
    - "несрочно", "когда успеешь", "не горит" → ["несрочно"]
    - иначе → []
-4. Никогда не добавляй другие теги — только срочность!
-5. status_code — ТОЛЬКО один из: {", ".join(status_codes)}
-6. Формат ответа СТРОГО:
-{{
-  "reply": "Краткий ответ",
-  "commands": [{{
-    "action": "create_task",
-    "task_data": {{
-      "title": "...",
-      "description": "...",
-      "status_code": "todo",
-      "due_date": null,
-      "tags": ["срочно"]
-    }}
-  }}]
-}}
+5. Никогда не добавляй другие теги — только срочность!
+6. status_code — ТОЛЬКО один из: {", ".join(status_codes)}
+7. Если ты не уверен в срочности или дате, устанавливай:
+   - "tags": []
+   - "due_date": null
+8. Поле "reply" делай кратким:
+   - "Создаю задачу '<title>'"
+   - "Создаю срочную задачу '<title>'"
+   - "Создаю критическую задачу '<title>'"
+   - "Не могу создать такую задачу."
+9. Если формулировка непонятна, бессмысленна или description пуст — ВОЗВРАЩАЙ:
+   {{
+     "reply": "Формулировка задачи непонятна. Пожалуйста, переформулируйте запрос более конкретно (что именно нужно сделать, где, к какому результату и в какие сроки прийти).",
+     "commands": []
+   }}
+10. description ДОЛЖНО быть осмысленным и непустым.
 
-ПРИМЕРЫ:
+Формат ответа СТРОГО как в примерах. Никаких отклонений!
 
-Запрос: "купить молоко завтра"
-Ответ: {{
-  "reply": "Создаю задачу 'Купить молоко'",
-  "commands": [{{
-    "action": "create_task",
-    "task_data": {{
-      "title": "Купить молоко",
-      "description": "",
-      "status_code": "todo",
-      "due_date": null,
-      "tags": []
-    }}
-  }}]
-}}
-
-Запрос: "важная встреча с клиентом 15.12.2024, подготовить документы"
-Ответ: {{
-  "reply": "Создаю задачу 'Встреча с клиентом'",
-  "commands": [{{
-    "action": "create_task",
-    "task_data": {{
-      "title": "Встреча с клиентом",
-      "description": "Подготовить документы",
-      "status_code": "todo",
-      "due_date": "2024-12-15T00:00:00",
-      "tags": ["срочно"]
-    }}
-  }}]
-}}
-
-Запрос: "нужно починить кран дома, срочно"
-Ответ: {{
-  "reply": "Создаю срочную задачу 'Починить кран'",
-  "commands": [{{
-    "action": "create_task",
-    "task_data": {{
-      "title": "Починить кран",
-      "description": "",
-      "status_code": "todo",
-      "due_date": null,
-      "tags": ["срочно"]
-    }}
-  }}]
-}}
-
-Запрос: "записать идеи для проекта"
-Ответ: {{
-  "reply": "Создаю задачу 'Записать идеи для проекта'",
-  "commands": [{{
-    "action": "create_task",
-    "task_data": {{
-      "title": "Записать идеи для проекта",
-      "description": "",
-      "status_code": "todo",
-      "due_date": null,
-      "tags": []
-    }}
-  }}]
-}}
-
-Запрос: "срочно доделать отчет к утру"
-Ответ: {{
-  "reply": "Создаю срочную задачу 'Доделать отчет'",
-  "commands": [{{
-    "action": "create_task",
-    "task_data": {{
-      "title": "Доделать отчет",
-      "description": "",
-      "status_code": "todo",
-      "due_date": null,
-      "tags": ["очень срочно"]
-    }}
-  }}]
-}}
-
-Запрос: "прочитать книгу 'Алхимик', когда будет время"
-Ответ: {{
-  "reply": "Создаю задачу 'Прочитать книгу \"Алхимик\"'",
-  "commands": [{{
-    "action": "create_task",
-    "task_data": {{
-      "title": "Прочитать книгу \"Алхимик\"",
-      "description": "",
-      "status_code": "todo",
-      "due_date": null,
-      "tags": ["несрочно"]
-    }}
-  }}]
-}}
-
-Запрос: "подготовить презентацию к выступлению 25.06.2025"
-Ответ: {{
-  "reply": "Создаю задачу 'Подготовить презентацию'",
-  "commands": [{{
-    "action": "create_task",
-    "task_data": {{
-      "title": "Подготовить презентацию",
-      "description": "К выступлению",
-      "status_code": "todo",
-      "due_date": "2025-06-25T00:00:00",
-      "tags": ["срочно"]
-    }}
-  }}]
-}}
-
-Запрос: "решить проблему с сервером, он упал!"
-Ответ: {{
-  "reply": "Создаю критическую задачу 'Решить проблему с сервером'",
-  "commands": [{{
-    "action": "create_task",
-    "task_data": {{
-      "title": "Решить проблему с сервером",
-      "description": "Сервер упал",
-      "status_code": "todo",
-      "due_date": null,
-      "tags": ["очень срочно"]
-    }}
-  }}]
-}}
-
-Запрос: "обдумать стратегию развития на следующий квартал"
-Ответ: {{
-  "reply": "Создаю задачу 'Обдумать стратегию развития'",
-  "commands": [{{
-    "action": "create_task",
-    "task_data": {{
-      "title": "Обдумать стратегию развития",
-      "description": "На следующий квартал",
-      "status_code": "todo",
-      "due_date": null,
-      "tags": []
-    }}
-  }}]
-}}
-
-Запрос: "оплатить коммунальные счета до 10.07.2025"
-Ответ: {{
-  "reply": "Создаю задачу 'Оплатить коммунальные счета'",
-  "commands": [{{
-    "action": "create_task",
-    "task_data": {{
-      "title": "Оплатить коммунальные счета",
-      "description": "",
-      "status_code": "todo",
-      "due_date": "2025-07-10T00:00:00",
-      "tags": ["срочно"]
-    }}
-  }}]
-}}
-
-Формат ответа СТРОГО как в примерах. Никаких отклонений!"""
+{TASK_EXAMPLES}"""
 
     try:
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_message}
         ]
-        data = _call_groq_with_messages(messages, temperature=0.1, max_tokens=1000, json_mode=True)
+        raw_data = _call_groq_with_messages(messages, temperature=0.05, max_tokens=600, json_mode=True)
+
+        reply = raw_data.get("reply", "Готов помочь!")
+        commands = raw_data.get("commands", [])
+
+        for cmd in commands:
+            if cmd.get("action") == "create_task":
+                task_data = cmd.get("task_data", {})
+                title = task_data.get("title", "")
+                description = task_data.get("description", "")
+                complexity = analyze_task(title, description)
+                task_data["estimated_points"] = complexity["estimated_points"]
 
         return {
-            "reply": data.get("reply", "Готов помочь!"),
-            "commands": data.get("commands", [])
+            "reply": reply,
+            "commands": commands
         }
 
     except Exception as e:
-        print(f"️ analyze_task_with_commands error: {e}")
+        print(f"analyze_task_with_commands error: {e}")
         return {
             "reply": "Извините, не удалось обработать ваш запрос.",
             "commands": []
