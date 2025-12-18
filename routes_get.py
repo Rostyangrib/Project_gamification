@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from schemas import TaskTitleAndDate, UserLeaderboard
-from config.db import get_db
+from db import get_db
 from database import User, TaskStatus, Tag, Task, RewardType, Reward, Competition
 from schemas import (
     UserResponse, TaskStatusResponse,

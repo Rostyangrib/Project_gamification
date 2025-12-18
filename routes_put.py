@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 
 
-from config.db import get_db
+from db import get_db
 from database import TaskStatus, Tag, Task, RewardType, Reward, User, Competition
 from schemas import (
     TaskStatusUpdate, TaskStatusResponse,
@@ -27,18 +27,19 @@ def update_own_user(
 ):
     user: User = current_user["user"]
 
-    # Обновление email с проверкой уникальности
+    if payload.first_name is not None:
+        user.first_name = payload.first_name
+
+    if payload.last_name is not None:
+        user.last_name = payload.last_name
+
     if payload.email and payload.email != user.email:
         if db.query(User).filter(User.email == payload.email).first():
             raise HTTPException(status_code=400, detail="Пользователь с таким email уже существует")
         user.email = payload.email
 
-    # Обновление пароля
     if payload.password:
         user.password_hash = get_password_hash(payload.password)
-
-    # Роль можно менять только через админский endpoint
-    # Здесь игнорируем payload.role для безопасности
 
     db.commit()
     db.refresh(user)

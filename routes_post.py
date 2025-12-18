@@ -1,14 +1,10 @@
-import re
-from datetime import datetime
-
-import requests
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from passlib.context import CryptContext
 from ml.ai_analyzer import analyze_task
 
-from config.db import get_db
+from db import get_db
 from database import (
     User, TaskStatus, Tag, TaskTag, Task, RewardType, Reward, Competition
 )

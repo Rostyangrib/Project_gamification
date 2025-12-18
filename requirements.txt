@@ -9,3 +9,6 @@ passlib
 bcrypt==3.2.2
 requests
 pydantic[email]
+pytest
+pytest-asyncio
+httpx
