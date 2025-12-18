@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 import json
 from ml.ai_analyzer import analyze_task_with_commands  # Убран импорт analyze_task
-from config.db import get_db
+from db import get_db
 from database import User, Task, TaskStatus, Tag, TaskTag
 from schemas import TaskResponse
 from dependencies import get_current_user
