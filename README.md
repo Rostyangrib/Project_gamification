@@ -3,11 +3,19 @@
 ### Как запустить проект
 
 1. Запустить Docker
-2. Запустить docker-compose build
-3. Запустить docker-compose run
+2. Запустить ```docker-compose build```
+3. Запустить ```docker-compose up```
 4. Перейти по адресу 0.0.0.0:8000
 5. Откроется само веб-приложение с frontend части
 
+
+### Запуск без докера
+
+1. ```pip install -r requirements.txt ``` - для установки зависимостей  
+2. ```cd frontend``` - перейти в папку frontend  
+3. ```npm install``` - установка зависимостей для frontend
+4. ```npm run build``` - сборка react
+5. ```python run.py``` - запуск приложения
 ### Доступ к админ-панели
 
 1. В адресной строке перейти по 0.0.0.0:8000/docs
