@@ -1,4 +1,3 @@
-# routes_chat.py
 import re
 from typing import Optional, List
 from fastapi import APIRouter, Depends
@@ -10,10 +9,7 @@ from database import User, Task, TaskStatus, Tag, TaskTag
 from schemas import TaskResponse
 from dependencies import get_current_user
 
-
-
 router = APIRouter()
-
 
 class ChatMessage(BaseModel):
     message: str
@@ -23,7 +19,6 @@ class ChatMessage(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
     task_created: TaskResponse | None = None
-
 
 @router.post("/api/chat", response_model=ChatResponse)
 @router.post("/chat", response_model=ChatResponse)

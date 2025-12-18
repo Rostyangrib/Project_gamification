@@ -1,16 +1,9 @@
-# pytests/test_post.py
 import pytest
 from jose import jwt
 from datetime import datetime, timedelta
 import uuid
 from sqlalchemy import text
-
-# Безопасный импорт с fallback
-try:
-    from auth import SECRET_KEY, ALGORITHM
-except ImportError:
-    SECRET_KEY = "test-secret-key-for-pytest-fallback"
-    ALGORITHM = "HS256"
+from auth import SECRET_KEY, ALGORITHM
 
 
 def create_token(user_id: int, email: str, role: str = "user"):
@@ -29,10 +22,7 @@ def unique_email():
     return f"test_{uuid.uuid4()}@example.com"
 
 
-# ----------------------------------------
 # Auth: /register, /login
-# ----------------------------------------
-
 def test_register_new_user(client):
     email = unique_email()
     response = client.post("/register", json={
@@ -49,8 +39,8 @@ def test_register_new_user(client):
 
 def test_register_duplicate_email(client):
     email = unique_email()
-    client.post("/register", json={"email": email, "first_name": "A", "last_name": "B", "password": "123"})
-    response = client.post("/register", json={"email": email, "first_name": "C", "last_name": "D", "password": "456"})
+    client.post("/register", json={"email": email, "first_name": "A", "last_name": "B", "password": "123456"})
+    response = client.post("/register", json={"email": email, "first_name": "C", "last_name": "D", "password": "123456"})
     assert response.status_code == 400
 
 
@@ -69,10 +59,7 @@ def test_login_wrong_password(client):
     assert response.status_code == 401
 
 
-# ----------------------------------------
 # Фикстуры: создание пользователей с нужной ролью
-# ----------------------------------------
-
 @pytest.fixture
 def registered_user(client):
     email = unique_email()
@@ -89,10 +76,10 @@ def registered_user(client):
 def registered_admin(client):
     email = unique_email()
     password = "adminpass"
-    # Создаём через /users (твой эндпоинт без защиты)
-    res = client.post("/users", json={"email": email, "first_name": "Admin", "last_name": "Test", "password": password})
+    # Создаём через /register
+    res = client.post("/register", json={"email": email, "first_name": "Admin", "last_name": "Test", "password": password})
     user = res.json()
-    # Меняем роль на admin через SQL (используем text!)
+    # Меняем роль на admin
     from db import engine
     with engine.connect() as conn:
         conn.execute(text("UPDATE users SET role = 'admin' WHERE id = :user_id"), {"user_id": user["id"]})
@@ -106,7 +93,7 @@ def registered_admin(client):
 def registered_manager(client):
     email = unique_email()
     password = "managerpass"
-    res = client.post("/users",
+    res = client.post("/register",
                       json={"email": email, "first_name": "Manager", "last_name": "Test", "password": password})
     user = res.json()
     from db import engine
@@ -118,10 +105,8 @@ def registered_manager(client):
     return {"user": user, "token": token}
 
 
-# ----------------------------------------
-# TaskStatus (admin only)
-# ----------------------------------------
 
+# TaskStatus только для админа
 def test_create_task_status_as_admin(client, registered_admin):
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     response = client.post("/task-statuses", json={"code": "test", "name": "Test"}, headers=headers)
@@ -141,10 +126,7 @@ def test_create_duplicate_task_status_code(client, registered_admin):
     assert response.status_code == 400
 
 
-# ----------------------------------------
-# Tags (public)
-# ----------------------------------------
-
+# Tags
 def test_create_tag(client):
     response = client.post("/tags", json={"name": "Urgent"})
     assert response.status_code == 201
@@ -157,12 +139,9 @@ def test_create_duplicate_tag(client):
     assert response.status_code == 400
 
 
-# ----------------------------------------
 # Tasks
-# ----------------------------------------
-
 def test_create_task_as_user(client, registered_user, registered_admin):
-    # Сначала создаём статус (через админа)
+    # Сначала создаём статус через админа
     client.post("/task-statuses", json={"code": "test_status", "name": "Test"},
                 headers={"Authorization": f"Bearer {registered_admin['token']}"})
 
@@ -198,12 +177,9 @@ def test_create_task_for_nonexistent_user(client, registered_admin):
     assert response.status_code == 404
 
 
-# ----------------------------------------
-# TaskTags
-# ----------------------------------------
 
+# TaskTags
 def test_create_task_tag(client, registered_user, registered_admin):
-    # Создаём статус
     client.post("/task-statuses", json={"code": "tag_task", "name": "Tag Task"},
                 headers={"Authorization": f"Bearer {registered_admin['token']}"})
 
@@ -216,10 +192,8 @@ def test_create_task_tag(client, registered_user, registered_admin):
     assert response.status_code == 201
 
 
-# ----------------------------------------
-# RewardTypes (admin only)
-# ----------------------------------------
 
+# RewardTypes
 def test_create_reward_type_as_admin(client, registered_admin):
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     response = client.post("/reward-types", json={"code": "test", "name": "Test Reward"}, headers=headers)
@@ -232,10 +206,7 @@ def test_create_reward_type_as_user_forbidden(client, registered_user):
     assert response.status_code == 403
 
 
-# ----------------------------------------
 # Rewards
-# ----------------------------------------
-
 def test_create_reward(client, registered_user, registered_admin):
     # Создаём тип награды
     rt = client.post("/reward-types", json={"code": "pytest", "name": "Pytest Reward"},
@@ -247,10 +218,7 @@ def test_create_reward(client, registered_user, registered_admin):
     assert response.status_code == 201
 
 
-# ----------------------------------------
-# Competitions (manager only)
-# ----------------------------------------
-
+# Competitions
 def test_create_competition_as_manager(client, registered_manager):
     headers = {"Authorization": f"Bearer {registered_manager['token']}"}
     response = client.post("/competitions", json={

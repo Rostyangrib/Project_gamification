@@ -1,13 +1,11 @@
-# pytests/test_chat.py
 import pytest
 from unittest.mock import patch
-from datetime import datetime, timedelta
+from datetime import datetime
 import uuid
 
 
 def unique_email():
     return f"test_{uuid.uuid4()}@example.com"
-
 
 @pytest.fixture
 def registered_user(client):
@@ -43,7 +41,6 @@ def sample_task_status(client, registered_user):
     login = client.post("/login", json={"email": admin_email, "password": "adminpass"}).json()
     client.post("/task-statuses", json={"code": "in_progress", "name": "В работе"},
                 headers={"Authorization": f"Bearer {login['access_token']}"})
-    # Также создаём "todo" на всякий случай
     client.post("/task-statuses", json={"code": "todo", "name": "К выполнению"},
                 headers={"Authorization": f"Bearer {login['access_token']}"})
 
@@ -67,10 +64,7 @@ def sample_tag(client, registered_user):
                 headers={"Authorization": f"Bearer {login['access_token']}"})
 
 
-# ----------------------------------------
 # Тесты
-# ----------------------------------------
-
 def test_chat_create_task_success(client, registered_user, sample_task_status, sample_tag):
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
 

@@ -1,4 +1,3 @@
-# pytests/test_delete.py
 import pytest
 import uuid
 from sqlalchemy import text
@@ -6,11 +5,6 @@ from sqlalchemy import text
 
 def unique_email():
     return f"test_{uuid.uuid4()}@example.com"
-
-
-# ----------------------------------------
-# Фикстуры
-# ----------------------------------------
 
 @pytest.fixture
 def registered_user(client):
@@ -70,10 +64,7 @@ def registered_manager(client):
     return {"user": user, "token": token}
 
 
-# ----------------------------------------
 # Подготовка данных
-# ----------------------------------------
-
 @pytest.fixture
 def sample_task_status(client, registered_admin):
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
@@ -131,18 +122,14 @@ def sample_competition(client, registered_manager):
     return comp
 
 
-# ----------------------------------------
 # Тесты
-# ----------------------------------------
-
-# ------------------ /users/me ------------------
-
+# /users/me
 def test_delete_own_account(client, registered_user):
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.delete("/users/me", headers=headers)
     assert response.status_code == 204
 
-    # Проверим, что пользователь удалён
+    # Проверяем что пользователь удалён
     db = registered_user["user"]
     from db import engine
     with engine.connect() as conn:
@@ -150,8 +137,7 @@ def test_delete_own_account(client, registered_user):
         assert res.fetchone() is None
 
 
-# ------------------ /admin/users/{id} ------------------
-
+# /admin/users/{id}
 def test_delete_user_by_admin(client, registered_admin, registered_user):
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     user_id = registered_user["user"]["id"]
@@ -177,8 +163,7 @@ def test_delete_user_by_non_admin_forbidden(client, registered_user):
     assert response.status_code == 403
 
 
-# ------------------ /task-statuses/{id} ------------------
-
+# /task-statuses/{id}
 def test_delete_task_status_by_admin(client, registered_admin, sample_task_status):
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     response = client.delete(f"/task-statuses/{sample_task_status['id']}", headers=headers)
@@ -191,16 +176,14 @@ def test_delete_nonexistent_task_status(client, registered_admin):
     assert response.status_code == 404
 
 
-# ------------------ /tags/{id} ------------------
-
+# /tags/{id}
 def test_delete_tag_by_admin(client, registered_admin, sample_tag):
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     response = client.delete(f"/tags/{sample_tag['id']}", headers=headers)
     assert response.status_code == 204
 
 
-# ------------------ /tasks/{id} ------------------
-
+# /tasks/{id}
 def test_delete_task_by_owner(client, registered_user, sample_task):
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.delete(f"/tasks/{sample_task['id']}", headers=headers)
@@ -222,27 +205,23 @@ def test_delete_task_by_non_owner_forbidden(client, registered_user, registered_
     # Пытаемся удалить как обычный пользователь
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.delete(f"/tasks/{task_id}", headers=headers)
-    assert response.status_code == 404  # не найдена, т.к. не принадлежит
+    assert response.status_code == 404
 
-
-# ------------------ /reward-types/{id} ------------------
-
+# /reward-types/{id}
 def test_delete_reward_type_by_admin(client, registered_admin, sample_reward_type):
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     response = client.delete(f"/reward-types/{sample_reward_type['id']}", headers=headers)
     assert response.status_code == 204
 
 
-# ------------------ /rewards/{id} ------------------
-
+# /rewards/{id}
 def test_delete_reward_by_owner(client, registered_user, sample_reward):
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.delete(f"/rewards/{sample_reward['id']}", headers=headers)
     assert response.status_code == 204
 
 
-# ------------------ /competitions/{id} ------------------
-
+# /competitions/{id}
 def test_delete_competition_by_manager(client, registered_manager, sample_competition, registered_user):
     headers = {"Authorization": f"Bearer {registered_manager['token']}"}
     comp_id = sample_competition["id"]
@@ -257,7 +236,7 @@ def test_delete_competition_by_manager(client, registered_manager, sample_compet
     response = client.delete(f"/competitions/{comp_id}", headers=headers)
     assert response.status_code == 204
 
-    # Проверим, что cur_comp сброшен
+    # Проверим что cur_comp сброшен
     with engine.connect() as conn:
         res = conn.execute(text("SELECT cur_comp FROM users WHERE id = :user_id"),
                            {"user_id": registered_user["user"]["id"]})

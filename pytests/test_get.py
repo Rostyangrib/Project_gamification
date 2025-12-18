@@ -1,16 +1,8 @@
-# pytests/test_get.py
 import pytest
 from datetime import datetime, timedelta
 import uuid
 from sqlalchemy import text
-
-# Безопасный импорт токена
-try:
-    from auth import SECRET_KEY, ALGORITHM
-except ImportError:
-    SECRET_KEY = "test-secret-key"
-    ALGORITHM = "HS256"
-
+from auth import SECRET_KEY, ALGORITHM
 from jose import jwt
 
 
@@ -27,10 +19,6 @@ def create_token(user_id: int, email: str, role: str = "user"):
 def unique_email():
     return f"test_{uuid.uuid4()}@example.com"
 
-
-# ----------------------------------------
-# Вспомогательные фикстуры
-# ----------------------------------------
 
 @pytest.fixture
 def registered_user(client):
@@ -88,10 +76,6 @@ def registered_manager(client):
     return {"user": user, "token": token}
 
 
-# ----------------------------------------
-# Подготовка данных: competition + task
-# ----------------------------------------
-
 @pytest.fixture
 def sample_competition(client, registered_manager):
     headers = {"Authorization": f"Bearer {registered_manager['token']}"}
@@ -120,10 +104,7 @@ def sample_task(client, registered_user, registered_admin):
     return task
 
 
-# ----------------------------------------
 # Тесты
-# ----------------------------------------
-
 def test_get_tasks_latest_authorized(client, registered_user, sample_task):
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.get("/tasks/latest", headers=headers)

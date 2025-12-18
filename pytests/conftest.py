@@ -1,15 +1,14 @@
-# pytests/conftest.py
 import os
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
-from database import Base          # Base и модели — из database.py
-from db import engine              # engine — из db.py
-from main import app               # FastAPI-приложение
 from unittest.mock import patch
+import pytest
 
-os.environ["TESTING"] = "false"
+os.environ["TESTING"] = "true"
 
+from database import Base
+from db import engine
+from main import app
 
 @pytest.fixture(scope="function")
 def client():
@@ -24,8 +23,6 @@ def client():
             conn.execute(text(f"TRUNCATE TABLE {table.name} RESTART IDENTITY CASCADE"))
         trans.commit()
 
-import pytest
-from unittest.mock import patch
 
 @pytest.fixture(autouse=True)
 def mock_ai_analyzer():

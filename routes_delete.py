@@ -45,7 +45,6 @@ def delete_user_by_admin(
         db.delete(task)
 
     # db.query(Board).filter(Board.user_id == user_id).delete()
-    #
     # db.query(Category).filter(Category.user_id == user_id).delete()
 
     db.query(Reward).filter(Reward.user_id == user_id).delete()
@@ -188,4 +187,4 @@ def delete_competition(
 
     db.delete(competition)
     db.commit()
-    return # 204 No Content
+    return

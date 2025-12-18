@@ -1,17 +1,15 @@
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, Field
 from typing import Optional, List
 
-# --- Users ---
 class UserCreate(BaseModel):
     first_name: str
     last_name: str
     email: EmailStr
-    password: str
+    password: str = Field(..., min_length=6, max_length=72)
 
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     id: int
     first_name: str
     last_name: str
@@ -22,7 +20,6 @@ class UserResponse(BaseModel):
 
 class UserLeaderboard(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     first_name: str
     last_name: str
     total_points: int
@@ -40,7 +37,6 @@ class UserUpdate(BaseModel):
     password: Optional[str] = None
     role: Optional[str] = None
 
-# --- TaskStatus ---
 class TaskStatusCreate(BaseModel):
     code: str
     name: str
@@ -56,7 +52,6 @@ class TaskStatusResponse(BaseModel):
     code: str
     name: str
 
-# --- Tags ---
 class TagCreate(BaseModel):
     name: str
 
@@ -69,12 +64,10 @@ class TagResponse(BaseModel):
     id: int
     name: str
 
-# --- TaskTags ---
 class TaskTagCreate(BaseModel):
     task_id: int
     tag_id: int
 
-# --- Tasks ---
 class TaskCreate(BaseModel):
     status_id: int
     title: str
@@ -94,7 +87,6 @@ class TaskUpdate(BaseModel):
 
 class TaskResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     id: int
     user_id: int
     status_id: int
@@ -108,7 +100,6 @@ class TaskResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-# --- RewardTypes ---
 class RewardTypeCreate(BaseModel):
     code: str
     name: str
@@ -121,13 +112,11 @@ class RewardTypeUpdate(BaseModel):
 
 class RewardTypeResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     id: int
     code: str
     name: str
     description: Optional[str]
 
-# --- Rewards ---
 class RewardCreate(BaseModel):
     type_id: int
     points_amount: int
@@ -140,7 +129,6 @@ class RewardUpdate(BaseModel):
 
 class RewardResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     id: int
     user_id: int
     type_id: int
@@ -148,7 +136,6 @@ class RewardResponse(BaseModel):
     awarded_at: datetime
     reason: Optional[str]
 
-# --- Competitions ---
 class CompetitionCreate(BaseModel):
     title: str
     start_date: datetime
@@ -161,7 +148,6 @@ class CompetitionUpdate(BaseModel):
 
 class CompetitionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     id: int
     title: str
     start_date: datetime
@@ -169,7 +155,6 @@ class CompetitionResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-# --- Auth ---
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -183,7 +168,6 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
-# --- Additional ---
 class TaskTitleAndDate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

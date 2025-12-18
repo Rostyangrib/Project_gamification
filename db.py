@@ -8,9 +8,9 @@ load_dotenv()
 TESTING = os.getenv("TESTING", "False").lower() == "true"
 
 if TESTING:
-    DB_NAME = os.getenv("DB_NAME_TEST", "gamification_test")
+    DB_NAME = os.getenv("DB_NAME_TEST", "tests")
 else:
-    DB_NAME = os.getenv("DB_NAME", "gamification")
+    DB_NAME = os.getenv("DB_NAME", "Database")
 
 DATABASE_URL = (
     f"postgresql://{os.getenv('DB_USER')}:"

@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
 
-
 from db import get_db
 from database import TaskStatus, Tag, Task, RewardType, Reward, User, Competition
 from schemas import (
@@ -56,25 +55,20 @@ def update_user_by_admin(
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
 
-    # Обновление имени
     if payload.first_name is not None:
         user.first_name = payload.first_name
 
-    # Обновление фамилии
     if payload.last_name is not None:
         user.last_name = payload.last_name
 
-    # Обновление email с проверкой уникальности
     if payload.email and payload.email != user.email:
         if db.query(User).filter(User.email == payload.email).first():
             raise HTTPException(status_code=400, detail="Пользователь с таким email уже существует")
         user.email = payload.email
 
-    # Обновление пароля
     if payload.password:
         user.password_hash = get_password_hash(payload.password)
 
-    # Обновление роли
     if payload.role:
         if payload.role not in ['user', 'manager', 'admin']:
             raise HTTPException(status_code=400, detail="Недопустимая роль. Используйте 'user', 'manager' или 'admin'")
@@ -236,7 +230,7 @@ def update_task(
 
         new_status = db.query(TaskStatus).filter(TaskStatus.id == update_data.status_id).first()
         if new_status and new_status.code == "done":
-            # Проверяем, есть ли у пользователя соревнование
+            # Проверяем есть ли у пользователя соревнование
             user = db.query(User).filter(User.id == current_user["user"].id).first()
             if user and user.cur_comp:
                 competition = db.query(Competition).filter(Competition.id == user.cur_comp).first()
@@ -320,17 +314,15 @@ def update_reward(
 def update_competition(
     competition_id: int,
     competition_update: CompetitionUpdate,
-    current_user: dict = Depends(require_manager), # Админ или менеджер может обновлять
+    current_user: dict = Depends(require_manager),
     db: Session = Depends(get_db)
 ):
     competition = db.query(Competition).filter(Competition.id == competition_id).first()
     if not competition:
         raise HTTPException(status_code=404, detail="Соревнование не найдено")
 
-    # Обновляем поля, которые пришли в запросе
     update_data = competition_update.model_dump(exclude_unset=True)
-    
-    # Конвертируем datetime с timezone в naive datetime (локальное время)
+
     if 'start_date' in update_data and update_data['start_date'] is not None:
         start_date = update_data['start_date']
         if start_date.tzinfo is not None:

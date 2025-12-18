@@ -25,13 +25,15 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 router = APIRouter()
 
+# Регистрация пользователя
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register(user: UserCreate, db: Session = Depends(get_db)):
+    # Проверка на уникальность email
     if db.query(User).filter(User.email == user.email).first():
         raise HTTPException(
             status_code=400, detail="Пользователь с таким email уже существует"
         )
-
+    # Шифрование пароля
     hashed_password = get_password_hash(user.password)
     db_user = User(
         first_name=user.first_name,
@@ -41,35 +43,11 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         total_points=0,
         role="user"
     )
+    # Запись в бд
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     return db_user
-
-
-@router.post("/login", response_model=Token)
-def login(user: UserLogin, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.email == user.email).first()
-    if not db_user or not verify_password(user.password, db_user.password_hash):
-        raise HTTPException(
-            status_code=401,
-            detail="Неверный email или пароль",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token = create_access_token(str(db_user.id), db_user.role)
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": {
-            "id": str(db_user.id),
-            "email": db_user.email,
-            "first_name": db_user.first_name,
-            "last_name": db_user.last_name,
-            "total_points": db_user.total_points,
-            "role": db_user.role
-        }
-    }
-
 
 @router.post("/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
@@ -93,6 +71,32 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
         )
     return db_user
 
+# Логин
+@router.post("/login", response_model=Token)
+def login(user: UserLogin, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.email == user.email).first()
+    # Если пользователя не существует, неправильная почта или пароль
+    if not db_user or not verify_password(user.password, db_user.password_hash):
+        raise HTTPException(
+            status_code=401,
+            detail="Неверный email или пароль",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    # Генерируем токен
+    access_token = create_access_token(str(db_user.id), db_user.role)
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "id": str(db_user.id),
+            "email": db_user.email,
+            "first_name": db_user.first_name,
+            "last_name": db_user.last_name,
+            "total_points": db_user.total_points,
+            "role": db_user.role
+        }
+    }
+
 # @router.post("/boards", response_model=BoardResponse, status_code=status.HTTP_201_CREATED)
 # def create_board(
 #     board: BoardCreate,
@@ -109,10 +113,11 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
 #     db.refresh(db_board)
 #     return db_board
 
+# Создание статуса
 @router.post("/task-statuses", response_model=TaskStatusResponse, status_code=status.HTTP_201_CREATED)
 def create_task_status(
     status_data: TaskStatusCreate,
-    current_user: dict = Depends(require_admin),
+    current_user: dict = Depends(require_admin), # Только для админа
     db: Session = Depends(get_db)
 ):
     if db.query(TaskStatus).filter(TaskStatus.code == status_data.code).first():
@@ -200,23 +205,20 @@ def create_task(
         current_user: dict = Depends(require_admin),
         db: Session = Depends(get_db)
 ):
-    # Проверяем, существует ли пользователь с переданным id_user
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
 
-    # Проверяем, существует ли статус задачи
     if not db.query(TaskStatus).filter(TaskStatus.id == task.status_id).first():
         raise HTTPException(status_code=404, detail="TaskStatus не найден")
 
-    # Анализ задачи через AI
     ai_result = analyze_task(task.title, task.description or "")
     estimated_points = ai_result["estimated_points"]
     ai_metadata = ai_result
 
     # Создаем задачу для указанного пользователя
     db_task = Task(
-        user_id=user_id,  # Устанавливаем задачу конкретному пользователю
+        user_id=user_id,
         status_id=task.status_id,
         title=task.title,
         description=task.description,
@@ -304,19 +306,14 @@ def create_competition(
     current_user: dict = Depends(require_manager), # Админ или менеджер может создавать
     db: Session = Depends(get_db)
 ):
-    # Проверка уникальности названия (опционально)
     existing = db.query(Competition).filter(Competition.title == competition.title).first()
     if existing:
         raise HTTPException(status_code=400, detail="Соревнование с таким названием уже существует")
 
-    # Конвертируем datetime с timezone в naive datetime (локальное время)
-    # Это нужно, чтобы PostgreSQL DateTime column правильно сохранил время
     competition_data = competition.model_dump()
     if competition_data.get('start_date'):
         start_date = competition_data['start_date']
         if start_date.tzinfo is not None:
-            # Если есть timezone info, конвертируем в naive datetime (убираем timezone)
-            # Это сохранит локальное время пользователя как есть
             competition_data['start_date'] = start_date.replace(tzinfo=None)
     
     if competition_data.get('end_date'):

@@ -1,16 +1,9 @@
-# pytests/test_put.py
 import pytest
 from jose import jwt
 from datetime import datetime, timedelta
 import uuid
 from sqlalchemy import text
-
-# Безопасный импорт SECRET_KEY
-try:
-    from auth import SECRET_KEY, ALGORITHM
-except ImportError:
-    SECRET_KEY = "test-secret-key-for-pytest"
-    ALGORITHM = "HS256"
+from auth import SECRET_KEY, ALGORITHM
 
 
 def create_token(user_id: int, email: str, role: str = "user"):
@@ -25,11 +18,6 @@ def create_token(user_id: int, email: str, role: str = "user"):
 
 def unique_email():
     return f"test_{uuid.uuid4()}@example.com"
-
-
-# ----------------------------------------
-# Фикстуры
-# ----------------------------------------
 
 @pytest.fixture
 def registered_user(client):
@@ -51,7 +39,7 @@ def registered_user(client):
 def registered_admin(client):
     email = unique_email()
     password = "adminpass"
-    res = client.post("/users", json={
+    res = client.post("/register", json={
         "first_name": "Admin",
         "last_name": "Test",
         "email": email,
@@ -71,7 +59,7 @@ def registered_admin(client):
 def registered_manager(client):
     email = unique_email()
     password = "managerpass"
-    res = client.post("/users", json={
+    res = client.post("/register", json={
         "first_name": "Manager",
         "last_name": "Test",
         "email": email,
@@ -85,11 +73,6 @@ def registered_manager(client):
     login_res = client.post("/login", json={"email": email, "password": password})
     token = login_res.json()["access_token"]
     return {"user": user, "token": token}
-
-
-# ----------------------------------------
-# Подготовка данных
-# ----------------------------------------
 
 @pytest.fixture
 def sample_competition(client, registered_manager):
@@ -148,12 +131,9 @@ def sample_reward(client, registered_user, sample_reward_type):
     return reward
 
 
-# ----------------------------------------
+
 # Тесты
-# ----------------------------------------
-
-# ------------------ /users/me ------------------
-
+# /users/me
 def test_update_own_user_success(client, registered_user):
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     new_email = unique_email()
@@ -182,14 +162,14 @@ def test_update_own_user_duplicate_email(client, registered_user):
     assert response.status_code == 400
 
 
-# ------------------ /admin/users/{id} ------------------
+# /admin/users/{id}
 
 def test_update_user_by_admin(client, registered_admin, registered_user):
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     new_email = unique_email()  # ← Генерируем уникальный!
     response = client.put(f"/admin/users/{registered_user['user']['id']}", json={
         "role": "manager",
-        "email": new_email  # ← Используем уникальный
+        "email": new_email  # Используем уникальный
     }, headers=headers)
     assert response.status_code == 200
     data = response.json()
@@ -209,8 +189,7 @@ def test_update_nonexistent_user_by_admin(client, registered_admin):
     assert response.status_code == 404
 
 
-# ------------------ /users/{id}/competition ------------------
-
+# /users/{id}/competition
 def test_assign_user_to_competition(client, registered_manager, registered_user, sample_competition):
     headers = {"Authorization": f"Bearer {registered_manager['token']}"}
     response = client.put(f"/users/{registered_user['user']['id']}/competition", json={
@@ -219,7 +198,7 @@ def test_assign_user_to_competition(client, registered_manager, registered_user,
     assert response.status_code == 200
     data = response.json()
     assert data["cur_comp"] == sample_competition["id"]
-    assert data["total_points"] == 0  # сброшено!
+    assert data["total_points"] == 0
 
 
 def test_remove_user_from_competition(client, registered_manager, registered_user, sample_competition):
@@ -244,8 +223,7 @@ def test_assign_to_nonexistent_competition(client, registered_manager, registere
     assert response.status_code == 404
 
 
-# ------------------ /task-statuses/{id} ------------------
-
+# /task-statuses/{id}
 def test_update_task_status_by_admin(client, registered_admin, sample_task_status):
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     new_code = "updated_put"
@@ -269,8 +247,7 @@ def test_update_task_status_duplicate_code(client, registered_admin, sample_task
     assert response.status_code == 400
 
 
-# ------------------ /tags/{id} ------------------
-
+# /tags/{id}
 def test_update_tag_by_admin(client, registered_admin, sample_tag):
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     new_name = "Updated PUT Tag"
@@ -289,8 +266,7 @@ def test_update_tag_duplicate_name(client, registered_admin, sample_tag):
     assert response.status_code == 400
 
 
-# ------------------ /tasks/{id} ------------------
-
+# /tasks/{id}
 def test_update_task_success(client, registered_user, sample_task, sample_task_status):
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.put(f"/tasks/{sample_task['id']}", json={
@@ -304,7 +280,7 @@ def test_update_task_success(client, registered_user, sample_task, sample_task_s
 
 
 def test_update_task_status_to_done_during_competition(
-    client, registered_user, sample_competition, registered_admin  # ← добавь сюда
+    client, registered_user, sample_competition, registered_admin
 ):
     # Назначим пользователя на соревнование
     from db import engine
@@ -314,7 +290,7 @@ def test_update_task_status_to_done_during_competition(
         conn.commit()
 
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
-    # Создадим статус "done" через админа
+    # Создадим статус через админа
     done_status = client.post("/task-statuses", json={"code": "done", "name": "Выполнено"},
                               headers={"Authorization": f"Bearer {registered_admin['token']}"})
     done_id = done_status.json()["id"]
@@ -322,11 +298,11 @@ def test_update_task_status_to_done_during_competition(
     # Создадим задачу
     task = client.post("/tasks", json={
         "title": "Task for done test",
-        "status_id": 1,  # любой существующий
+        "status_id": 1,
         "due_date": "2025-12-31T23:59:59"
     }, headers=headers).json()
 
-    # Обновим статус на "done"
+    # Обновим статус на done
     response = client.put(f"/tasks/{task['id']}", json={"status_id": done_id}, headers=headers)
     assert response.status_code == 200
 
@@ -337,8 +313,7 @@ def test_update_task_nonexistent(client, registered_user):
     assert response.status_code == 404
 
 
-# ------------------ /reward-types/{id} ------------------
-
+# /reward-types/{id}
 def test_update_reward_type_by_admin(client, registered_admin, sample_reward_type):
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     response = client.put(f"/reward-types/{sample_reward_type['id']}", json={
@@ -350,8 +325,7 @@ def test_update_reward_type_by_admin(client, registered_admin, sample_reward_typ
     assert data["name"] == "Updated PUT Reward"
 
 
-# ------------------ /rewards/{id} ------------------
-
+# /rewards/{id}
 def test_update_reward_success(client, registered_user, sample_reward):
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     new_points = 25
@@ -363,13 +337,12 @@ def test_update_reward_success(client, registered_user, sample_reward):
     data = response.json()
     assert data["points_amount"] == new_points
 
-    # Проверим, что total_points пользователя обновилось
+    # Проверим что total_points обновились
     me = client.get("/users/me", headers=headers).json()
-    assert me["total_points"] == new_points  # было 10, стало 25 → delta=+15 → total=25
+    assert me["total_points"] == new_points
 
 
-# ------------------ /competitions/{id} ------------------
-
+# /competitions/{id}
 def test_update_competition_by_manager(client, registered_manager, sample_competition):
     headers = {"Authorization": f"Bearer {registered_manager['token']}"}
     new_title = "Updated PUT Competition"
