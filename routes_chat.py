@@ -1,12 +1,9 @@
-# routes_chat.py
 import re
-from datetime import datetime
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-import json
-from ml.ai_analyzer import analyze_task_with_commands  # Убран импорт analyze_task
+from ml.ai_analyzer import analyze_task_with_commands, analyze_task
 from db import get_db
 from database import User, Task, TaskStatus, Tag, TaskTag
 from schemas import TaskResponse
@@ -17,6 +14,7 @@ router = APIRouter()
 class ChatMessage(BaseModel):
     message: str
     user_ids: Optional[List[int]] = None
+
 
 class ChatResponse(BaseModel):
     reply: str
@@ -30,7 +28,8 @@ def chat_with_ai(
     db: Session = Depends(get_db)
 ):
     """
-    Принимает естественный язык и создаёт задачу с оценкой сложности.
+    Принимает естественный язык и создаёт задачу.
+    Пример: "Создай задачу 'Купить фрукты' на 12.12.2025, статус В работе, тег срочно"
     """
     statuses = [{"code": s.code, "name": s.name} for s in db.query(TaskStatus).all()]
     tags = [t.name for t in db.query(Tag).all()]
@@ -66,6 +65,7 @@ def chat_with_ai(
             db.refresh(status_obj)
 
     due_date = task_data.get("due_date")
+    
     if due_date and hasattr(due_date, 'tzinfo') and due_date.tzinfo is not None:
         due_date = due_date.replace(tzinfo=None)
 
@@ -113,23 +113,18 @@ def chat_with_ai(
             ).strip()
         )
 
-    # Получаем оценку сложности из одного вызова!
-    estimated_points = task_data.get("estimated_points", 50)
-    ai_analysis = {
-        "estimated_points": estimated_points,
-        "explanation": task_data.get("explanation", "Оценка от модели"),
-        "confidence": task_data.get("confidence", 0.7),
-        "model_used": "llama-3.1-8b-instant"
-    }
+    ai_analysis = analyze_task(title, description)
+    estimated_points = ai_analysis["estimated_points"]
 
     user_ids_to_create = chat.user_ids if chat.user_ids else [current_user["user"].id]
+    
     users = db.query(User).filter(User.id.in_(user_ids_to_create)).all()
     if len(users) != len(user_ids_to_create):
         return ChatResponse(reply="Один или несколько указанных пользователей не найдены.")
 
     created_tasks = []
     attached_tags = []
-
+    
     for user_id in user_ids_to_create:
         new_task = Task(
             user_id=user_id,
@@ -142,8 +137,8 @@ def chat_with_ai(
             awarded_points=0
         )
         db.add(new_task)
-        db.flush()
-
+        db.flush()  
+        
         for tag_name in task_data.get("tags", []):
             if not isinstance(tag_name, str) or not tag_name.strip():
                 continue
@@ -161,25 +156,26 @@ def chat_with_ai(
                 db.add(TaskTag(task_id=new_task.id, tag_id=tag.id))
                 if tag_name not in attached_tags:
                     attached_tags.append(tag_name)
-
+        
         created_tasks.append(new_task)
 
     db.commit()
+    
     for task in created_tasks:
         db.refresh(task)
 
-    reply_suffix = f" Задача «{title}» создана"
+    reply = f" Задача «{title}» создана"
     if len(created_tasks) > 1:
-        reply_suffix += f" для {len(created_tasks)} пользователей"
+        reply += f" для {len(created_tasks)} пользователей"
     if due_date:
-        reply_suffix += f" Срок: {due_date}."
+        reply += f" Срок: {due_date}."
     if attached_tags:
-        reply_suffix += f" Теги: {', '.join(attached_tags)}."
-    reply_suffix += f" Статус: {status_obj.name}."
+        reply += f" Теги: {', '.join(attached_tags)}."
+    reply += f" Статус: {status_obj.name}."
 
     first_task = created_tasks[0] if created_tasks else None
 
     return ChatResponse(
-        reply=ai_response["reply"] + " " + reply_suffix,
+        reply=ai_response["reply"] + " " + reply,
         task_created=TaskResponse.from_orm(first_task) if first_task else None
     )
