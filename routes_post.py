@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from passlib.context import CryptContext
-from ml.ai_analyzer import analyze_task
+#from ml.ai_analyzer import analyze_task
 
 from db import get_db
 from database import (
