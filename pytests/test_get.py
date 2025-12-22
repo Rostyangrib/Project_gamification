@@ -106,6 +106,10 @@ def sample_task(client, registered_user, registered_admin):
 
 # Тесты
 def test_get_tasks_latest_authorized(client, registered_user, sample_task):
+    """
+    Тест получения последних задач авторизованным пользователем.
+    Проверяет что авторизованный пользователь может получить список последних задач через GET /tasks/latest.
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.get("/tasks/latest", headers=headers)
     assert response.status_code == 200
@@ -115,11 +119,19 @@ def test_get_tasks_latest_authorized(client, registered_user, sample_task):
 
 
 def test_get_tasks_latest_unauthorized(client):
+    """
+    Тест получения последних задач неавторизованным пользователем.
+    Проверяет что неавторизованный запрос к GET /tasks/latest возвращает 401 Unauthorized.
+    """
     response = client.get("/tasks/latest")
     assert response.status_code == 401
 
 
 def test_get_all_users_as_admin(client, registered_admin):
+    """
+    Тест получения списка всех пользователей администратором.
+    Проверяет что администратор может получить список всех пользователей через GET /users.
+    """
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     response = client.get("/users", headers=headers)
     assert response.status_code == 200
@@ -127,12 +139,20 @@ def test_get_all_users_as_admin(client, registered_admin):
 
 
 def test_get_all_users_as_user_forbidden(client, registered_user):
+    """
+    Тест запрета получения списка всех пользователей обычным пользователем.
+    Проверяет что обычный пользователь не может получить список всех пользователей (403 Forbidden).
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.get("/users", headers=headers)
     assert response.status_code == 403
 
 
 def test_get_competition_dates(client, registered_user, sample_competition):
+    """
+    Тест получения дат соревнования.
+    Проверяет что авторизованный пользователь может получить даты начала и окончания соревнования через GET /competitions/{id}/dates.
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     comp_id = sample_competition["id"]
     response = client.get(f"/competitions/{comp_id}/dates", headers=headers)
@@ -143,12 +163,20 @@ def test_get_competition_dates(client, registered_user, sample_competition):
 
 
 def test_get_competition_dates_not_found(client, registered_user):
+    """
+    Тест получения дат несуществующего соревнования.
+    Проверяет что при запросе дат несуществующего соревнования возвращается 404 Not Found.
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.get("/competitions/999999/dates", headers=headers)
     assert response.status_code == 404
 
 
 def test_get_users_only_as_manager(client, registered_manager):
+    """
+    Тест получения списка только пользователей (без админов и менеджеров) менеджером.
+    Проверяет что менеджер может получить список пользователей с ролью "user" через GET /users/only.
+    """
     headers = {"Authorization": f"Bearer {registered_manager['token']}"}
     response = client.get("/users/only", headers=headers)
     assert response.status_code == 200
@@ -157,12 +185,20 @@ def test_get_users_only_as_manager(client, registered_manager):
 
 
 def test_get_users_only_as_user_forbidden(client, registered_user):
+    """
+    Тест запрета получения списка пользователей обычным пользователем.
+    Проверяет что обычный пользователь не может получить список пользователей через GET /users/only (403 Forbidden).
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.get("/users/only", headers=headers)
     assert response.status_code == 403
 
 
 def test_get_own_info(client, registered_user):
+    """
+    Тест получения собственной информации пользователем.
+    Проверяет что пользователь может получить информацию о себе через GET /users/me.
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.get("/users/me", headers=headers)
     assert response.status_code == 200
@@ -171,18 +207,30 @@ def test_get_own_info(client, registered_user):
 
 
 def test_get_task_statuses_public(client):
+    """
+    Тест получения списка статусов задач (публичный эндпоинт).
+    Проверяет что любой пользователь может получить список статусов задач через GET /task-statuses без авторизации.
+    """
     response = client.get("/task-statuses")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
 
 def test_get_tags_public(client):
+    """
+    Тест получения списка тегов (публичный эндпоинт).
+    Проверяет что любой пользователь может получить список тегов через GET /tags без авторизации.
+    """
     response = client.get("/tags")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
 
 def test_get_tasks_authorized(client, registered_user, sample_task):
+    """
+    Тест получения списка задач авторизованным пользователем.
+    Проверяет что авторизованный пользователь может получить список своих задач через GET /tasks.
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.get("/tasks", headers=headers)
     assert response.status_code == 200
@@ -192,12 +240,20 @@ def test_get_tasks_authorized(client, registered_user, sample_task):
 
 
 def test_get_reward_types_public(client):
+    """
+    Тест получения списка типов наград (публичный эндпоинт).
+    Проверяет что любой пользователь может получить список типов наград через GET /reward-types без авторизации.
+    """
     response = client.get("/reward-types")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
 
 def test_get_rewards_authorized(client, registered_user, registered_admin):
+    """
+    Тест получения списка наград авторизованным пользователем.
+    Проверяет что авторизованный пользователь может получить список своих наград через GET /rewards.
+    """
     rt = client.post("/reward-types", json={"code": "get_test", "name": "GET Test"},
                      headers={"Authorization": f"Bearer {registered_admin['token']}"})
     client.post("/rewards", json={
@@ -213,6 +269,10 @@ def test_get_rewards_authorized(client, registered_user, registered_admin):
 
 
 def test_get_competitions_as_manager(client, registered_manager, sample_competition):
+    """
+    Тест получения списка соревнований менеджером.
+    Проверяет что менеджер может получить список всех соревнований через GET /competitions.
+    """
     headers = {"Authorization": f"Bearer {registered_manager['token']}"}
     response = client.get("/competitions", headers=headers)
     assert response.status_code == 200
@@ -220,12 +280,20 @@ def test_get_competitions_as_manager(client, registered_manager, sample_competit
 
 
 def test_get_competitions_as_user_forbidden(client, registered_user):
+    """
+    Тест запрета получения списка соревнований обычным пользователем.
+    Проверяет что обычный пользователь не может получить список соревнований (403 Forbidden).
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.get("/competitions", headers=headers)
     assert response.status_code == 403
 
 
 def test_get_competition_by_id_authorized(client, registered_user, sample_competition):
+    """
+    Тест получения соревнования по ID авторизованным пользователем.
+    Проверяет что авторизованный пользователь может получить информацию о соревновании через GET /competitions/{id}.
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     comp_id = sample_competition["id"]
     response = client.get(f"/competitions/{comp_id}", headers=headers)
@@ -234,12 +302,20 @@ def test_get_competition_by_id_authorized(client, registered_user, sample_compet
 
 
 def test_get_competition_by_id_not_found(client, registered_user):
+    """
+    Тест получения несуществующего соревнования по ID.
+    Проверяет что при запросе несуществующего соревнования возвращается 404 Not Found.
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.get("/competitions/999999", headers=headers)
     assert response.status_code == 404
 
 
 def test_get_leaderboard_public(client, registered_user, sample_competition):
+    """
+    Тест получения таблицы лидеров соревнования (публичный эндпоинт).
+    Проверяет что любой пользователь может получить таблицу лидеров через GET /leaderboard/{id} без авторизации.
+    """
     comp_id = sample_competition["id"]
     from db import engine
     with engine.connect() as conn:
@@ -253,5 +329,9 @@ def test_get_leaderboard_public(client, registered_user, sample_competition):
     assert isinstance(leaderboard, list)
 
 def test_get_leaderboard_not_found(client):
+    """
+    Тест получения таблицы лидеров несуществующего соревнования.
+    Проверяет что при запросе таблицы лидеров несуществующего соревнования возвращается 404 Not Found.
+    """
     response = client.get("/leaderboard/999999")
     assert response.status_code == 404

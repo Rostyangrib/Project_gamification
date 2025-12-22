@@ -11,4 +11,6 @@ requests
 pydantic[email]
 pytest
 pytest-asyncio
+pytest-html
+pytest-metadata
 httpx

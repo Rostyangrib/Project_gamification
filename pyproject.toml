@@ -3,5 +3,50 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
-pythonpath = ["."]
+# Пути для поиска тестов
 testpaths = ["pytests"]
+
+# Паттерн имен файлов с тестами
+python_files = "test_*.py"
+
+# Паттерн имен тестовых функций
+python_functions = "test_*"
+
+# Паттерн имен тестовых классов
+python_classes = "Test*"
+
+# Минимальная версия pytest
+minversion = "6.0"
+
+# Дополнительные опции для pytest
+addopts = [
+    "-v",              # Подробный вывод
+    "-l",              # Показывать локальные переменные при ошибках
+    "-ra",             # Показывать краткую сводку по результатам
+    "--strict-markers", # Включить строгие маркеры
+    "--color=yes",      # Цветной вывод
+    "--tb=short"        # Краткий traceback при ошибках
+]
+
+# Маркеры для группировки тестов
+markers = [
+    "slow: slow running tests",
+    "integration: integration tests",
+    "unit: unit tests",
+    "chat: chat functionality tests",
+    "security: security tests",
+    "api: API endpoint tests"
+]
+
+# Настройки для pytest-asyncio
+asyncio_mode = "auto"
+
+# Игнорировать предупреждения от определенных библиотек
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning"
+]
+
+# Pythonpath для импорта модулей проекта
+pythonpath = ["."]
+

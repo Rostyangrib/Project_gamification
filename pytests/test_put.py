@@ -135,6 +135,10 @@ def sample_reward(client, registered_user, sample_reward_type):
 # Тесты
 # /users/me
 def test_update_own_user_success(client, registered_user):
+    """
+    Тест успешного обновления собственного профиля пользователем.
+    Проверяет что пользователь может обновить свои данные через PUT /users/me.
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     new_email = unique_email()
     response = client.put("/users/me", json={
@@ -148,6 +152,10 @@ def test_update_own_user_success(client, registered_user):
 
 
 def test_update_own_user_duplicate_email(client, registered_user):
+    """
+    Тест обновления профиля с дублирующимся email.
+    Проверяет что пользователь не может обновить свой email на уже существующий (400 Bad Request).
+    """
     # Создаём второго пользователя
     other_email = unique_email()
     client.post("/register", json={
@@ -165,6 +173,10 @@ def test_update_own_user_duplicate_email(client, registered_user):
 # /admin/users/{id}
 
 def test_update_user_by_admin(client, registered_admin, registered_user):
+    """
+    Тест обновления пользователя администратором.
+    Проверяет что администратор может обновить данные любого пользователя через PUT /admin/users/{id}.
+    """
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     new_email = unique_email()  # ← Генерируем уникальный!
     response = client.put(f"/admin/users/{registered_user['user']['id']}", json={
@@ -178,12 +190,20 @@ def test_update_user_by_admin(client, registered_admin, registered_user):
 
 
 def test_update_user_by_non_admin_forbidden(client, registered_user):
+    """
+    Тест запрета обновления пользователя не-администратором.
+    Проверяет что обычный пользователь не может обновлять других пользователей через админский эндпоинт (403 Forbidden).
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.put("/admin/users/1", json={"email": "hacker@test.com"}, headers=headers)
     assert response.status_code == 403
 
 
 def test_update_nonexistent_user_by_admin(client, registered_admin):
+    """
+    Тест обновления несуществующего пользователя администратором.
+    Проверяет что при попытке обновить несуществующего пользователя возвращается 404 Not Found.
+    """
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     response = client.put("/admin/users/999999", json={"first_name": "Ghost"}, headers=headers)
     assert response.status_code == 404
@@ -191,6 +211,10 @@ def test_update_nonexistent_user_by_admin(client, registered_admin):
 
 # /users/{id}/competition
 def test_assign_user_to_competition(client, registered_manager, registered_user, sample_competition):
+    """
+    Тест назначения пользователя на соревнование менеджером.
+    Проверяет что менеджер может назначить пользователя на соревнование через PUT /users/{id}/competition.
+    """
     headers = {"Authorization": f"Bearer {registered_manager['token']}"}
     response = client.put(f"/users/{registered_user['user']['id']}/competition", json={
         "competition_id": sample_competition["id"]
@@ -202,6 +226,10 @@ def test_assign_user_to_competition(client, registered_manager, registered_user,
 
 
 def test_remove_user_from_competition(client, registered_manager, registered_user, sample_competition):
+    """
+    Тест снятия пользователя с соревнования менеджером.
+    Проверяет что менеджер может снять пользователя с соревнования, установив competition_id в None.
+    """
     # Сначала назначим
     headers = {"Authorization": f"Bearer {registered_manager['token']}"}
     client.put(f"/users/{registered_user['user']['id']}/competition", json={
@@ -216,6 +244,10 @@ def test_remove_user_from_competition(client, registered_manager, registered_use
 
 
 def test_assign_to_nonexistent_competition(client, registered_manager, registered_user):
+    """
+    Тест назначения пользователя на несуществующее соревнование.
+    Проверяет что попытка назначить пользователя на несуществующее соревнование возвращает 404 Not Found.
+    """
     headers = {"Authorization": f"Bearer {registered_manager['token']}"}
     response = client.put(f"/users/{registered_user['user']['id']}/competition", json={
         "competition_id": 999999
@@ -225,6 +257,10 @@ def test_assign_to_nonexistent_competition(client, registered_manager, registere
 
 # /task-statuses/{id}
 def test_update_task_status_by_admin(client, registered_admin, sample_task_status):
+    """
+    Тест обновления статуса задачи администратором.
+    Проверяет что администратор может обновить статус задачи через PUT /task-statuses/{id}.
+    """
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     new_code = "updated_put"
     response = client.put(f"/task-statuses/{sample_task_status['id']}", json={
@@ -236,6 +272,10 @@ def test_update_task_status_by_admin(client, registered_admin, sample_task_statu
 
 
 def test_update_task_status_duplicate_code(client, registered_admin, sample_task_status):
+    """
+    Тест обновления статуса задачи с дублирующимся кодом.
+    Проверяет что попытка обновить статус на уже существующий код возвращает 400 Bad Request.
+    """
     # Создаём второй статус
     client.post("/task-statuses", json={"code": "conflict", "name": "Conflict"},
                 headers={"Authorization": f"Bearer {registered_admin['token']}"})
@@ -249,6 +289,10 @@ def test_update_task_status_duplicate_code(client, registered_admin, sample_task
 
 # /tags/{id}
 def test_update_tag_by_admin(client, registered_admin, sample_tag):
+    """
+    Тест обновления тега администратором.
+    Проверяет что администратор может обновить тег через PUT /tags/{id}.
+    """
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     new_name = "Updated PUT Tag"
     response = client.put(f"/tags/{sample_tag['id']}", json={"name": new_name}, headers=headers)
@@ -257,6 +301,10 @@ def test_update_tag_by_admin(client, registered_admin, sample_tag):
 
 
 def test_update_tag_duplicate_name(client, registered_admin, sample_tag):
+    """
+    Тест обновления тега с дублирующимся именем.
+    Проверяет что попытка обновить тег на уже существующее имя возвращает 400 Bad Request.
+    """
     # Создаём второй тег
     client.post("/tags", json={"name": "conflict_tag"},
                 headers={"Authorization": f"Bearer {registered_admin['token']}"})
@@ -268,6 +316,10 @@ def test_update_tag_duplicate_name(client, registered_admin, sample_tag):
 
 # /tasks/{id}
 def test_update_task_success(client, registered_user, sample_task, sample_task_status):
+    """
+    Тест успешного обновления задачи владельцем.
+    Проверяет что владелец задачи может обновить свою задачу через PUT /tasks/{id}.
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.put(f"/tasks/{sample_task['id']}", json={
         "title": "Updated PUT Task",
@@ -282,6 +334,10 @@ def test_update_task_success(client, registered_user, sample_task, sample_task_s
 def test_update_task_status_to_done_during_competition(
     client, registered_user, sample_competition, registered_admin
 ):
+    """
+    Тест обновления статуса задачи на "Выполнено" во время соревнования.
+    Проверяет что пользователь может обновить статус задачи на "done" во время участия в соревновании.
+    """
     # Назначим пользователя на соревнование
     from db import engine
     with engine.connect() as conn:
@@ -308,6 +364,10 @@ def test_update_task_status_to_done_during_competition(
 
 
 def test_update_task_nonexistent(client, registered_user):
+    """
+    Тест обновления несуществующей задачи.
+    Проверяет что при попытке обновить несуществующую задачу возвращается 404 Not Found.
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.put("/tasks/999999", json={"title": "Ghost"}, headers=headers)
     assert response.status_code == 404
@@ -315,6 +375,10 @@ def test_update_task_nonexistent(client, registered_user):
 
 # /reward-types/{id}
 def test_update_reward_type_by_admin(client, registered_admin, sample_reward_type):
+    """
+    Тест обновления типа награды администратором.
+    Проверяет что администратор может обновить тип награды через PUT /reward-types/{id}.
+    """
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     response = client.put(f"/reward-types/{sample_reward_type['id']}", json={
         "name": "Updated PUT Reward",
@@ -327,6 +391,10 @@ def test_update_reward_type_by_admin(client, registered_admin, sample_reward_typ
 
 # /rewards/{id}
 def test_update_reward_success(client, registered_user, sample_reward):
+    """
+    Тест успешного обновления награды владельцем.
+    Проверяет что владелец награды может обновить свою награду и при этом обновляется total_points пользователя.
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     new_points = 25
     response = client.put(f"/rewards/{sample_reward['id']}", json={
@@ -344,6 +412,10 @@ def test_update_reward_success(client, registered_user, sample_reward):
 
 # /competitions/{id}
 def test_update_competition_by_manager(client, registered_manager, sample_competition):
+    """
+    Тест обновления соревнования менеджером.
+    Проверяет что менеджер может обновить соревнование через PUT /competitions/{id}.
+    """
     headers = {"Authorization": f"Bearer {registered_manager['token']}"}
     new_title = "Updated PUT Competition"
     response = client.put(f"/competitions/{sample_competition['id']}", json={
@@ -355,6 +427,10 @@ def test_update_competition_by_manager(client, registered_manager, sample_compet
 
 
 def test_update_competition_by_user_forbidden(client, registered_user, sample_competition):
+    """
+    Тест запрета обновления соревнования обычным пользователем.
+    Проверяет что обычный пользователь не может обновлять соревнования (403 Forbidden).
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.put(f"/competitions/{sample_competition['id']}", json={"title": "Hack"}, headers=headers)
     assert response.status_code == 403

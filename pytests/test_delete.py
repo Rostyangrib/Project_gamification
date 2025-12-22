@@ -125,6 +125,10 @@ def sample_competition(client, registered_manager):
 # Тесты
 # /users/me
 def test_delete_own_account(client, registered_user):
+    """
+    Тест удаления собственного аккаунта пользователем.
+    Проверяет что пользователь может удалить свой аккаунт через DELETE /users/me.
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.delete("/users/me", headers=headers)
     assert response.status_code == 204
@@ -139,6 +143,10 @@ def test_delete_own_account(client, registered_user):
 
 # /admin/users/{id}
 def test_delete_user_by_admin(client, registered_admin, registered_user):
+    """
+    Тест удаления пользователя администратором.
+    Проверяет что администратор может удалить любого пользователя через DELETE /admin/users/{id}.
+    """
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     user_id = registered_user["user"]["id"]
     response = client.delete(f"/admin/users/{user_id}", headers=headers)
@@ -152,12 +160,20 @@ def test_delete_user_by_admin(client, registered_admin, registered_user):
 
 
 def test_delete_nonexistent_user_by_admin(client, registered_admin):
+    """
+    Тест удаления несуществующего пользователя администратором.
+    Проверяет что при попытке удалить несуществующего пользователя возвращается 404.
+    """
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     response = client.delete("/admin/users/999999", headers=headers)
     assert response.status_code == 404
 
 
 def test_delete_user_by_non_admin_forbidden(client, registered_user):
+    """
+    Тест запрета удаления пользователя не-администратором.
+    Проверяет что обычный пользователь не может удалять других пользователей (403 Forbidden).
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.delete("/admin/users/1", headers=headers)
     assert response.status_code == 403
@@ -165,12 +181,20 @@ def test_delete_user_by_non_admin_forbidden(client, registered_user):
 
 # /task-statuses/{id}
 def test_delete_task_status_by_admin(client, registered_admin, sample_task_status):
+    """
+    Тест удаления статуса задачи администратором.
+    Проверяет что администратор может удалить статус задачи через DELETE /task-statuses/{id}.
+    """
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     response = client.delete(f"/task-statuses/{sample_task_status['id']}", headers=headers)
     assert response.status_code == 204
 
 
 def test_delete_nonexistent_task_status(client, registered_admin):
+    """
+    Тест удаления несуществующего статуса задачи.
+    Проверяет что при попытке удалить несуществующий статус возвращается 404.
+    """
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     response = client.delete("/task-statuses/999999", headers=headers)
     assert response.status_code == 404
@@ -178,6 +202,10 @@ def test_delete_nonexistent_task_status(client, registered_admin):
 
 # /tags/{id}
 def test_delete_tag_by_admin(client, registered_admin, sample_tag):
+    """
+    Тест удаления тега администратором.
+    Проверяет что администратор может удалить тег через DELETE /tags/{id}.
+    """
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     response = client.delete(f"/tags/{sample_tag['id']}", headers=headers)
     assert response.status_code == 204
@@ -185,12 +213,20 @@ def test_delete_tag_by_admin(client, registered_admin, sample_tag):
 
 # /tasks/{id}
 def test_delete_task_by_owner(client, registered_user, sample_task):
+    """
+    Тест удаления задачи владельцем.
+    Проверяет что владелец задачи может удалить свою задачу через DELETE /tasks/{id}.
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.delete(f"/tasks/{sample_task['id']}", headers=headers)
     assert response.status_code == 204
 
 
 def test_delete_task_by_non_owner_forbidden(client, registered_user, registered_admin):
+    """
+    Тест запрета удаления чужой задачи.
+    Проверяет что пользователь не может удалить задачу другого пользователя (404 Not Found).
+    """
     # Создаём задачу от админа
     admin = registered_admin
     status = client.post("/task-statuses", json={"code": "del_task2", "name": "Del2"},
@@ -209,6 +245,10 @@ def test_delete_task_by_non_owner_forbidden(client, registered_user, registered_
 
 # /reward-types/{id}
 def test_delete_reward_type_by_admin(client, registered_admin, sample_reward_type):
+    """
+    Тест удаления типа награды администратором.
+    Проверяет что администратор может удалить тип награды через DELETE /reward-types/{id}.
+    """
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     response = client.delete(f"/reward-types/{sample_reward_type['id']}", headers=headers)
     assert response.status_code == 204
@@ -216,6 +256,10 @@ def test_delete_reward_type_by_admin(client, registered_admin, sample_reward_typ
 
 # /rewards/{id}
 def test_delete_reward_by_owner(client, registered_user, sample_reward):
+    """
+    Тест удаления награды владельцем.
+    Проверяет что владелец награды может удалить свою награду через DELETE /rewards/{id}.
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.delete(f"/rewards/{sample_reward['id']}", headers=headers)
     assert response.status_code == 204
@@ -223,6 +267,10 @@ def test_delete_reward_by_owner(client, registered_user, sample_reward):
 
 # /competitions/{id}
 def test_delete_competition_by_manager(client, registered_manager, sample_competition, registered_user):
+    """
+    Тест удаления соревнования менеджером.
+    Проверяет что менеджер может удалить соревнование и при этом сбрасывается cur_comp у участников.
+    """
     headers = {"Authorization": f"Bearer {registered_manager['token']}"}
     comp_id = sample_competition["id"]
 
@@ -243,6 +291,10 @@ def test_delete_competition_by_manager(client, registered_manager, sample_compet
         assert res.fetchone()[0] is None
 
 def test_delete_competition_by_user_forbidden(client, registered_user, sample_competition):
+    """
+    Тест запрета удаления соревнования обычным пользователем.
+    Проверяет что обычный пользователь не может удалять соревнования (403 Forbidden).
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.delete(f"/competitions/{sample_competition['id']}", headers=headers)
     assert response.status_code == 403

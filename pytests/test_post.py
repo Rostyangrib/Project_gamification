@@ -3,6 +3,7 @@ from jose import jwt
 from datetime import datetime, timedelta
 import uuid
 from sqlalchemy import text
+from unittest.mock import patch
 from auth import SECRET_KEY, ALGORITHM
 
 
@@ -24,6 +25,10 @@ def unique_email():
 
 # Auth: /register, /login
 def test_register_new_user(client):
+    """
+    Тест успешной регистрации нового пользователя.
+    Проверяет что новый пользователь может зарегистрироваться через POST /register и получает роль "user".
+    """
     email = unique_email()
     response = client.post("/register", json={
         "first_name": "Test",
@@ -38,6 +43,10 @@ def test_register_new_user(client):
 
 
 def test_register_duplicate_email(client):
+    """
+    Тест регистрации с дублирующимся email.
+    Проверяет что попытка зарегистрироваться с уже существующим email возвращает 400 Bad Request.
+    """
     email = unique_email()
     client.post("/register", json={"email": email, "first_name": "A", "last_name": "B", "password": "123456"})
     response = client.post("/register", json={"email": email, "first_name": "C", "last_name": "D", "password": "123456"})
@@ -45,6 +54,10 @@ def test_register_duplicate_email(client):
 
 
 def test_login_success(client):
+    """
+    Тест успешного входа пользователя.
+    Проверяет что зарегистрированный пользователь может войти через POST /login с правильными credentials.
+    """
     email = unique_email()
     password = "pass123"
     client.post("/register", json={"email": email, "first_name": "Test", "last_name": "User", "password": password})
@@ -53,6 +66,10 @@ def test_login_success(client):
 
 
 def test_login_wrong_password(client):
+    """
+    Тест входа с неправильным паролем.
+    Проверяет что попытка входа с неправильным паролем возвращает 401 Unauthorized.
+    """
     email = unique_email()
     client.post("/register", json={"email": email, "first_name": "Bad", "last_name": "Login", "password": "correct"})
     response = client.post("/login", json={"email": email, "password": "wrong"})
@@ -108,18 +125,30 @@ def registered_manager(client):
 
 # TaskStatus только для админа
 def test_create_task_status_as_admin(client, registered_admin):
+    """
+    Тест создания статуса задачи администратором.
+    Проверяет что администратор может создать статус задачи через POST /task-statuses.
+    """
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     response = client.post("/task-statuses", json={"code": "test", "name": "Test"}, headers=headers)
     assert response.status_code == 201
 
 
 def test_create_task_status_as_user_forbidden(client, registered_user):
+    """
+    Тест запрета создания статуса задачи обычным пользователем.
+    Проверяет что обычный пользователь не может создать статус задачи (403 Forbidden).
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.post("/task-statuses", json={"code": "forbidden", "name": "Test"}, headers=headers)
     assert response.status_code == 403
 
 
 def test_create_duplicate_task_status_code(client, registered_admin):
+    """
+    Тест создания статуса задачи с дублирующимся кодом.
+    Проверяет что попытка создать статус с уже существующим кодом возвращает 400 Bad Request.
+    """
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     client.post("/task-statuses", json={"code": "dup", "name": "A"}, headers=headers)
     response = client.post("/task-statuses", json={"code": "dup", "name": "B"}, headers=headers)
@@ -128,11 +157,19 @@ def test_create_duplicate_task_status_code(client, registered_admin):
 
 # Tags
 def test_create_tag(client):
+    """
+    Тест создания тега.
+    Проверяет что можно создать тег через POST /tags без авторизации.
+    """
     response = client.post("/tags", json={"name": "Urgent"})
     assert response.status_code == 201
 
 
 def test_create_duplicate_tag(client):
+    """
+    Тест создания тега с дублирующимся именем.
+    Проверяет что попытка создать тег с уже существующим именем возвращает 400 Bad Request.
+    """
     name = f"tag_{uuid.uuid4().hex[:6]}"
     client.post("/tags", json={"name": name})
     response = client.post("/tags", json={"name": name})
@@ -141,6 +178,10 @@ def test_create_duplicate_tag(client):
 
 # Tasks
 def test_create_task_as_user(client, registered_user, registered_admin):
+    """
+    Тест создания задачи пользователем.
+    Проверяет что пользователь может создать задачу для себя через POST /tasks.
+    """
     # Сначала создаём статус через админа
     client.post("/task-statuses", json={"code": "test_status", "name": "Test"},
                 headers={"Authorization": f"Bearer {registered_admin['token']}"})
@@ -155,6 +196,10 @@ def test_create_task_as_user(client, registered_user, registered_admin):
 
 
 def test_create_task_for_other_user_as_admin(client, registered_admin, registered_user):
+    """
+    Тест создания задачи для другого пользователя администратором.
+    Проверяет что администратор может создать задачу для любого пользователя через POST /tasks/{user_id}.
+    """
     client.post("/task-statuses", json={"code": "admin_task", "name": "Admin Task"},
                 headers={"Authorization": f"Bearer {registered_admin['token']}"})
 
@@ -168,6 +213,10 @@ def test_create_task_for_other_user_as_admin(client, registered_admin, registere
 
 
 def test_create_task_for_nonexistent_user(client, registered_admin):
+    """
+    Тест создания задачи для несуществующего пользователя.
+    Проверяет что попытка создать задачу для несуществующего пользователя возвращает 404 Not Found.
+    """
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     response = client.post("/tasks/999999", json={
         "title": "Impossible",
@@ -180,6 +229,10 @@ def test_create_task_for_nonexistent_user(client, registered_admin):
 
 # TaskTags
 def test_create_task_tag(client, registered_user, registered_admin):
+    """
+    Тест привязки тега к задаче.
+    Проверяет что владелец задачи может привязать тег к своей задаче через POST /task-tags.
+    """
     client.post("/task-statuses", json={"code": "tag_task", "name": "Tag Task"},
                 headers={"Authorization": f"Bearer {registered_admin['token']}"})
 
@@ -195,12 +248,20 @@ def test_create_task_tag(client, registered_user, registered_admin):
 
 # RewardTypes
 def test_create_reward_type_as_admin(client, registered_admin):
+    """
+    Тест создания типа награды администратором.
+    Проверяет что администратор может создать тип награды через POST /reward-types.
+    """
     headers = {"Authorization": f"Bearer {registered_admin['token']}"}
     response = client.post("/reward-types", json={"code": "test", "name": "Test Reward"}, headers=headers)
     assert response.status_code == 201
 
 
 def test_create_reward_type_as_user_forbidden(client, registered_user):
+    """
+    Тест запрета создания типа награды обычным пользователем.
+    Проверяет что обычный пользователь не может создать тип награды (403 Forbidden).
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.post("/reward-types", json={"code": "forbidden", "name": "Test"}, headers=headers)
     assert response.status_code == 403
@@ -208,6 +269,10 @@ def test_create_reward_type_as_user_forbidden(client, registered_user):
 
 # Rewards
 def test_create_reward(client, registered_user, registered_admin):
+    """
+    Тест создания награды пользователем.
+    Проверяет что пользователь может создать награду для себя через POST /rewards.
+    """
     # Создаём тип награды
     rt = client.post("/reward-types", json={"code": "pytest", "name": "Pytest Reward"},
                      headers={"Authorization": f"Bearer {registered_admin['token']}"})
@@ -220,6 +285,10 @@ def test_create_reward(client, registered_user, registered_admin):
 
 # Competitions
 def test_create_competition_as_manager(client, registered_manager):
+    """
+    Тест создания соревнования менеджером.
+    Проверяет что менеджер может создать соревнование через POST /competitions.
+    """
     headers = {"Authorization": f"Bearer {registered_manager['token']}"}
     response = client.post("/competitions", json={
         "title": "Test Comp",
@@ -231,6 +300,10 @@ def test_create_competition_as_manager(client, registered_manager):
 
 
 def test_create_competition_as_user_forbidden(client, registered_user):
+    """
+    Тест запрета создания соревнования обычным пользователем.
+    Проверяет что обычный пользователь не может создать соревнование (403 Forbidden).
+    """
     headers = {"Authorization": f"Bearer {registered_user['token']}"}
     response = client.post("/competitions", json={
         "title": "Forbidden",
@@ -242,6 +315,10 @@ def test_create_competition_as_user_forbidden(client, registered_user):
 
 
 def test_create_duplicate_competition_title(client, registered_manager):
+    """
+    Тест создания соревнования с дублирующимся названием.
+    Проверяет что попытка создать соревнование с уже существующим названием возвращает 400 Bad Request.
+    """
     headers = {"Authorization": f"Bearer {registered_manager['token']}"}
     title = f"Comp_{uuid.uuid4().hex[:8]}"
     client.post("/competitions",
@@ -250,3 +327,67 @@ def test_create_duplicate_competition_title(client, registered_manager):
     response = client.post("/competitions", json={"title": title, "description": "B", "start_date": "2025-04-01",
                                                   "end_date": "2025-04-30"}, headers=headers)
     assert response.status_code == 400
+
+
+def test_create_task_rate_limit_error(client, registered_user, registered_admin):
+    """
+    Тест обработки ошибки rate limit при создании задачи через POST /tasks.
+    Проверяет что при ошибке "Too many requests" от Groq API возвращается HTTP 429,
+    и тест фиксирует эту ошибку как неудачный.
+    """
+    from ml.ai_analyzer import GroqRateLimitError
+    
+    # Создаём статус через админа
+    client.post("/task-statuses", json={"code": "rate_test", "name": "Rate Test"},
+                headers={"Authorization": f"Bearer {registered_admin['token']}"})
+
+    headers = {"Authorization": f"Bearer {registered_user['token']}"}
+    
+    # Мокаем analyze_task чтобы он выбрасывал ошибку rate limit
+    with patch("routes_post.analyze_task") as mock_analyze:
+        # Имитируем ошибку rate limit после исчерпания всех retry
+        mock_analyze.side_effect = GroqRateLimitError("Groq API rate limit exceeded after 3 attempts")
+
+        # Отправляем запрос на создание задачи
+        response = client.post("/tasks", json={
+            "title": "Test task",
+            "status_id": 1,
+            "due_date": "2025-12-31T23:59:59"
+        }, headers=headers)
+
+        # ВАЖНО: Проверяем что API вернул HTTP 429 (Too Many Requests)
+        # Это означает, что ошибка была правильно обработана и проброшена
+        assert response.status_code == 429
+        # Проверяем что в ответе есть сообщение об ошибке
+        assert "Слишком много запросов" in response.json()["detail"]
+
+
+def test_create_task_groq_api_error(client, registered_user, registered_admin):
+    """
+    Тест обработки других ошибок Groq API при создании задачи.
+    Проверяет что при других ошибках API (не rate limit) возвращается HTTP 503.
+    """
+    from ml.ai_analyzer import GroqAPIError
+    
+    # Создаём статус через админа
+    client.post("/task-statuses", json={"code": "api_test", "name": "API Test"},
+                headers={"Authorization": f"Bearer {registered_admin['token']}"})
+
+    headers = {"Authorization": f"Bearer {registered_user['token']}"}
+    
+    # Мокаем analyze_task чтобы он выбрасывал ошибку API
+    with patch("routes_post.analyze_task") as mock_analyze:
+        # Имитируем ошибку API
+        mock_analyze.side_effect = GroqAPIError("Groq API error 500 after 3 attempts")
+
+        # Отправляем запрос на создание задачи
+        response = client.post("/tasks", json={
+            "title": "Test task",
+            "status_id": 1,
+            "due_date": "2025-12-31T23:59:59"
+        }, headers=headers)
+
+        # Проверяем что API вернул HTTP 503 (Service Unavailable)
+        assert response.status_code == 503
+        # Проверяем что в ответе есть сообщение об ошибке
+        assert "Ошибка при обращении к AI сервису" in response.json()["detail"]

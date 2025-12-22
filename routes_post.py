@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from passlib.context import CryptContext
-from ml.ai_analyzer import analyze_task
+from ml.ai_analyzer import analyze_task, GroqRateLimitError, GroqAPIError
 
 from db import get_db
 from database import (
@@ -176,7 +176,20 @@ def create_task(
     if not db.query(TaskStatus).filter(TaskStatus.id == task.status_id).first():
         raise HTTPException(status_code=404, detail="TaskStatus не найден")
 
-    ai_result = analyze_task(task.title, task.description or "")
+    try:
+        ai_result = analyze_task(task.title, task.description or "")
+    except GroqRateLimitError as e:
+        # Пробрасываем ошибку rate limit, чтобы тесты могли её зафиксировать
+        raise HTTPException(
+            status_code=429,
+            detail="Слишком много запросов к AI. Пожалуйста, подождите несколько секунд и попробуйте снова."
+        )
+    except GroqAPIError as e:
+        # Обработка других ошибок Groq API
+        raise HTTPException(
+            status_code=503,
+            detail=f"Ошибка при обращении к AI сервису: {str(e)}"
+        )
 
     estimated_points = ai_result["estimated_points"]
     ai_metadata = ai_result
@@ -212,7 +225,21 @@ def create_task(
     if not db.query(TaskStatus).filter(TaskStatus.id == task.status_id).first():
         raise HTTPException(status_code=404, detail="TaskStatus не найден")
 
-    ai_result = analyze_task(task.title, task.description or "")
+    try:
+        ai_result = analyze_task(task.title, task.description or "")
+    except GroqRateLimitError as e:
+        # Пробрасываем ошибку rate limit, чтобы тесты могли её зафиксировать
+        raise HTTPException(
+            status_code=429,
+            detail="Слишком много запросов к AI. Пожалуйста, подождите несколько секунд и попробуйте снова."
+        )
+    except GroqAPIError as e:
+        # Обработка других ошибок Groq API
+        raise HTTPException(
+            status_code=503,
+            detail=f"Ошибка при обращении к AI сервису: {str(e)}"
+        )
+    
     estimated_points = ai_result["estimated_points"]
     ai_metadata = ai_result
 

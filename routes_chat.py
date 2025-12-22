@@ -1,9 +1,10 @@
 import re
 from typing import Optional, List
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from ml.ai_analyzer import analyze_task_with_commands, analyze_task
+import requests
+from ml.ai_analyzer import analyze_task_with_commands, analyze_task, GroqRateLimitError, GroqAPIError
 from db import get_db
 from database import User, Task, TaskStatus, Tag, TaskTag
 from schemas import TaskResponse
@@ -34,11 +35,42 @@ def chat_with_ai(
     statuses = [{"code": s.code, "name": s.name} for s in db.query(TaskStatus).all()]
     tags = [t.name for t in db.query(Tag).all()]
 
-    ai_response = analyze_task_with_commands(
-        user_message=chat.message,
-        available_statuses=statuses,
-        available_tags=tags
-    )
+    try:
+        ai_response = analyze_task_with_commands(
+            user_message=chat.message,
+            available_statuses=statuses,
+            available_tags=tags
+        )
+    except GroqRateLimitError as e:
+        # Специальная обработка ошибки rate limit - пробрасываем HTTP 429
+        # Это позволит тестам фиксировать ошибку
+        raise HTTPException(
+            status_code=429,
+            detail="Слишком много запросов к AI. Пожалуйста, подождите несколько секунд и попробуйте снова."
+        )
+    except GroqAPIError as e:
+        # Обработка других ошибок Groq API
+        raise HTTPException(
+            status_code=503,
+            detail=f"Ошибка при обращении к AI сервису: {str(e)}"
+        )
+    except requests.exceptions.HTTPError as e:
+        # Обработка других HTTP ошибок (на случай если они не были перехвачены)
+        if e.response.status_code == 429:
+            raise HTTPException(
+                status_code=429,
+                detail="Слишком много запросов к AI. Пожалуйста, подождите несколько секунд и попробуйте снова."
+            )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Ошибка при обращении к AI сервису: {str(e)}"
+        )
+    except Exception as e:
+        # Обработка всех остальных ошибок
+        raise HTTPException(
+            status_code=500,
+            detail=f"Внутренняя ошибка сервера: {str(e)}"
+        )
 
     if not ai_response.get("commands"):
         return ChatResponse(reply=ai_response["reply"])
@@ -113,8 +145,27 @@ def chat_with_ai(
             ).strip()
         )
 
-    ai_analysis = analyze_task(title, description)
-    estimated_points = ai_analysis["estimated_points"]
+    # Используем estimated_points из первого AI запроса, чтобы избежать дублирования вызовов
+    estimated_points = task_data.get("estimated_points", 50)
+    
+    # Если estimated_points не был установлен в первом запросе, вызываем analyze_task
+    # Это может произойти только если analyze_task_with_commands не смог определить сложность
+    if estimated_points == 50 and "estimated_points" not in task_data:
+        try:
+            ai_analysis = analyze_task(title, description)
+            estimated_points = ai_analysis["estimated_points"]
+        except (GroqRateLimitError, GroqAPIError) as e:
+            # Если произошла ошибка API при оценке сложности, пробрасываем её дальше
+            # Это позволит тестам фиксировать ошибку
+            raise
+    else:
+        # Создаем минимальный ai_analysis для совместимости
+        ai_analysis = {
+            "estimated_points": estimated_points,
+            "explanation": "Оценка получена из первичного анализа",
+            "model_used": "cached",
+            "confidence": 0.8
+        }
 
     user_ids_to_create = chat.user_ids if chat.user_ids else [current_user["user"].id]
     
