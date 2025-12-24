@@ -14,3 +14,5 @@ pytest-asyncio
 pytest-html
 pytest-metadata
 httpx
+uvicorn[standard]>=0.30.0
+gunicorn>=21.0.0

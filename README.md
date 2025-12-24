@@ -15,7 +15,17 @@
 2. ```cd frontend``` - перейти в папку frontend  
 3. ```npm install``` - установка зависимостей для frontend
 4. ```npm run build``` - сборка react
-5. ```python run.py``` - запуск приложения
+5. ```python start.py``` - запуск приложения
+
+### Тесты производительности locust
+```locust -f locust/locustfile.py --host=http://127.0.0.1:8000/```
+
+### Тесты Pytest
+
+```python pytest\generate_full_report.py```  
+```start test_reports\full_test_report.html```
+
+
 ### Доступ к админ-панели
 
 1. В адресной строке перейти по 0.0.0.0:8000/docs
