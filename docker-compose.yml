@@ -14,9 +14,11 @@ services:
       SECRET_KEY: 123
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
-      YANDEX_API_KEY:
+      GROQ_API_KEY:
+      GROQ_API_KEY_SECONDARY:
       DB_NAME_TEST: tests
-      TESTING: false
+      TESTING: "false"
+      INIT_DB: "true"
     depends_on:
       - db
     volumes:

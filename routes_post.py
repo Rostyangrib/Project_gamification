@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from passlib.context import CryptContext
-from ml.ai_analyzer import analyze_task, YandexRateLimitError, YandexAPIError
+from ml.ai_analyzer import analyze_task, GroqRateLimitError, GroqAPIError
 
 from db import get_db
 from database import (
@@ -21,7 +21,7 @@ from schemas import (
 from auth import verify_password, get_password_hash, create_access_token
 from dependencies import get_current_user, require_admin, require_manager
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto",bcrypt__rounds=10)
 
 router = APIRouter()
 
@@ -158,6 +158,31 @@ def create_tag(
     return db_tag
 
 
+@router.post("/task", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
+def create_task_single(
+        task: TaskCreate,
+        current_user: dict = Depends(get_current_user),
+        db: Session = Depends(get_db)
+):
+    """Создает новую задачу для текущего пользователя"""
+    if not db.query(TaskStatus).filter(TaskStatus.id == task.status_id).first():
+        raise HTTPException(status_code=404, detail="TaskStatus не найден")
+
+    db_task = Task(
+        user_id=current_user["user"].id,
+        status_id=task.status_id,
+        title=task.title,
+        description=task.description,
+        estimated_points=task.estimated_points or 0,
+        ai_analysis_metadata=task.ai_analysis_metadata,
+        due_date=task.due_date,
+        awarded_points=0
+    )
+    db.add(db_task)
+    db.commit()
+    db.refresh(db_task)
+    return db_task
+
 @router.post("/tasks", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
 def create_task(
         task: TaskCreate,
@@ -178,24 +203,17 @@ def create_task(
 
     try:
         ai_result = analyze_task(task.title, task.description or "")
-    except YandexRateLimitError as e:
+    except GroqRateLimitError as e:
         # Пробрасываем ошибку rate limit, чтобы тесты могли её зафиксировать
         raise HTTPException(
             status_code=429,
             detail="Слишком много запросов к AI. Пожалуйста, подождите несколько секунд и попробуйте снова."
         )
-    except YandexAPIError as e:
-        # Обработка других ошибок Yandex Cloud API
+    except GroqAPIError as e:
+        # Обработка других ошибок Groq API
         raise HTTPException(
             status_code=503,
             detail=f"Ошибка при обращении к AI сервису: {str(e)}"
-        )
-
-    # Проверяем, является ли задача бессмысленной
-    if ai_result.get("estimated_points") is None or ai_result.get("is_meaningless"):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Задача бессмысленна или неконкретна: {ai_result.get('explanation', 'Не удалось оценить задачу')}"
         )
 
     estimated_points = ai_result["estimated_points"]
@@ -234,26 +252,19 @@ def create_task(
 
     try:
         ai_result = analyze_task(task.title, task.description or "")
-    except YandexRateLimitError as e:
+    except GroqRateLimitError as e:
         # Пробрасываем ошибку rate limit, чтобы тесты могли её зафиксировать
         raise HTTPException(
             status_code=429,
             detail="Слишком много запросов к AI. Пожалуйста, подождите несколько секунд и попробуйте снова."
         )
-    except YandexAPIError as e:
-        # Обработка других ошибок Yandex Cloud API
+    except GroqAPIError as e:
+        # Обработка других ошибок Groq API
         raise HTTPException(
             status_code=503,
             detail=f"Ошибка при обращении к AI сервису: {str(e)}"
         )
-
-    # Проверяем, является ли задача бессмысленной
-    if ai_result.get("estimated_points") is None or ai_result.get("is_meaningless"):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Задача бессмысленна или неконкретна: {ai_result.get('explanation', 'Не удалось оценить задачу')}"
-        )
-
+    
     estimated_points = ai_result["estimated_points"]
     ai_metadata = ai_result
 

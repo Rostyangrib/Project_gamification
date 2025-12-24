@@ -15,4 +15,4 @@ COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 
 COPY . .
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "start.py"]
