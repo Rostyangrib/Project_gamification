@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 import requests
-from ml.ai_analyzer import analyze_task_with_commands, analyze_task, GroqRateLimitError, GroqAPIError
+from ml.ai_analyzer import analyze_task_with_commands, analyze_task, YandexRateLimitError, YandexAPIError
 from db import get_db
 from database import User, Task, TaskStatus, Tag, TaskTag
 from schemas import TaskResponse
@@ -41,15 +41,15 @@ def chat_with_ai(
             available_statuses=statuses,
             available_tags=tags
         )
-    except GroqRateLimitError as e:
+    except YandexRateLimitError as e:
         # Специальная обработка ошибки rate limit - пробрасываем HTTP 429
         # Это позволит тестам фиксировать ошибку
         raise HTTPException(
             status_code=429,
             detail="Слишком много запросов к AI. Пожалуйста, подождите несколько секунд и попробуйте снова."
         )
-    except GroqAPIError as e:
-        # Обработка других ошибок Groq API
+    except YandexAPIError as e:
+        # Обработка других ошибок Yandex Cloud API
         raise HTTPException(
             status_code=503,
             detail=f"Ошибка при обращении к AI сервису: {str(e)}"
@@ -153,8 +153,13 @@ def chat_with_ai(
     if estimated_points == 50 and "estimated_points" not in task_data:
         try:
             ai_analysis = analyze_task(title, description)
+            # Проверяем, является ли задача бессмысленной
+            if ai_analysis.get("estimated_points") is None or ai_analysis.get("is_meaningless"):
+                return ChatResponse(
+                    reply=f"Задача бессмысленна или неконкретна: {ai_analysis.get('explanation', 'Не удалось оценить задачу')}"
+                )
             estimated_points = ai_analysis["estimated_points"]
-        except (GroqRateLimitError, GroqAPIError) as e:
+        except (YandexRateLimitError, YandexAPIError) as e:
             # Если произошла ошибка API при оценке сложности, пробрасываем её дальше
             # Это позволит тестам фиксировать ошибку
             raise

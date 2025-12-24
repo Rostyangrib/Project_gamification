@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from passlib.context import CryptContext
-from ml.ai_analyzer import analyze_task, GroqRateLimitError, GroqAPIError
+from ml.ai_analyzer import analyze_task, YandexRateLimitError, YandexAPIError
 
 from db import get_db
 from database import (
@@ -178,17 +178,24 @@ def create_task(
 
     try:
         ai_result = analyze_task(task.title, task.description or "")
-    except GroqRateLimitError as e:
+    except YandexRateLimitError as e:
         # Пробрасываем ошибку rate limit, чтобы тесты могли её зафиксировать
         raise HTTPException(
             status_code=429,
             detail="Слишком много запросов к AI. Пожалуйста, подождите несколько секунд и попробуйте снова."
         )
-    except GroqAPIError as e:
-        # Обработка других ошибок Groq API
+    except YandexAPIError as e:
+        # Обработка других ошибок Yandex Cloud API
         raise HTTPException(
             status_code=503,
             detail=f"Ошибка при обращении к AI сервису: {str(e)}"
+        )
+
+    # Проверяем, является ли задача бессмысленной
+    if ai_result.get("estimated_points") is None or ai_result.get("is_meaningless"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Задача бессмысленна или неконкретна: {ai_result.get('explanation', 'Не удалось оценить задачу')}"
         )
 
     estimated_points = ai_result["estimated_points"]
@@ -227,19 +234,26 @@ def create_task(
 
     try:
         ai_result = analyze_task(task.title, task.description or "")
-    except GroqRateLimitError as e:
+    except YandexRateLimitError as e:
         # Пробрасываем ошибку rate limit, чтобы тесты могли её зафиксировать
         raise HTTPException(
             status_code=429,
             detail="Слишком много запросов к AI. Пожалуйста, подождите несколько секунд и попробуйте снова."
         )
-    except GroqAPIError as e:
-        # Обработка других ошибок Groq API
+    except YandexAPIError as e:
+        # Обработка других ошибок Yandex Cloud API
         raise HTTPException(
             status_code=503,
             detail=f"Ошибка при обращении к AI сервису: {str(e)}"
         )
-    
+
+    # Проверяем, является ли задача бессмысленной
+    if ai_result.get("estimated_points") is None or ai_result.get("is_meaningless"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Задача бессмысленна или неконкретна: {ai_result.get('explanation', 'Не удалось оценить задачу')}"
+        )
+
     estimated_points = ai_result["estimated_points"]
     ai_metadata = ai_result
 
