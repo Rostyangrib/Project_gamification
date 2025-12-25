@@ -360,7 +360,7 @@ const AdminPage = () => {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-            ⚙️ Панель администратора
+            Панель администратора
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
             Управление типами наград, тегами, статусами задач и пользователями
@@ -846,4 +846,5 @@ const AdminPage = () => {
 };
 
 export default AdminPage;
+
 
