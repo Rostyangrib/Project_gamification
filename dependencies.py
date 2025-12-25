@@ -7,18 +7,22 @@ import os
 from db import get_db
 from database import User
 
+#Читает authorization из запроса
 security = HTTPBearer()
 
+#Подтверждение токена и данных из него(зависимость для эндпоинтов)
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
 ):
+    #стандартная ошибка при неудаче проверки токена
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Не удалось проверить токен",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
+                #расшифровывается токен и проверяется на подлиность
         payload = jwt.decode(
             credentials.credentials,
             os.getenv("SECRET_KEY"),
@@ -31,9 +35,11 @@ def get_current_user(
     except JWTError:
         raise credentials_exception
 
+    #проверка на существование пользователя в бд
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise credentials_exception
+        #возвращаем расшифрованные данные о пользователе(все из бд)
     return {"user": user, "role": role}
 
 
