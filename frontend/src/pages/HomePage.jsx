@@ -699,18 +699,17 @@ const HomePage = () => {
                       <div className="text-sm text-gray-800 dark:text-gray-100 font-bold mb-2.5 text-center">
                         Задачи на {day} {toGenitiveMonth(new Date(year, month).toLocaleString('ru-RU', { month: 'long' }))}:
                       </div>
-                      <ul className="list-none p-0 m-0 max-h-48 overflow-y-auto">
+                      <ul className="list-none p-0 m-0 max-h-48 overflow-y-auto overflow-x-hidden">
                         {dayTasks.map((task, idx) => (
                           <li
                             key={task.id || idx}
-                            className={`flex justify-between items-start p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded mb-2 
+                            className={`flex flex-col p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded mb-2 
                               border-l-4 
                               transition-colors duration-300 ease-in-out
-                              ${task.status_id === completedStatusId ? 'border-green-500 dark:border-green-400' : 'border-blue-500 dark:border-blue-400'} 
-                              break-words`}
+                              ${task.status_id === completedStatusId ? 'border-green-500 dark:border-green-400' : 'border-blue-500 dark:border-blue-400'}`}
                           >
-                            <div className="flex-1">
-                              <span className="text-gray-900 dark:text-gray-100">{task.title}</span>
+                            <div className="break-words mb-2">
+                              <span className="text-gray-900 dark:text-gray-100 break-words">{task.title}</span>
                               {task.estimated_points && (
                                 <span className="ml-2 text-indigo-600 dark:text-indigo-400 font-semibold text-sm">
                                   {task.estimated_points}
@@ -718,40 +717,42 @@ const HomePage = () => {
                               )}
                             </div>
 
-                            {task.status_id !== completedStatusId ? (
+                            <div className="flex items-center gap-2 mt-auto">
+                              {task.status_id !== completedStatusId ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (task.id) {
+                                      markTaskAsCompleted(task.id, task.estimated_points || 10);
+                                    }
+                                  }}
+                                  className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-colors"
+                                  title="Отметить как выполненную"
+                                >
+                                  ✓
+                                </button>
+                              ) : (
+                                <span
+                                  className="text-green-500 dark:text-green-400 opacity-70"
+                                  title="Задача уже выполнена"
+                                >
+                                  ✓
+                                </span>
+                              )}
+
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   if (task.id) {
-                                    markTaskAsCompleted(task.id, task.estimated_points || 10);
+                                    removeTask(task.id);
                                   }
                                 }}
-                                className="ml-2 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-colors"
-                                title="Отметить как выполненную"
+                                className="text-red-500 dark:text-red-400 cursor-pointer text-xl leading-none hover:text-red-700 dark:hover:text-red-300 transition-colors"
+                                title="Удалить задачу"
                               >
-                                ✓
+                                ×
                               </button>
-                            ) : (
-                              <span
-                                className="ml-2 text-green-500 dark:text-green-400 opacity-70"
-                                title="Задача уже выполнена"
-                              >
-                                ✓
-                              </span>
-                            )}
-
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (task.id) {
-                                  removeTask(task.id);
-                                }
-                              }}
-                              className="ml-2 text-red-500 dark:text-red-400 cursor-pointer text-xl leading-none flex-shrink-0 hover:text-red-700 dark:hover:text-red-300 transition-colors"
-                              title="Удалить задачу"
-                            >
-                              ×
-                            </button>
+                            </div>
                           </li>
                         ))}
                       </ul>
