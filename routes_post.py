@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from passlib.context import CryptContext
+from datetime import datetime
+import re
 from ml.ai_analyzer import analyze_task, YandexRateLimitError, YandexAPIError
 
 from db import get_db
@@ -326,17 +328,44 @@ def create_reward(
     if not db.query(RewardType).filter(RewardType.id == reward.type_id).first():
         raise HTTPException(status_code=404, detail="RewardType не найден")
 
+    # Проверяем, связана ли награда с задачей и не прошла ли дата выполнения
+    points_to_award = reward.points_amount
+    if reward.reason and "Выполнена задача" in reward.reason:
+        # Извлекаем task_id из reason (формат: "Выполнена задача (ID: 123)")
+        task_id_match = re.search(r'ID:\s*(\d+)', reward.reason)
+        if task_id_match:
+            try:
+                task_id = int(task_id_match.group(1))
+                task = db.query(Task).filter(
+                    Task.id == task_id,
+                    Task.user_id == current_user["user"].id
+                ).first()
+                
+                if task and task.due_date:
+                    now = datetime.utcnow()
+                    # Если due_date имеет timezone info, убираем его для сравнения
+                    due_date = task.due_date
+                    if hasattr(due_date, 'replace') and due_date.tzinfo is not None:
+                        due_date = due_date.replace(tzinfo=None)
+                    
+                    # Если дата выполнения прошла, не начисляем очки
+                    if now > due_date:
+                        points_to_award = 0
+            except (ValueError, AttributeError):
+                # Если не удалось извлечь task_id или произошла ошибка, продолжаем как обычно
+                pass
+
     db_reward = Reward(
         user_id=current_user["user"].id,
         type_id=reward.type_id,
-        points_amount=reward.points_amount,
+        points_amount=points_to_award,
         reason=reward.reason
     )
     db.add(db_reward)
     db.commit()
     db.refresh(db_reward)
 
-    current_user["user"].total_points += reward.points_amount
+    current_user["user"].total_points += points_to_award
     db.commit()
 
     return db_reward

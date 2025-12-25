@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 
 from db import get_db
-from database import TaskStatus, Tag, Task, RewardType, Reward, User, Competition
+from database import TaskStatus, Tag, Task, TaskTag, RewardType, Reward, User, Competition
 from schemas import (
     TaskStatusUpdate, TaskStatusResponse,
     TagUpdate, TagResponse,
@@ -94,6 +94,18 @@ def assign_user_to_competition(
         competition = db.query(Competition).filter(Competition.id == payload.competition_id).first()
         if not competition:
             raise HTTPException(status_code=404, detail="Соревнование не найдено")
+        
+        # Удаляем старые задачи пользователя при назначении нового соревнования
+        # Проверяем, что это действительно новое соревнование (не то же самое)
+        if user.cur_comp != payload.competition_id:
+            # Получаем все задачи пользователя
+            user_tasks = db.query(Task).filter(Task.user_id == user_id).all()
+            
+            # Удаляем связанные TaskTag записи и сами задачи
+            for task in user_tasks:
+                db.query(TaskTag).filter(TaskTag.task_id == task.id).delete()
+                db.delete(task)
+        
         user.cur_comp = payload.competition_id
         user.total_points = 0
     else:
