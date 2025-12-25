@@ -388,8 +388,8 @@ const AdminPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Типы наград */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
-              🏆 Типы наград
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <img src="/award.png" alt="Reward" className="w-6 h-6" /> Типы наград
             </h2>
             
             {/* Форма создания */}
@@ -493,13 +493,13 @@ const AdminPage = () => {
                           onClick={() => setEditingRewardType(rt)}
                           className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-sm hover:bg-blue-200 dark:hover:bg-blue-900/50"
                         >
-                          ✏️
+                          <img src="/edit.png" alt="Edit" className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteRewardType(rt.id)}
                           className="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded text-sm hover:bg-red-200 dark:hover:bg-red-900/50"
                         >
-                          🗑️
+                          <img src="/trash.png" alt="Trash" className="w-4 h-4" />
                         </button>
                       </div>
                     </>
@@ -511,8 +511,8 @@ const AdminPage = () => {
 
           {/* Теги */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
-              🏷️ Теги
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <img src="/tag.png" alt="Reward" className="w-6 h-6" /> Теги
             </h2>
             
             {/* Форма создания */}
@@ -576,13 +576,13 @@ const AdminPage = () => {
                           onClick={() => setEditingTag(tag)}
                           className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-sm hover:bg-blue-200 dark:hover:bg-blue-900/50"
                         >
-                          ✏️
+                          <img src="/edit.png" alt="Edit" className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteTag(tag.id)}
                           className="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded text-sm hover:bg-red-200 dark:hover:bg-red-900/50"
                         >
-                          🗑️
+                          <img src="/trash.png" alt="Trash" className="w-4 h-4" />
                         </button>
                       </div>
                     </>
@@ -594,8 +594,8 @@ const AdminPage = () => {
 
           {/* Статусы задач */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
-              📋 Статусы задач
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <img src="/status.png" alt="Reward" className="w-6 h-6" /> Статусы задач
             </h2>
             
             {/* Форма создания */}
@@ -676,13 +676,13 @@ const AdminPage = () => {
                           onClick={() => setEditingTaskStatus(status)}
                           className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-sm hover:bg-blue-200 dark:hover:bg-blue-900/50"
                         >
-                          ✏️
+                          <img src="/edit.png" alt="Edit" className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteTaskStatus(status.id)}
                           className="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded text-sm hover:bg-red-200 dark:hover:bg-red-900/50"
                         >
-                          🗑️
+                          <img src="/trash.png" alt="Trash" className="w-4 h-4" />
                         </button>
                       </div>
                     </>
@@ -694,8 +694,8 @@ const AdminPage = () => {
 
           {/* Пользователи */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
-              👥 Пользователи
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <img src="/users.png" alt="Reward" className="w-6 h-6" /> Пользователи
             </h2>
 
             {/* Поиск пользователей */}
@@ -822,13 +822,13 @@ const AdminPage = () => {
                             }}
                             className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-sm hover:bg-blue-200 dark:hover:bg-blue-900/50"
                           >
-                            ✏️
+                            <img src="/edit.png" alt="Edit" className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteUser(userItem.id)}
                             className="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded text-sm hover:bg-red-200 dark:hover:bg-red-900/50"
                           >
-                            🗑️
+                            <img src="/trash.png" alt="Trash" className="w-4 h-4" />
                           </button>
                         </div>
                       </div>

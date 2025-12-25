@@ -405,7 +405,6 @@ const HomePage = () => {
             className="bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 p-6 rounded-xl shadow-lg text-white hover:from-indigo-600 hover:to-purple-700 dark:hover:from-indigo-700 dark:hover:to-purple-800 transition-all transform hover:scale-105 w-full"
           >
             <div className="flex items-center gap-4">
-              <div className="text-4xl"></div>
               <div className="text-left">
                 <h3 className="text-xl font-bold mb-1">Управление соревнованиями</h3>
                 <p className="text-indigo-100 text-sm">Создавайте и управляйте соревнованиями</p>
@@ -419,7 +418,6 @@ const HomePage = () => {
               className="bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-500 dark:to-pink-500 p-6 rounded-xl shadow-lg text-white hover:from-purple-700 hover:to-pink-700 dark:hover:from-purple-600 dark:hover:to-pink-600 transition-all transform hover:scale-105"
             >
               <div className="flex items-center gap-4">
-                <div className="text-4xl">⚙️</div>
                 <div className="text-left">
                   <h3 className="text-xl font-bold mb-1">Админ-панель</h3>
                   <p className="text-purple-100 text-sm">Управление пользователями и настройками</p>
