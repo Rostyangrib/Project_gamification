@@ -4,16 +4,16 @@
 
 @layer base {
   html {
-    @apply bg-white dark:bg-gray-900;
+    @apply bg-gray-50 dark:bg-gray-900;
   }
 
   body {
-    @apply font-sans antialiased bg-white dark:bg-gray-900;
+    @apply font-sans antialiased bg-gray-50 dark:bg-gray-900;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
 
   #root {
-    @apply w-full min-h-screen bg-white dark:bg-gray-900;
+    @apply w-full min-h-screen bg-gray-50 dark:bg-gray-900;
   }
 
   /* Стилизация календаря */

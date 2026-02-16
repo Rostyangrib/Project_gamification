@@ -389,7 +389,7 @@ const HomePage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 dark:text-gray-400 text-sm">Участников</p>
-                <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">
+                <p className="text-3xl font-bold text-blue-500 dark:text-blue-600 mt-1">
                   {loadingUsers ? '...' : allUsers.length}
                 </p>
               </div>
@@ -402,12 +402,12 @@ const HomePage = () => {
         <div className={`grid grid-cols-1 ${user?.role === 'admin' ? 'md:grid-cols-2' : ''} gap-6 mb-8`}>
           <button
             onClick={() => navigate('/manager')}
-            className="bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 p-6 rounded-xl shadow-lg text-white hover:from-indigo-600 hover:to-purple-700 dark:hover:from-indigo-700 dark:hover:to-purple-800 transition-all transform hover:scale-105 w-full"
+            className="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 p-6 rounded-xl shadow-lg text-white hover:from-blue-600 hover:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800 transition-all transform hover:scale-105 w-full"
           >
             <div className="flex items-center gap-4">
               <div className="text-left">
                 <h3 className="text-xl font-bold mb-1">Управление соревнованиями</h3>
-                <p className="text-indigo-100 text-sm">Создавайте и управляйте соревнованиями</p>
+                <p className="text-blue-100 text-sm">Создавайте и управляйте соревнованиями</p>
               </div>
             </div>
           </button>
@@ -415,12 +415,12 @@ const HomePage = () => {
           {user?.role === 'admin' && (
             <button
               onClick={() => navigate('/admin')}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-500 dark:to-pink-500 p-6 rounded-xl shadow-lg text-white hover:from-purple-700 hover:to-pink-700 dark:hover:from-purple-600 dark:hover:to-pink-600 transition-all transform hover:scale-105"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 p-6 rounded-xl shadow-lg text-white hover:from-blue-600 hover:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800 transition-all transform hover:scale-105"
             >
               <div className="flex items-center gap-4">
                 <div className="text-left">
                   <h3 className="text-xl font-bold mb-1">Админ-панель</h3>
-                  <p className="text-purple-100 text-sm">Управление пользователями и настройками</p>
+                  <p className="text-blue-100 text-sm">Управление пользователями и настройками</p>
                 </div>
               </div>
             </button>
@@ -434,7 +434,7 @@ const HomePage = () => {
 
           {loadingCompetitions ? (
             <div className="text-center py-8">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent"></div>
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
             </div>
           ) : competitions.length === 0 ? (
             <p className="text-gray-500 dark:text-gray-400 text-center py-8">
@@ -464,7 +464,7 @@ const HomePage = () => {
                           </div>
                           <button
                             onClick={() => navigate(`/manager?competitionId=${comp.id}`)}
-                            className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-sm"
+                            className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm"
                           >
                             Управлять
                           </button>
@@ -497,7 +497,7 @@ const HomePage = () => {
                           </div>
                           <button
                             onClick={() => navigate(`/manager?competitionId=${comp.id}`)}
-                            className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-sm"
+                            className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm"
                           >
                             Управлять
                           </button>
@@ -555,7 +555,7 @@ const HomePage = () => {
 
       <div className="grid grid-cols-1 gap-8">
         {!isLoadingCompetition && competition && (
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 p-6 rounded-lg shadow-lg text-white">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 p-6 rounded-lg shadow-lg text-white">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
@@ -563,20 +563,20 @@ const HomePage = () => {
                 </h2>
                 {competition.end_date ? (
                   <div className="space-y-1">
-                    <p className="text-indigo-100 text-sm">
+                    <p className="text-blue-100 text-sm">
                       <span className="font-semibold">Дедлайн:</span> {formatDateTime(competition.end_date)}
                     </p>
-                    <p className="text-indigo-100 text-sm font-medium">
+                    <p className="text-blue-100 text-sm font-medium">
                       {getTimeRemaining(competition.end_date)}
                     </p>
                   </div>
                 ) : (
-                  <p className="text-indigo-100 text-sm">
+                  <p className="text-blue-100 text-sm">
                     Информация о дедлайне недоступна
                   </p>
                 )}
                 {competition.start_date && (
-                  <p className="text-indigo-100 text-sm mt-2">
+                  <p className="text-blue-100 text-sm mt-2">
                     <span className="font-semibold">Начало:</span> {formatDateTime(competition.start_date)}
                   </p>
                 )}
@@ -620,50 +620,76 @@ const HomePage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-7 text-center font-semibold mb-2 text-gray-800 dark:text-gray-200">
+          <div className="grid grid-cols-7 text-center font-semibold mb-0 bg-gray-600 dark:bg-gray-700 text-white">
             {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map(day => (
               <div
                 key={day}
-                className={day === 'Сб' || day === 'Вс' ? 'text-red-500 dark:text-red-400' : ''}
+                className="py-2 px-1"
               >
                 {day}
               </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-1">
-            {Array.from({ length: startDay }).map((_, i) => (
-              <div key={`empty-${i}`} className="h-[120px]"></div>
-            ))}
+          <div className="border border-gray-300 dark:border-gray-600 overflow-hidden">
+            <div className="grid grid-cols-7">
+              {Array.from({ length: startDay }).map((_, i) => {
+                const colIndex = i % 7;
+                const isLastCol = colIndex === 6;
+                const totalCells = startDay + days.length;
+                const rowIndex = Math.floor(i / 7);
+                const totalRows = Math.ceil(totalCells / 7);
+                const isLastRow = rowIndex === totalRows - 1;
+                return (
+                  <div 
+                    key={`empty-${i}`} 
+                    className={`h-[120px] bg-gray-50 dark:bg-gray-800 ${!isLastCol ? 'border-r border-gray-300 dark:border-gray-600' : ''} ${!isLastRow ? 'border-b border-gray-300 dark:border-gray-600' : ''}`}
+                  ></div>
+                );
+              })}
 
-            {days.map(day => {
-              const dayIndex = day - 1;
-              const dateKey = formatDateKey(new Date(year, month, day));
-              const dayTasks = getTasksForDay(day);
-              const isExpanded = expandedDay === dateKey;
-              const today = isToday(day);
-              const weekend = isWeekend(dayIndex);
+              {days.map((day, dayIdx) => {
+                const dayIndex = day - 1;
+                const dateKey = formatDateKey(new Date(year, month, day));
+                const dayTasks = getTasksForDay(day);
+                const isExpanded = expandedDay === dateKey;
+                const today = isToday(day);
+                const weekend = isWeekend(dayIndex);
+                const totalCells = startDay + days.length;
+                const cellIndex = startDay + dayIdx;
+                const colIndex = cellIndex % 7;
+                const rowIndex = Math.floor(cellIndex / 7);
+                const totalRows = Math.ceil(totalCells / 7);
+                const isLastCol = colIndex === 6;
+                const isLastRow = rowIndex === totalRows - 1;
 
-              return (
-                <div
-                  key={day}
-                  onClick={() => dayTasks.length > 0 && toggleDay(day)}
-                  className={`
-                    border border-gray-200 dark:border-gray-700 rounded-md min-h-[120px] transition-colors flex flex-col
-                    ${today ? 'bg-blue-50 dark:bg-blue-900/30' : 'bg-white dark:bg-gray-800'}
-                    ${isExpanded ? 'bg-gray-50 dark:bg-gray-700' : ''}
-                    ${dayTasks.length > 0 ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700' : ''}
-                  `.trim()}
-                >
+                return (
                   <div
+                    key={day}
+                    onClick={() => dayTasks.length > 0 && toggleDay(day)}
                     className={`
-                      p-2 text-right text-sm text-gray-900 dark:text-gray-100
-                      ${today ? 'font-bold' : ''}
-                      ${weekend ? 'text-red-500 dark:text-red-400' : ''}
+                      min-h-[120px] transition-colors flex flex-col
+                      ${!isLastCol ? 'border-r border-gray-300 dark:border-gray-600' : ''}
+                      ${!isLastRow ? 'border-b border-gray-300 dark:border-gray-600' : ''}
+                      ${today ? 'bg-blue-100 dark:bg-blue-900/40' : 'bg-gray-50 dark:bg-gray-800'}
+                      ${isExpanded ? 'bg-gray-100 dark:bg-gray-700' : ''}
+                      ${dayTasks.length > 0 ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700' : ''}
                     `.trim()}
                   >
-                    {day}
-                    {today && <span className="text-green-600 dark:text-green-400 ml-1">●</span>}
+                  <div
+                    className={`
+                      p-2 text-right text-sm
+                      ${today ? 'font-bold' : ''}
+                      ${weekend ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}
+                    `.trim()}
+                  >
+                    {today ? (
+                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-500 dark:bg-blue-600 text-white">
+                        {day}
+                      </span>
+                    ) : (
+                      <span>{day}</span>
+                    )}
                   </div>
 
                   <div className="px-2 pb-2 text-sm flex-1">
@@ -676,7 +702,7 @@ const HomePage = () => {
                           >
                             {task.title.length > 15 ? task.title.slice(0, 15) + '…' : task.title}
                             {task.estimated_points && (
-                              <span className="ml-1 text-indigo-600 dark:text-indigo-400 font-semibold">
+                              <span className="ml-1 text-blue-500 dark:text-blue-600 font-semibold">
                                 ({task.estimated_points})
                               </span>
                             )}
@@ -684,7 +710,7 @@ const HomePage = () => {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-gray-400 dark:text-gray-500 text-xs m-1">Нет задач</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs m-1">Нет задач</p>
                     )}
                   </div>
 
@@ -711,7 +737,7 @@ const HomePage = () => {
                             <div className="break-words mb-2">
                               <span className="text-gray-900 dark:text-gray-100 break-words">{task.title}</span>
                               {task.estimated_points && (
-                                <span className="ml-2 text-indigo-600 dark:text-indigo-400 font-semibold text-sm">
+                                <span className="ml-2 text-blue-500 dark:text-blue-600 font-semibold text-sm">
                                   {task.estimated_points}
                                 </span>
                               )}
@@ -761,6 +787,7 @@ const HomePage = () => {
                 </div>
               );
             })}
+            </div>
           </div>
         </div>
       </div>

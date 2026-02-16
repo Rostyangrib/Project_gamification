@@ -19,7 +19,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white dark:bg-gray-800 shadow-md border-b border-gray-200 dark:border-gray-700">
+    <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-8">
@@ -27,8 +27,8 @@ const Navbar = () => {
               to="/"
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 isActive('/')
-                  ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30'
-                  : 'text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  ? 'text-blue-500 dark:text-blue-600 bg-blue-100 dark:bg-blue-900/40'
+                  : 'text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
               {isAuthenticated && (user?.role === 'admin' || user?.role === 'manager') 
@@ -40,8 +40,8 @@ const Navbar = () => {
                 to="/leaderboards"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive('/leaderboards')
-                    ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30'
-                    : 'text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'text-blue-500 dark:text-blue-600 bg-blue-100 dark:bg-blue-900/40'
+                    : 'text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
                 Список лидеров
@@ -52,8 +52,8 @@ const Navbar = () => {
                 to="/manager"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive('/manager')
-                    ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30'
-                    : 'text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'text-blue-500 dark:text-blue-600 bg-blue-100 dark:bg-blue-900/40'
+                    : 'text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
                 Управление соревнованиями
@@ -64,8 +64,8 @@ const Navbar = () => {
                 to="/admin"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive('/admin')
-                    ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30'
-                    : 'text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'text-blue-500 dark:text-blue-600 bg-blue-100 dark:bg-blue-900/40'
+                    : 'text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
                 Админ-панель
@@ -76,13 +76,13 @@ const Navbar = () => {
             {isAuthenticated && user && (
               <div className="flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-200">
                 {user.role !== 'admin' && user.role !== 'manager' && (
-                  <span className="px-2 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-200 font-semibold">
+                  <span className="px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-200 font-semibold">
                     {user.total_points ?? 0} баллов
                   </span>
                 )}
                 <button
                   onClick={() => navigate('/profile')}
-                  className="px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-indigo-600 dark:text-indigo-300 font-medium"
+                  className="px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-blue-500 dark:text-blue-600 font-medium"
                   title="Профиль"
                 >
                   {user.email}
@@ -110,14 +110,14 @@ const Navbar = () => {
                   logout();
                   navigate('/login');
                 }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors"
               >
                 Выйти
               </button>
             ) : (
               <button
                 onClick={() => navigate('/login')}
-                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-md transition-colors"
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 rounded-md transition-colors"
               >
                 Войти
               </button>

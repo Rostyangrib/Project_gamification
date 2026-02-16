@@ -693,7 +693,7 @@ const ManagerPage = () => {
             <button
               onClick={loadCompetitions}
               disabled={loadingCompetitions}
-              className="px-4 py-2 text-sm bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               <svg className={`w-4 h-4 ${loadingCompetitions ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -704,7 +704,7 @@ const ManagerPage = () => {
 
           {loadingCompetitions ? (
             <div className="text-center py-8">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent"></div>
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
               <p className="mt-2 text-gray-600 dark:text-gray-400">Загрузка соревнований...</p>
             </div>
           ) : competitions.length === 0 ? (
@@ -730,7 +730,7 @@ const ManagerPage = () => {
                           type="text"
                           value={editFormData.title}
                           onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                           required
                         />
                       </div>
@@ -745,7 +745,7 @@ const ManagerPage = () => {
                             onChange={(e) => setEditFormData({ ...editFormData, start_date: e.target.value })}
                             min="1900-01-01T00:00"
                             max="9999-12-31T23:59"
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             required
                           />
                         </div>
@@ -759,7 +759,7 @@ const ManagerPage = () => {
                             onChange={(e) => setEditFormData({ ...editFormData, end_date: e.target.value })}
                             min={editFormData.start_date || "1900-01-01T00:00"}
                             max="9999-12-31T23:59"
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             required
                           />
                         </div>
@@ -774,7 +774,7 @@ const ManagerPage = () => {
                           <button
                             type="button"
                             onClick={addEditTask}
-                            className="px-3 py-1.5 text-sm bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors flex items-center gap-1"
+                            className="px-3 py-1.5 text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors flex items-center gap-1"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -813,7 +813,7 @@ const ManagerPage = () => {
                                     type="text"
                                     value={task.title}
                                     onChange={(e) => updateEditTask(index, 'title', e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     placeholder="Введите название задачи"
                                   />
                                 </div>
@@ -844,7 +844,7 @@ const ManagerPage = () => {
                                                 type="checkbox"
                                                 checked={task.user_ids.includes(userItem.id)}
                                                 onChange={() => toggleEditTaskUser(index, userItem.id)}
-                                                className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 focus:ring-1"
+                                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-1"
                                               />
                                               <span className="ml-2 text-xs text-gray-900 dark:text-gray-100">
                                                 {userItem.first_name} {userItem.last_name}
@@ -915,7 +915,7 @@ const ManagerPage = () => {
                         <button
                           type="submit"
                           disabled={loading}
-                          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                         >
                           Сохранить
                         </button>
@@ -1005,7 +1005,7 @@ const ManagerPage = () => {
                           </h4>
                           {loadingLeaderboard ? (
                             <div className="text-center py-4">
-                              <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent"></div>
+                              <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
                               <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Загрузка рейтинга...</p>
                             </div>
                           ) : leaderboardData[competition.id]?.length > 0 ? (
@@ -1016,14 +1016,14 @@ const ManagerPage = () => {
                                   className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg"
                                 >
                                   <div className="flex items-center gap-3">
-                                    <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400 w-8">
+                                    <span className="text-lg font-bold text-blue-600 dark:text-blue-400 w-8">
                                       {index + 1}
                                     </span>
                                     <span className="text-sm font-medium text-gray-800 dark:text-gray-100">
                                       {user.first_name} {user.last_name}
                                     </span>
                                   </div>
-                                  <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
+                                  <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
                                     {user.total_points} баллов
                                   </span>
                                 </div>
@@ -1051,13 +1051,13 @@ const ManagerPage = () => {
                               placeholder="Найти участника"
                               value={participantSearchText}
                               onChange={(e) => setParticipantSearchText(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                           </div>
 
                           {loadingParticipants ? (
                             <div className="text-center py-4">
-                              <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent"></div>
+                              <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
                               <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Загрузка участников...</p>
                             </div>
                           ) : (
@@ -1096,7 +1096,7 @@ const ManagerPage = () => {
                                       <button
                                         onClick={() => handleAddParticipant(competition.id, user.id)}
                                         disabled={loading}
-                                        className="px-3 py-1 text-sm bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors disabled:opacity-50"
+                                        className="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors disabled:opacity-50"
                                       >
                                         Добавить
                                       </button>
@@ -1138,7 +1138,7 @@ const ManagerPage = () => {
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Введите название соревнования"
                 required
               />
@@ -1157,7 +1157,7 @@ const ManagerPage = () => {
                 onChange={handleInputChange}
                 min="1900-01-01T00:00"
                 max="9999-12-31T23:59"
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
             </div>
@@ -1175,7 +1175,7 @@ const ManagerPage = () => {
                 onChange={handleInputChange}
                 min={formData.start_date || "1900-01-01T00:00"}
                 max="9999-12-31T23:59"
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
             </div>
@@ -1191,7 +1191,7 @@ const ManagerPage = () => {
                     <button
                       type="button"
                       onClick={selectAllUsers}
-                      className="px-3 py-1.5 text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors"
+                      className="px-3 py-1.5 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
                     >
                       Выбрать всех
                     </button>
@@ -1216,7 +1216,7 @@ const ManagerPage = () => {
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
                     placeholder="Найти участника"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   {searchText && (
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -1228,7 +1228,7 @@ const ManagerPage = () => {
               
               {loadingUsers ? (
                 <div className="text-center py-8">
-                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent"></div>
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
                   <p className="mt-2 text-gray-600 dark:text-gray-400">Загрузка пользователей...</p>
                 </div>
               ) : allUsers.length === 0 ? (
@@ -1253,7 +1253,7 @@ const ManagerPage = () => {
                           type="checkbox"
                           checked={selectedUsers.includes(userItem.id)}
                           onChange={() => toggleUserSelection(userItem.id)}
-                          className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 focus:ring-2"
+                          className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                         />
                         <div className="ml-3 flex-1">
                           <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -1262,7 +1262,7 @@ const ManagerPage = () => {
                           <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
                             ({userItem.email})
                           </span>
-                          <span className="ml-2 text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
+                          <span className="ml-2 text-xs text-blue-600 dark:text-blue-400 font-semibold">
                             {userItem.total_points} баллов
                           </span>
                         </div>
@@ -1283,7 +1283,7 @@ const ManagerPage = () => {
                   <button
                     type="button"
                     onClick={addTask}
-                    className="px-3 py-1.5 text-sm bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors flex items-center gap-1"
+                    className="px-3 py-1.5 text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors flex items-center gap-1"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -1322,7 +1322,7 @@ const ManagerPage = () => {
                             type="text"
                             value={task.title}
                             onChange={(e) => updateTask(index, 'title', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             placeholder="Введите название задачи"
                           />
                         </div>
@@ -1350,7 +1350,7 @@ const ManagerPage = () => {
                                           type="checkbox"
                                           checked={task.user_ids.includes(userItem.id)}
                                           onChange={() => toggleTaskUser(index, userItem.id)}
-                                          className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 focus:ring-1"
+                                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-1"
                                         />
                                         <span className="ml-2 text-xs text-gray-900 dark:text-gray-100">
                                           {userItem.first_name} {userItem.last_name}
@@ -1427,7 +1427,7 @@ const ManagerPage = () => {
             <button
               type="submit"
               disabled={loading || loadingUsers}
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Создание...' : 'Создать соревнование'}
             </button>

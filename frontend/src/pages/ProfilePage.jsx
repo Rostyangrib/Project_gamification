@@ -94,7 +94,7 @@ const ProfilePage = () => {
               name="email"
               value={form.email}
               onChange={handleChange}
-              className={`w-full px-3 py-3 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+              className={`w-full px-3 py-3 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 errors.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
               placeholder="you@example.com"
@@ -111,7 +111,7 @@ const ProfilePage = () => {
               name="password"
               value={form.password}
               onChange={handleChange}
-              className={`w-full px-3 py-3 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+              className={`w-full px-3 py-3 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 errors.password ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
               placeholder="Введите новый пароль"
@@ -128,7 +128,7 @@ const ProfilePage = () => {
               name="confirmPassword"
               value={form.confirmPassword}
               onChange={handleChange}
-              className={`w-full px-3 py-3 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+              className={`w-full px-3 py-3 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 errors.confirmPassword ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
               placeholder="Повторите пароль"
@@ -152,7 +152,7 @@ const ProfilePage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? 'Сохранение...' : 'Сохранить изменения'}
           </button>

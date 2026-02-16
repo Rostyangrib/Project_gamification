@@ -130,10 +130,10 @@ const LeaderboardsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 sm:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 sm:p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent mb-2">
+          <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent mb-2">
             Список лидеров
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
@@ -144,7 +144,7 @@ const LeaderboardsPage = () => {
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
           {loading ? (
             <div className="text-center py-16">
-              <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent dark:border-indigo-400"></div>
+              <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent dark:border-blue-400"></div>
               <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Загрузка лидеров...</p>
             </div>
           ) : error ? (
@@ -207,7 +207,7 @@ const LeaderboardsPage = () => {
                           </div>
                         </td>
                         <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-right">
-                          <span className="inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-200">
+                          <span className="inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
                             {user.total_points}
                           </span>
                         </td>

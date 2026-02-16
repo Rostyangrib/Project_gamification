@@ -159,8 +159,8 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-600 dark:from-indigo-900 dark:via-purple-900 dark:to-purple-950 p-5">
-      <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md">
+    <div className="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-gray-900 p-5">
+      <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-md">
         <h2 className="text-center mb-6 text-2xl font-semibold text-gray-800 dark:text-gray-100">
           {isLogin ? 'Вход' : 'Регистрация'}
         </h2>
@@ -175,7 +175,7 @@ const AuthPage = () => {
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              className={`w-full px-3 py-3 border rounded-lg text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+              className={`w-full px-3 py-3 border rounded-lg text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 errors.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
               placeholder="Введите вашу электронную почту"
@@ -197,7 +197,7 @@ const AuthPage = () => {
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-3 border rounded-lg text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                  className={`w-full px-3 py-3 border rounded-lg text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     errors.firstName ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                   }`}
                   placeholder="Введите ваше имя"
@@ -216,7 +216,7 @@ const AuthPage = () => {
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-3 border rounded-lg text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                  className={`w-full px-3 py-3 border rounded-lg text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     errors.lastName ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                   }`}
                   placeholder="Введите вашу фамилию"
@@ -239,7 +239,7 @@ const AuthPage = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
-              className={`w-full px-3 py-3 pr-10 border rounded-lg text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+              className={`w-full px-3 py-3 pr-10 border rounded-lg text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 errors.password ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
                 placeholder="Введите ваш пароль"
@@ -279,7 +279,7 @@ const AuthPage = () => {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-3 pr-10 border rounded-lg text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                  className={`w-full px-3 py-3 pr-10 border rounded-lg text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     errors.confirmPassword
                       ? "border-red-500"
                       : "border-gray-300 dark:border-gray-600"
@@ -323,7 +323,7 @@ const AuthPage = () => {
           )}
           <button
             type="submit"
-            className="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg text-base font-medium cursor-pointer transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg text-base font-medium cursor-pointer transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             {isLogin ? 'Войти' : 'Зарегистрироваться'}
           </button>
@@ -334,7 +334,7 @@ const AuthPage = () => {
           <button
             type="button"
             onClick={toggleMode}
-            className="bg-transparent border-none text-indigo-600 cursor-pointer font-semibold underline p-0 ml-1 hover:text-purple-600 transition-colors"
+            className="bg-transparent border-none text-blue-600 cursor-pointer font-semibold underline p-0 ml-1 hover:text-purple-600 transition-colors"
           >
             {isLogin ? 'Зарегистрироваться' : 'Войти'}
           </button>
