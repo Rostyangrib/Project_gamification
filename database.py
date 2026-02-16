@@ -1,11 +1,11 @@
 from sqlalchemy import (
     Column, String, Integer, Text, ForeignKey, JSON, DateTime, text
 )
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 
 from auth import get_password_hash
-from config.db import engine
+from db import engine
 from sqlalchemy.orm import Session
 
 Base = declarative_base()

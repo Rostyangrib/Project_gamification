@@ -9,3 +9,10 @@ passlib
 bcrypt==3.2.2
 requests
 pydantic[email]
+pytest
+pytest-asyncio
+pytest-html
+pytest-metadata
+httpx
+uvicorn[standard]>=0.30.0
+gunicorn>=21.0.0

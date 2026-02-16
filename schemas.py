@@ -1,14 +1,15 @@
 from datetime import datetime
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict, Field
 from typing import Optional, List
 
 class UserCreate(BaseModel):
     first_name: str
     last_name: str
     email: EmailStr
-    password: str
+    password: str = Field(..., min_length=6, max_length=72)
 
 class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     first_name: str
     last_name: str
@@ -17,16 +18,11 @@ class UserResponse(BaseModel):
     role: Optional[str] = None
     cur_comp: Optional[int] = None
 
-    class Config:
-        from_attributes = True
-
 class UserLeaderboard(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     first_name: str
     last_name: str
     total_points: int
-
-    class Config:
-        from_attributes = True
 
 class AllUsersResponse(BaseModel):
     users: List[UserLeaderboard]
@@ -39,7 +35,7 @@ class UserUpdate(BaseModel):
     last_name: Optional[str] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = None
-    role: Optional[str] = None  # Для админа: возможность менять роль
+    role: Optional[str] = None
 
 class TaskStatusCreate(BaseModel):
     code: str
@@ -50,12 +46,11 @@ class TaskStatusUpdate(BaseModel):
     name: Optional[str] = None
 
 class TaskStatusResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     code: str
     name: str
-
-    class Config:
-        from_attributes = True
 
 class TagCreate(BaseModel):
     name: str
@@ -64,11 +59,10 @@ class TagUpdate(BaseModel):
     name: Optional[str] = None
 
 class TagResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
-
-    class Config:
-        from_attributes = True
 
 class TaskTagCreate(BaseModel):
     task_id: int
@@ -92,6 +86,7 @@ class TaskUpdate(BaseModel):
     completed_at: Optional[datetime] = None
 
 class TaskResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     user_id: int
     status_id: int
@@ -105,9 +100,6 @@ class TaskResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
-
 class RewardTypeCreate(BaseModel):
     code: str
     name: str
@@ -119,13 +111,11 @@ class RewardTypeUpdate(BaseModel):
     description: Optional[str] = None
 
 class RewardTypeResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     code: str
     name: str
     description: Optional[str]
-
-    class Config:
-        from_attributes = True
 
 class RewardCreate(BaseModel):
     type_id: int
@@ -138,15 +128,13 @@ class RewardUpdate(BaseModel):
     reason: Optional[str] = None
 
 class RewardResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     user_id: int
     type_id: int
     points_amount: int
     awarded_at: datetime
     reason: Optional[str]
-
-    class Config:
-        from_attributes = True
 
 class CompetitionCreate(BaseModel):
     title: str
@@ -159,15 +147,13 @@ class CompetitionUpdate(BaseModel):
     end_date: Optional[datetime] = None
 
 class CompetitionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     title: str
     start_date: datetime
     end_date: datetime
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class Token(BaseModel):
     access_token: str
@@ -183,11 +169,10 @@ class UserLogin(BaseModel):
     password: str
 
 class TaskTitleAndDate(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     title: str
     due_date: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
 
 class CompetitionDatesResponse(BaseModel):
     start_date: datetime

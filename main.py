@@ -1,18 +1,10 @@
 import os
 
 from fastapi import FastAPI
-from datetime import datetime
-from sqlalchemy import text
-from config.db import engine
-from database import init_db
 from routes import router
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-
-
-
-init_db()
 
 app = FastAPI(
     title="Gamification API",

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 import os
 
-from config.db import get_db
+from db import get_db
 from database import User
 
 security = HTTPBearer()

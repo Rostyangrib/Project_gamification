@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from config.db import get_db
+from db import get_db
 from database import User, TaskStatus, Tag, Task, TaskTag, RewardType, Reward, Competition
 from dependencies import get_current_user, require_admin, require_manager
 
@@ -19,7 +19,6 @@ def delete_own_account(
         db.delete(task)
 
     # db.query(Board).filter(Board.user_id == user.id).delete()
-    #
     # db.query(Category).filter(Category.user_id == user.id).delete()
 
     db.query(Reward).filter(Reward.user_id == user.id).delete()
@@ -46,7 +45,6 @@ def delete_user_by_admin(
         db.delete(task)
 
     # db.query(Board).filter(Board.user_id == user_id).delete()
-    #
     # db.query(Category).filter(Category.user_id == user_id).delete()
 
     db.query(Reward).filter(Reward.user_id == user_id).delete()
@@ -189,4 +187,4 @@ def delete_competition(
 
     db.delete(competition)
     db.commit()
-    return # 204 No Content
+    return

@@ -3,10 +3,29 @@
 ### Как запустить проект
 
 1. Запустить Docker
-2. Запустить docker-compose build
-3. Запустить docker-compose run
+2. Запустить ```docker-compose build```
+3. Запустить ```docker-compose up```
 4. Перейти по адресу 0.0.0.0:8000
 5. Откроется само веб-приложение с frontend части
+
+
+### Запуск без докера
+
+1. ```pip install -r requirements.txt ``` - для установки зависимостей  
+2. ```cd frontend``` - перейти в папку frontend  
+3. ```npm install``` - установка зависимостей для frontend
+4. ```npm run build``` - сборка react
+5. ```cd ..``` - возврат в корень проекта
+6. ```python start.py``` - запуск приложения
+
+### Тесты производительности locust
+```locust -f locust/locustfile.py --host=http://127.0.0.1:8000/```
+
+### Тесты Pytest
+
+```python pytest\generate_full_report.py```  
+```start test_reports\full_test_report.html```
+
 
 ### Доступ к админ-панели
 
@@ -33,4 +52,5 @@
       - Копируем данный токен
     - В верней части страницы есть кнопка Authorize, где нужно вставить полученный токен и нажать Authorize
     - Поздравляем, мы вошли в админ-панель!
+
 4. После этого можно воспользоваться всеми запросами

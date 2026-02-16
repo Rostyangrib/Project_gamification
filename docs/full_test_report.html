@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title id="head-title">Отчет о тестировании - Gamification System</title>
+      <style type="text/css">body {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  /* do not increase min-width as some may use split screens */
+  min-width: 800px;
+  color: #999;
+}
+
+h1 {
+  font-size: 24px;
+  color: black;
+}
+
+h2 {
+  font-size: 16px;
+  color: black;
+}
+
+p {
+  color: black;
+}
+
+a {
+  color: #999;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+/******************************
+ * SUMMARY INFORMATION
+ ******************************/
+#environment td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  vertical-align: top;
+}
+#environment tr:nth-child(odd) {
+  background-color: #f6f6f6;
+}
+#environment ul {
+  margin: 0;
+  padding: 0 20px;
+}
+
+/******************************
+ * TEST RESULT COLORS
+ ******************************/
+span.passed,
+.passed .col-result {
+  color: green;
+}
+
+span.skipped,
+span.xfailed,
+span.rerun,
+.skipped .col-result,
+.xfailed .col-result,
+.rerun .col-result {
+  color: orange;
+}
+
+span.error,
+span.failed,
+span.xpassed,
+.error .col-result,
+.failed .col-result,
+.xpassed .col-result {
+  color: red;
+}
+
+.col-links__extra {
+  margin-right: 3px;
+}
+
+/******************************
+ * RESULTS TABLE
+ *
+ * 1. Table Layout
+ * 2. Extra
+ * 3. Sorting items
+ *
+ ******************************/
+/*------------------
+ * 1. Table Layout
+ *------------------*/
+#results-table {
+  border: 1px solid #e6e6e6;
+  color: #999;
+  font-size: 12px;
+  width: 100%;
+}
+#results-table th,
+#results-table td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  text-align: left;
+}
+#results-table th {
+  font-weight: bold;
+}
+
+/*------------------
+ * 2. Extra
+ *------------------*/
+.logwrapper {
+  max-height: 230px;
+  overflow-y: scroll;
+  background-color: #e6e6e6;
+}
+.logwrapper.expanded {
+  max-height: none;
+}
+.logwrapper.expanded .logexpander:after {
+  content: "collapse [-]";
+}
+.logwrapper .logexpander {
+  z-index: 1;
+  position: sticky;
+  top: 10px;
+  width: max-content;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 5px 7px;
+  margin: 10px 0 10px calc(100% - 80px);
+  cursor: pointer;
+  background-color: #e6e6e6;
+}
+.logwrapper .logexpander:after {
+  content: "expand [+]";
+}
+.logwrapper .logexpander:hover {
+  color: #000;
+  border-color: #000;
+}
+.logwrapper .log {
+  min-height: 40px;
+  position: relative;
+  top: -50px;
+  height: calc(100% + 50px);
+  border: 1px solid #e6e6e6;
+  color: black;
+  display: block;
+  font-family: "Courier New", Courier, monospace;
+  padding: 5px;
+  padding-right: 80px;
+  white-space: pre-wrap;
+}
+
+div.media {
+  border: 1px solid #e6e6e6;
+  float: right;
+  height: 240px;
+  margin: 0 5px;
+  overflow: hidden;
+  width: 320px;
+}
+
+.media-container {
+  display: grid;
+  grid-template-columns: 25px auto 25px;
+  align-items: center;
+  flex: 1 1;
+  overflow: hidden;
+  height: 200px;
+}
+
+.media-container--fullscreen {
+  grid-template-columns: 0px auto 0px;
+}
+
+.media-container__nav--right,
+.media-container__nav--left {
+  text-align: center;
+  cursor: pointer;
+}
+
+.media-container__viewport {
+  cursor: pointer;
+  text-align: center;
+  height: inherit;
+}
+.media-container__viewport img,
+.media-container__viewport video {
+  object-fit: cover;
+  width: 100%;
+  max-height: 100%;
+}
+
+.media__name,
+.media__counter {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  flex: 0 0 25px;
+  align-items: center;
+}
+
+.collapsible td:not(.col-links) {
+  cursor: pointer;
+}
+.collapsible td:not(.col-links):hover::after {
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+}
+
+.col-result {
+  width: 130px;
+}
+.col-result:hover::after {
+  content: " (hide details)";
+}
+
+.col-result.collapsed:hover::after {
+  content: " (show details)";
+}
+
+#environment-header h2:hover::after {
+  content: " (hide details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#environment-header.collapsed h2:hover::after {
+  content: " (show details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/*------------------
+ * 3. Sorting items
+ *------------------*/
+.sortable {
+  cursor: pointer;
+}
+.sortable.desc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: -12.5px;
+  border: 10px solid #4caf50;
+  border-bottom: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+.sortable.asc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: 12.5px;
+  border: 10px solid #4caf50;
+  border-top: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+
+.hidden, .summary__reload__button.hidden {
+  display: none;
+}
+
+.summary__data {
+  flex: 0 0 550px;
+}
+.summary__reload {
+  flex: 1 1;
+  display: flex;
+  justify-content: center;
+}
+.summary__reload__button {
+  flex: 0 0 300px;
+  display: flex;
+  color: white;
+  font-weight: bold;
+  background-color: #4caf50;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.summary__reload__button:hover {
+  background-color: #46a049;
+}
+.summary__spacer {
+  flex: 0 0 550px;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+}
+
+.filters,
+.collapse {
+  display: flex;
+  align-items: center;
+}
+.filters button,
+.collapse button {
+  color: #999;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.filters button:hover,
+.collapse button:hover {
+  color: #ccc;
+}
+
+.filter__label {
+  margin-right: 10px;
+}
+
+      </style>
+    
+  </head>
+  <body>
+    <h1 id="title">Отчет о тестировании - Gamification System</h1>
+    <p>Report generated on 26-Dec-2025 at 09:09:42 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a>
+        v4.1.1</p>
+    <div id="environment-header">
+      <h2>Environment</h2>
+    </div>
+    <table id="environment"></table>
+    <!-- TEMPLATES -->
+      <template id="template_environment_row">
+      <tr>
+        <td></td>
+        <td></td>
+      </tr>
+    </template>
+    <template id="template_results-table__body--empty">
+      <tbody class="results-table-row">
+        <tr id="not-found-message">
+          <td colspan="6">No results found. Check the filters.</th>
+        </tr>
+    </template>
+    <template id="template_results-table__tbody">
+      <tbody class="results-table-row">
+        <tr class="collapsible">
+        </tr>
+        <tr class="extras-row">
+          <td class="extra" colspan="6">
+            <div class="extraHTML"></div>
+            <div class="media">
+              <div class="media-container">
+                  <div class="media-container__nav--left"><</div>
+                  <div class="media-container__viewport">
+                    <img src="" />
+                    <video controls>
+                      <source src="" type="video/mp4">
+                    </video>
+                  </div>
+                  <div class="media-container__nav--right">></div>
+                </div>
+                <div class="media__name"></div>
+                <div class="media__counter"></div>
+            </div>
+            <div class="logwrapper">
+              <div class="logexpander"></div>
+              <div class="log"></div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </template>
+    <!-- END TEMPLATES -->
+    <div class="summary">
+      <div class="summary__data">
+        <h2>Summary</h2>
+        <div class="additional-summary prefix">
+          <div style="padding: 10px; background-color: #f0f0f0; border-radius: 5px; margin: 10px 0;">
+          <h3> Информация о тестировании</h3>
+          <p><strong>Система:</strong> Gamification Platform - система геймификации задач</p>
+          <p><strong>Компоненты:</strong> API Backend (FastAPI), AI Analyzer, База данных (PostgreSQL)</p>
+          <p><strong>Тестируемые модули:</strong> Chat API, Security, CRUD операции, AI Integration</p>
+          </div>
+        </div>
+        <p class="run-count">79 tests took 00:01:00.</p>
+        <p class="filter">(Un)check the boxes to filter the results.</p>
+        <div class="summary__reload">
+          <div class="summary__reload__button hidden" onclick="location.reload()">
+            <div>There are still tests running. <br />Reload this page to get the latest results!</div>
+          </div>
+        </div>
+        <div class="summary__spacer"></div>
+        <div class="controls">
+          <div class="filters">
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="failed" disabled/>
+            <span class="failed">0 Failed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="passed" />
+            <span class="passed">79 Passed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="skipped" disabled/>
+            <span class="skipped">0 Skipped,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xfailed" disabled/>
+            <span class="xfailed">0 Expected failures,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xpassed" disabled/>
+            <span class="xpassed">0 Unexpected passes,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="error" disabled/>
+            <span class="error">0 Errors,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="rerun" disabled/>
+            <span class="rerun">0 Reruns</span>
+          </div>
+          <div class="collapse">
+            <button id="show_all_details">Show all details</button>&nbsp;/&nbsp;<button id="hide_all_details">Hide all details</button>
+          </div>
+        </div>
+      </div>
+      <div class="additional-summary summary">
+      </div>
+      <div class="additional-summary postfix">
+      </div>
+    </div>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable" data-column-type="result">Result</th>
+          <th class="sortable" data-column-type="testId">Test</th>
+          <th>Описание</th>
+          <th class="sortable time" data-column-type="time">Время (сек)</th>
+          <th class="sortable" data-column-type="duration">Duration</th>
+          <th>Links</th>
+        </tr>
+      </thead>
+    </table>
+  </body>
+  <footer>
+    <div id="data-container" data-jsonblob="{&#34;environment&#34;: {&#34;Python&#34;: &#34;3.13.5&#34;, &#34;Platform&#34;: &#34;Windows-10-10.0.19045-SP0&#34;, &#34;Packages&#34;: {&#34;pytest&#34;: &#34;8.3.4&#34;, &#34;pluggy&#34;: &#34;1.5.0&#34;}, &#34;Plugins&#34;: {&#34;anyio&#34;: &#34;4.7.0&#34;, &#34;html&#34;: &#34;4.1.1&#34;, &#34;metadata&#34;: &#34;3.1.1&#34;}}, &#34;tests&#34;: {&#34;pytests/test_delete.py::test_delete_own_account&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u0441\u043e\u0431\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u0433\u043e \u0430\u043a\u043a\u0430\u0443\u043d\u0442\u0430 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u0443\u0434\u0430\u043b\u0438\u0442\u044c \u0441\u0432\u043e\u0439 \u0430\u043a\u043a\u0430\u0443\u043d\u0442 \u0447\u0435\u0440\u0435\u0437 DELETE /users/me.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_delete.py::test_delete_own_account&#34;, &#34;time&#34;: &#34;0.043&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_delete.py::test_delete_own_account&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u0441\u043e\u0431\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u0433\u043e \u0430\u043a\u043a\u0430\u0443\u043d\u0442\u0430 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.043&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_delete.py::test_delete_user_by_admin&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440 \u043c\u043e\u0436\u0435\u0442 \u0443\u0434\u0430\u043b\u0438\u0442\u044c \u043b\u044e\u0431\u043e\u0433\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0447\u0435\u0440\u0435\u0437 DELETE /admin/users/{id}.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_delete.py::test_delete_user_by_admin&#34;, &#34;time&#34;: &#34;0.014&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_delete.py::test_delete_user_by_admin&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.014&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_delete.py::test_delete_nonexistent_user_by_admin&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u0440\u0438 \u043f\u043e\u043f\u044b\u0442\u043a\u0435 \u0443\u0434\u0430\u043b\u0438\u0442\u044c \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u0442\u0441\u044f 404.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_delete.py::test_delete_nonexistent_user_by_admin&#34;, &#34;time&#34;: &#34;0.006&#34;, &#34;duration&#34;: &#34;644 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_delete.py::test_delete_nonexistent_user_by_admin&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.006&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;644 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_delete.py::test_delete_user_by_non_admin_forbidden&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u043d\u0435-\u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043e\u0431\u044b\u0447\u043d\u044b\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043d\u0435 \u043c\u043e\u0436\u0435\u0442 \u0443\u0434\u0430\u043b\u044f\u0442\u044c \u0434\u0440\u0443\u0433\u0438\u0445 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u0439 (403 Forbidden).\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_delete.py::test_delete_user_by_non_admin_forbidden&#34;, &#34;time&#34;: &#34;0.004&#34;, &#34;duration&#34;: &#34;647 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_delete.py::test_delete_user_by_non_admin_forbidden&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u043d\u0435-\u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.004&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;647 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_delete.py::test_delete_task_status_by_admin&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u0441\u0442\u0430\u0442\u0443\u0441\u0430 \u0437\u0430\u0434\u0430\u0447\u0438 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440 \u043c\u043e\u0436\u0435\u0442 \u0443\u0434\u0430\u043b\u0438\u0442\u044c \u0441\u0442\u0430\u0442\u0443\u0441 \u0437\u0430\u0434\u0430\u0447\u0438 \u0447\u0435\u0440\u0435\u0437 DELETE /task-statuses/{id}.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_delete.py::test_delete_task_status_by_admin&#34;, &#34;time&#34;: &#34;0.009&#34;, &#34;duration&#34;: &#34;667 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_delete.py::test_delete_task_status_by_admin&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u0441\u0442\u0430\u0442\u0443\u0441\u0430 \u0437\u0430\u0434\u0430\u0447\u0438 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.009&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;667 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_delete.py::test_delete_nonexistent_task_status&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u0441\u0442\u0430\u0442\u0443\u0441\u0430 \u0437\u0430\u0434\u0430\u0447\u0438.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u0440\u0438 \u043f\u043e\u043f\u044b\u0442\u043a\u0435 \u0443\u0434\u0430\u043b\u0438\u0442\u044c \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u0439 \u0441\u0442\u0430\u0442\u0443\u0441 \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u0442\u0441\u044f 404.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_delete.py::test_delete_nonexistent_task_status&#34;, &#34;time&#34;: &#34;0.007&#34;, &#34;duration&#34;: &#34;638 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_delete.py::test_delete_nonexistent_task_status&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u0441\u0442\u0430\u0442\u0443\u0441\u0430 \u0437\u0430\u0434\u0430\u0447\u0438.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.007&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;638 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_delete.py::test_delete_tag_by_admin&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u0442\u0435\u0433\u0430 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440 \u043c\u043e\u0436\u0435\u0442 \u0443\u0434\u0430\u043b\u0438\u0442\u044c \u0442\u0435\u0433 \u0447\u0435\u0440\u0435\u0437 DELETE /tags/{id}.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_delete.py::test_delete_tag_by_admin&#34;, &#34;time&#34;: &#34;0.012&#34;, &#34;duration&#34;: &#34;733 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_delete.py::test_delete_tag_by_admin&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u0442\u0435\u0433\u0430 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.012&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;733 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_delete.py::test_delete_task_by_owner&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u0437\u0430\u0434\u0430\u0447\u0438 \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0432\u043b\u0430\u0434\u0435\u043b\u0435\u0446 \u0437\u0430\u0434\u0430\u0447\u0438 \u043c\u043e\u0436\u0435\u0442 \u0443\u0434\u0430\u043b\u0438\u0442\u044c \u0441\u0432\u043e\u044e \u0437\u0430\u0434\u0430\u0447\u0443 \u0447\u0435\u0440\u0435\u0437 DELETE /tasks/{id}.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_delete.py::test_delete_task_by_owner&#34;, &#34;time&#34;: &#34;0.024&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_delete.py::test_delete_task_by_owner&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u0437\u0430\u0434\u0430\u0447\u0438 \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.024&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_delete.py::test_delete_task_by_non_owner_forbidden&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u0447\u0443\u0436\u043e\u0439 \u0437\u0430\u0434\u0430\u0447\u0438.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043d\u0435 \u043c\u043e\u0436\u0435\u0442 \u0443\u0434\u0430\u043b\u0438\u0442\u044c \u0437\u0430\u0434\u0430\u0447\u0443 \u0434\u0440\u0443\u0433\u043e\u0433\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f (404 Not Found).\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_delete.py::test_delete_task_by_non_owner_forbidden&#34;, &#34;time&#34;: &#34;0.025&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_delete.py::test_delete_task_by_non_owner_forbidden&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u0447\u0443\u0436\u043e\u0439 \u0437\u0430\u0434\u0430\u0447\u0438.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.025&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_delete.py::test_delete_reward_type_by_admin&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u0442\u0438\u043f\u0430 \u043d\u0430\u0433\u0440\u0430\u0434\u044b \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440 \u043c\u043e\u0436\u0435\u0442 \u0443\u0434\u0430\u043b\u0438\u0442\u044c \u0442\u0438\u043f \u043d\u0430\u0433\u0440\u0430\u0434\u044b \u0447\u0435\u0440\u0435\u0437 DELETE /reward-types/{id}.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_delete.py::test_delete_reward_type_by_admin&#34;, &#34;time&#34;: &#34;0.008&#34;, &#34;duration&#34;: &#34;662 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_delete.py::test_delete_reward_type_by_admin&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u0442\u0438\u043f\u0430 \u043d\u0430\u0433\u0440\u0430\u0434\u044b \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.008&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;662 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_delete.py::test_delete_reward_by_owner&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u043d\u0430\u0433\u0440\u0430\u0434\u044b \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0432\u043b\u0430\u0434\u0435\u043b\u0435\u0446 \u043d\u0430\u0433\u0440\u0430\u0434\u044b \u043c\u043e\u0436\u0435\u0442 \u0443\u0434\u0430\u043b\u0438\u0442\u044c \u0441\u0432\u043e\u044e \u043d\u0430\u0433\u0440\u0430\u0434\u0443 \u0447\u0435\u0440\u0435\u0437 DELETE /rewards/{id}.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_delete.py::test_delete_reward_by_owner&#34;, &#34;time&#34;: &#34;0.008&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_delete.py::test_delete_reward_by_owner&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u043d\u0430\u0433\u0440\u0430\u0434\u044b \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.008&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_delete.py::test_delete_competition_by_manager&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440 \u043c\u043e\u0436\u0435\u0442 \u0443\u0434\u0430\u043b\u0438\u0442\u044c \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u0435 \u0438 \u043f\u0440\u0438 \u044d\u0442\u043e\u043c \u0441\u0431\u0440\u0430\u0441\u044b\u0432\u0430\u0435\u0442\u0441\u044f cur_comp \u0443 \u0443\u0447\u0430\u0441\u0442\u043d\u0438\u043a\u043e\u0432.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_delete.py::test_delete_competition_by_manager&#34;, &#34;time&#34;: &#34;0.015&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_delete.py::test_delete_competition_by_manager&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.015&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_delete.py::test_delete_competition_by_user_forbidden&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u043e\u0431\u044b\u0447\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043e\u0431\u044b\u0447\u043d\u044b\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043d\u0435 \u043c\u043e\u0436\u0435\u0442 \u0443\u0434\u0430\u043b\u044f\u0442\u044c \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f (403 Forbidden).\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_delete.py::test_delete_competition_by_user_forbidden&#34;, &#34;time&#34;: &#34;0.005&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_delete.py::test_delete_competition_by_user_forbidden&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u043e\u0431\u044b\u0447\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.005&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_get.py::test_get_tasks_latest_authorized&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u043f\u043e\u0441\u043b\u0435\u0434\u043d\u0438\u0445 \u0437\u0430\u0434\u0430\u0447 \u0430\u0432\u0442\u043e\u0440\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0430\u0432\u0442\u043e\u0440\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u044b\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0441\u043f\u0438\u0441\u043e\u043a \u043f\u043e\u0441\u043b\u0435\u0434\u043d\u0438\u0445 \u0437\u0430\u0434\u0430\u0447 \u0447\u0435\u0440\u0435\u0437 GET /tasks/latest.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_get.py::test_get_tasks_latest_authorized&#34;, &#34;time&#34;: &#34;0.007&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_get.py::test_get_tasks_latest_authorized&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u043f\u043e\u0441\u043b\u0435\u0434\u043d\u0438\u0445 \u0437\u0430\u0434\u0430\u0447 \u0430\u0432\u0442\u043e\u0440\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.007&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_get.py::test_get_tasks_latest_unauthorized&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u043f\u043e\u0441\u043b\u0435\u0434\u043d\u0438\u0445 \u0437\u0430\u0434\u0430\u0447 \u043d\u0435\u0430\u0432\u0442\u043e\u0440\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043d\u0435\u0430\u0432\u0442\u043e\u0440\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u044b\u0439 \u0437\u0430\u043f\u0440\u043e\u0441 \u043a GET /tasks/latest \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u0442 401 Unauthorized.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_get.py::test_get_tasks_latest_unauthorized&#34;, &#34;time&#34;: &#34;0.002&#34;, &#34;duration&#34;: &#34;112 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_get.py::test_get_tasks_latest_unauthorized&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u043f\u043e\u0441\u043b\u0435\u0434\u043d\u0438\u0445 \u0437\u0430\u0434\u0430\u0447 \u043d\u0435\u0430\u0432\u0442\u043e\u0440\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.002&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;112 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_get.py::test_get_all_users_as_admin&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u0432\u0441\u0435\u0445 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u0439 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440 \u043c\u043e\u0436\u0435\u0442 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0441\u043f\u0438\u0441\u043e\u043a \u0432\u0441\u0435\u0445 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u0439 \u0447\u0435\u0440\u0435\u0437 GET /users.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_get.py::test_get_all_users_as_admin&#34;, &#34;time&#34;: &#34;0.005&#34;, &#34;duration&#34;: &#34;656 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_get.py::test_get_all_users_as_admin&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u0432\u0441\u0435\u0445 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u0439 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.005&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;656 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_get.py::test_get_all_users_as_user_forbidden&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u0432\u0441\u0435\u0445 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u0439 \u043e\u0431\u044b\u0447\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043e\u0431\u044b\u0447\u043d\u044b\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043d\u0435 \u043c\u043e\u0436\u0435\u0442 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0441\u043f\u0438\u0441\u043e\u043a \u0432\u0441\u0435\u0445 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u0439 (403 Forbidden).\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_get.py::test_get_all_users_as_user_forbidden&#34;, &#34;time&#34;: &#34;0.004&#34;, &#34;duration&#34;: &#34;662 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_get.py::test_get_all_users_as_user_forbidden&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u0432\u0441\u0435\u0445 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u0439 \u043e\u0431\u044b\u0447\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.004&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;662 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_get.py::test_get_competition_dates&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0434\u0430\u0442 \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0430\u0432\u0442\u043e\u0440\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u044b\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0434\u0430\u0442\u044b \u043d\u0430\u0447\u0430\u043b\u0430 \u0438 \u043e\u043a\u043e\u043d\u0447\u0430\u043d\u0438\u044f \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u0447\u0435\u0440\u0435\u0437 GET /competitions/{id}/dates.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_get.py::test_get_competition_dates&#34;, &#34;time&#34;: &#34;0.005&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_get.py::test_get_competition_dates&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0434\u0430\u0442 \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.005&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_get.py::test_get_competition_dates_not_found&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0434\u0430\u0442 \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u0440\u0438 \u0437\u0430\u043f\u0440\u043e\u0441\u0435 \u0434\u0430\u0442 \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u0442\u0441\u044f 404 Not Found.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_get.py::test_get_competition_dates_not_found&#34;, &#34;time&#34;: &#34;0.006&#34;, &#34;duration&#34;: &#34;645 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_get.py::test_get_competition_dates_not_found&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0434\u0430\u0442 \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.006&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;645 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_get.py::test_get_users_only_as_manager&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u0442\u043e\u043b\u044c\u043a\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u0439 (\u0431\u0435\u0437 \u0430\u0434\u043c\u0438\u043d\u043e\u0432 \u0438 \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440\u043e\u0432) \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440 \u043c\u043e\u0436\u0435\u0442 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0441\u043f\u0438\u0441\u043e\u043a \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u0439 \u0441 \u0440\u043e\u043b\u044c\u044e \&#34;user\&#34; \u0447\u0435\u0440\u0435\u0437 GET /users/only.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_get.py::test_get_users_only_as_manager&#34;, &#34;time&#34;: &#34;0.005&#34;, &#34;duration&#34;: &#34;657 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_get.py::test_get_users_only_as_manager&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u0442\u043e\u043b\u044c\u043a\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u0439 (\u0431\u0435\u0437 \u0430\u0434\u043c\u0438\u043d\u043e\u0432 \u0438 \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440\u043e\u0432) \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.005&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;657 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_get.py::test_get_users_only_as_user_forbidden&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u0439 \u043e\u0431\u044b\u0447\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043e\u0431\u044b\u0447\u043d\u044b\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043d\u0435 \u043c\u043e\u0436\u0435\u0442 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0441\u043f\u0438\u0441\u043e\u043a \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u0439 \u0447\u0435\u0440\u0435\u0437 GET /users/only (403 Forbidden).\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_get.py::test_get_users_only_as_user_forbidden&#34;, &#34;time&#34;: &#34;0.005&#34;, &#34;duration&#34;: &#34;670 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_get.py::test_get_users_only_as_user_forbidden&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u0439 \u043e\u0431\u044b\u0447\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.005&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;670 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_get.py::test_get_own_info&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043e\u0431\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u0439 \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u0438 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044e \u043e \u0441\u0435\u0431\u0435 \u0447\u0435\u0440\u0435\u0437 GET /users/me.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_get.py::test_get_own_info&#34;, &#34;time&#34;: &#34;0.005&#34;, &#34;duration&#34;: &#34;682 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_get.py::test_get_own_info&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043e\u0431\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u0439 \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u0438 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.005&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;682 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_get.py::test_get_task_statuses_public&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u0441\u0442\u0430\u0442\u0443\u0441\u043e\u0432 \u0437\u0430\u0434\u0430\u0447 (\u043f\u0443\u0431\u043b\u0438\u0447\u043d\u044b\u0439 \u044d\u043d\u0434\u043f\u043e\u0438\u043d\u0442).\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043b\u044e\u0431\u043e\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0441\u043f\u0438\u0441\u043e\u043a \u0441\u0442\u0430\u0442\u0443\u0441\u043e\u0432 \u0437\u0430\u0434\u0430\u0447 \u0447\u0435\u0440\u0435\u0437 GET /task-statuses \u0431\u0435\u0437 \u0430\u0432\u0442\u043e\u0440\u0438\u0437\u0430\u0446\u0438\u0438.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_get.py::test_get_task_statuses_public&#34;, &#34;time&#34;: &#34;0.006&#34;, &#34;duration&#34;: &#34;138 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_get.py::test_get_task_statuses_public&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u0441\u0442\u0430\u0442\u0443\u0441\u043e\u0432 \u0437\u0430\u0434\u0430\u0447 (\u043f\u0443\u0431\u043b\u0438\u0447\u043d\u044b\u0439 \u044d\u043d\u0434\u043f\u043e\u0438\u043d\u0442).&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.006&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;138 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_get.py::test_get_tags_public&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u0442\u0435\u0433\u043e\u0432 (\u043f\u0443\u0431\u043b\u0438\u0447\u043d\u044b\u0439 \u044d\u043d\u0434\u043f\u043e\u0438\u043d\u0442).\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043b\u044e\u0431\u043e\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0441\u043f\u0438\u0441\u043e\u043a \u0442\u0435\u0433\u043e\u0432 \u0447\u0435\u0440\u0435\u0437 GET /tags \u0431\u0435\u0437 \u0430\u0432\u0442\u043e\u0440\u0438\u0437\u0430\u0446\u0438\u0438.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_get.py::test_get_tags_public&#34;, &#34;time&#34;: &#34;0.007&#34;, &#34;duration&#34;: &#34;112 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_get.py::test_get_tags_public&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u0442\u0435\u0433\u043e\u0432 (\u043f\u0443\u0431\u043b\u0438\u0447\u043d\u044b\u0439 \u044d\u043d\u0434\u043f\u043e\u0438\u043d\u0442).&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.007&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;112 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_get.py::test_get_tasks_authorized&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u0437\u0430\u0434\u0430\u0447 \u0430\u0432\u0442\u043e\u0440\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0430\u0432\u0442\u043e\u0440\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u044b\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0441\u043f\u0438\u0441\u043e\u043a \u0441\u0432\u043e\u0438\u0445 \u0437\u0430\u0434\u0430\u0447 \u0447\u0435\u0440\u0435\u0437 GET /tasks.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_get.py::test_get_tasks_authorized&#34;, &#34;time&#34;: &#34;0.004&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_get.py::test_get_tasks_authorized&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u0437\u0430\u0434\u0430\u0447 \u0430\u0432\u0442\u043e\u0440\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.004&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_get.py::test_get_reward_types_public&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u0442\u0438\u043f\u043e\u0432 \u043d\u0430\u0433\u0440\u0430\u0434 (\u043f\u0443\u0431\u043b\u0438\u0447\u043d\u044b\u0439 \u044d\u043d\u0434\u043f\u043e\u0438\u043d\u0442).\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043b\u044e\u0431\u043e\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0441\u043f\u0438\u0441\u043e\u043a \u0442\u0438\u043f\u043e\u0432 \u043d\u0430\u0433\u0440\u0430\u0434 \u0447\u0435\u0440\u0435\u0437 GET /reward-types \u0431\u0435\u0437 \u0430\u0432\u0442\u043e\u0440\u0438\u0437\u0430\u0446\u0438\u0438.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_get.py::test_get_reward_types_public&#34;, &#34;time&#34;: &#34;0.006&#34;, &#34;duration&#34;: &#34;98 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_get.py::test_get_reward_types_public&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u0442\u0438\u043f\u043e\u0432 \u043d\u0430\u0433\u0440\u0430\u0434 (\u043f\u0443\u0431\u043b\u0438\u0447\u043d\u044b\u0439 \u044d\u043d\u0434\u043f\u043e\u0438\u043d\u0442).&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.006&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;98 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_get.py::test_get_rewards_authorized&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u043d\u0430\u0433\u0440\u0430\u0434 \u0430\u0432\u0442\u043e\u0440\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0430\u0432\u0442\u043e\u0440\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u044b\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0441\u043f\u0438\u0441\u043e\u043a \u0441\u0432\u043e\u0438\u0445 \u043d\u0430\u0433\u0440\u0430\u0434 \u0447\u0435\u0440\u0435\u0437 GET /rewards.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_get.py::test_get_rewards_authorized&#34;, &#34;time&#34;: &#34;0.023&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_get.py::test_get_rewards_authorized&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u043d\u0430\u0433\u0440\u0430\u0434 \u0430\u0432\u0442\u043e\u0440\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.023&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_get.py::test_get_competitions_as_manager&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u0439 \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440 \u043c\u043e\u0436\u0435\u0442 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0441\u043f\u0438\u0441\u043e\u043a \u0432\u0441\u0435\u0445 \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u0439 \u0447\u0435\u0440\u0435\u0437 GET /competitions.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_get.py::test_get_competitions_as_manager&#34;, &#34;time&#34;: &#34;0.006&#34;, &#34;duration&#34;: &#34;671 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_get.py::test_get_competitions_as_manager&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u0439 \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.006&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;671 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_get.py::test_get_competitions_as_user_forbidden&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u0439 \u043e\u0431\u044b\u0447\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043e\u0431\u044b\u0447\u043d\u044b\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043d\u0435 \u043c\u043e\u0436\u0435\u0442 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0441\u043f\u0438\u0441\u043e\u043a \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u0439 (403 Forbidden).\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_get.py::test_get_competitions_as_user_forbidden&#34;, &#34;time&#34;: &#34;0.005&#34;, &#34;duration&#34;: &#34;679 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_get.py::test_get_competitions_as_user_forbidden&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043f\u0438\u0441\u043a\u0430 \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u0439 \u043e\u0431\u044b\u0447\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.005&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;679 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_get.py::test_get_competition_by_id_authorized&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u043f\u043e ID \u0430\u0432\u0442\u043e\u0440\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0430\u0432\u0442\u043e\u0440\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u044b\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044e \u043e \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u0438 \u0447\u0435\u0440\u0435\u0437 GET /competitions/{id}.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_get.py::test_get_competition_by_id_authorized&#34;, &#34;time&#34;: &#34;0.006&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_get.py::test_get_competition_by_id_authorized&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u043f\u043e ID \u0430\u0432\u0442\u043e\u0440\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.006&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_get.py::test_get_competition_by_id_not_found&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u043f\u043e ID.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u0440\u0438 \u0437\u0430\u043f\u0440\u043e\u0441\u0435 \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u0442\u0441\u044f 404 Not Found.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_get.py::test_get_competition_by_id_not_found&#34;, &#34;time&#34;: &#34;0.006&#34;, &#34;duration&#34;: &#34;642 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_get.py::test_get_competition_by_id_not_found&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u043f\u043e ID.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.006&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;642 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_get.py::test_get_leaderboard_public&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0442\u0430\u0431\u043b\u0438\u0446\u044b \u043b\u0438\u0434\u0435\u0440\u043e\u0432 \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f (\u043f\u0443\u0431\u043b\u0438\u0447\u043d\u044b\u0439 \u044d\u043d\u0434\u043f\u043e\u0438\u043d\u0442).\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043b\u044e\u0431\u043e\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0442\u0430\u0431\u043b\u0438\u0446\u0443 \u043b\u0438\u0434\u0435\u0440\u043e\u0432 \u0447\u0435\u0440\u0435\u0437 GET /leaderboard/{id} \u0431\u0435\u0437 \u0430\u0432\u0442\u043e\u0440\u0438\u0437\u0430\u0446\u0438\u0438.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_get.py::test_get_leaderboard_public&#34;, &#34;time&#34;: &#34;0.007&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_get.py::test_get_leaderboard_public&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0442\u0430\u0431\u043b\u0438\u0446\u044b \u043b\u0438\u0434\u0435\u0440\u043e\u0432 \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f (\u043f\u0443\u0431\u043b\u0438\u0447\u043d\u044b\u0439 \u044d\u043d\u0434\u043f\u043e\u0438\u043d\u0442).&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.007&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_get.py::test_get_leaderboard_not_found&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0442\u0430\u0431\u043b\u0438\u0446\u044b \u043b\u0438\u0434\u0435\u0440\u043e\u0432 \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u0440\u0438 \u0437\u0430\u043f\u0440\u043e\u0441\u0435 \u0442\u0430\u0431\u043b\u0438\u0446\u044b \u043b\u0438\u0434\u0435\u0440\u043e\u0432 \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u0442\u0441\u044f 404 Not Found.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_get.py::test_get_leaderboard_not_found&#34;, &#34;time&#34;: &#34;0.005&#34;, &#34;duration&#34;: &#34;121 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_get.py::test_get_leaderboard_not_found&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u044f \u0442\u0430\u0431\u043b\u0438\u0446\u044b \u043b\u0438\u0434\u0435\u0440\u043e\u0432 \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.005&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;121 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_post.py::test_register_new_user&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0443\u0441\u043f\u0435\u0448\u043d\u043e\u0439 \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u0438 \u043d\u043e\u0432\u043e\u0433\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043d\u043e\u0432\u044b\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u0437\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043e\u0432\u0430\u0442\u044c\u0441\u044f \u0447\u0435\u0440\u0435\u0437 POST /register \u0438 \u043f\u043e\u043b\u0443\u0447\u0430\u0435\u0442 \u0440\u043e\u043b\u044c \&#34;user\&#34;.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_post.py::test_register_new_user&#34;, &#34;time&#34;: &#34;0.269&#34;, &#34;duration&#34;: &#34;367 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_post.py::test_register_new_user&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0443\u0441\u043f\u0435\u0448\u043d\u043e\u0439 \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u0438 \u043d\u043e\u0432\u043e\u0433\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.269&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;367 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_post.py::test_register_duplicate_email&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u0438 \u0441 \u0434\u0443\u0431\u043b\u0438\u0440\u0443\u044e\u0449\u0438\u043c\u0441\u044f email.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u043e\u043f\u044b\u0442\u043a\u0430 \u0437\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043e\u0432\u0430\u0442\u044c\u0441\u044f \u0441 \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u043c email \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u0442 400 Bad Request.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_post.py::test_register_duplicate_email&#34;, &#34;time&#34;: &#34;0.283&#34;, &#34;duration&#34;: &#34;398 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_post.py::test_register_duplicate_email&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u0438 \u0441 \u0434\u0443\u0431\u043b\u0438\u0440\u0443\u044e\u0449\u0438\u043c\u0441\u044f email.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.283&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;398 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_post.py::test_login_success&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0443\u0441\u043f\u0435\u0448\u043d\u043e\u0433\u043e \u0432\u0445\u043e\u0434\u0430 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0437\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u0432\u043e\u0439\u0442\u0438 \u0447\u0435\u0440\u0435\u0437 POST /login \u0441 \u043f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u044b\u043c\u0438 credentials.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_post.py::test_login_success&#34;, &#34;time&#34;: &#34;0.541&#34;, &#34;duration&#34;: &#34;643 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_post.py::test_login_success&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0443\u0441\u043f\u0435\u0448\u043d\u043e\u0433\u043e \u0432\u0445\u043e\u0434\u0430 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.541&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;643 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_post.py::test_login_wrong_password&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0432\u0445\u043e\u0434\u0430 \u0441 \u043d\u0435\u043f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u044b\u043c \u043f\u0430\u0440\u043e\u043b\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u043e\u043f\u044b\u0442\u043a\u0430 \u0432\u0445\u043e\u0434\u0430 \u0441 \u043d\u0435\u043f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u044b\u043c \u043f\u0430\u0440\u043e\u043b\u0435\u043c \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u0442 401 Unauthorized.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_post.py::test_login_wrong_password&#34;, &#34;time&#34;: &#34;0.541&#34;, &#34;duration&#34;: &#34;657 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_post.py::test_login_wrong_password&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0432\u0445\u043e\u0434\u0430 \u0441 \u043d\u0435\u043f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u044b\u043c \u043f\u0430\u0440\u043e\u043b\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.541&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;657 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_post.py::test_create_task_status_as_admin&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0441\u0442\u0430\u0442\u0443\u0441\u0430 \u0437\u0430\u0434\u0430\u0447\u0438 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440 \u043c\u043e\u0436\u0435\u0442 \u0441\u043e\u0437\u0434\u0430\u0442\u044c \u0441\u0442\u0430\u0442\u0443\u0441 \u0437\u0430\u0434\u0430\u0447\u0438 \u0447\u0435\u0440\u0435\u0437 POST /task-statuses.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_post.py::test_create_task_status_as_admin&#34;, &#34;time&#34;: &#34;0.010&#34;, &#34;duration&#34;: &#34;651 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_post.py::test_create_task_status_as_admin&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0441\u0442\u0430\u0442\u0443\u0441\u0430 \u0437\u0430\u0434\u0430\u0447\u0438 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.010&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;651 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_post.py::test_create_task_status_as_user_forbidden&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0441\u0442\u0430\u0442\u0443\u0441\u0430 \u0437\u0430\u0434\u0430\u0447\u0438 \u043e\u0431\u044b\u0447\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043e\u0431\u044b\u0447\u043d\u044b\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043d\u0435 \u043c\u043e\u0436\u0435\u0442 \u0441\u043e\u0437\u0434\u0430\u0442\u044c \u0441\u0442\u0430\u0442\u0443\u0441 \u0437\u0430\u0434\u0430\u0447\u0438 (403 Forbidden).\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_post.py::test_create_task_status_as_user_forbidden&#34;, &#34;time&#34;: &#34;0.004&#34;, &#34;duration&#34;: &#34;659 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_post.py::test_create_task_status_as_user_forbidden&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0441\u0442\u0430\u0442\u0443\u0441\u0430 \u0437\u0430\u0434\u0430\u0447\u0438 \u043e\u0431\u044b\u0447\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.004&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;659 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_post.py::test_create_duplicate_task_status_code&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0441\u0442\u0430\u0442\u0443\u0441\u0430 \u0437\u0430\u0434\u0430\u0447\u0438 \u0441 \u0434\u0443\u0431\u043b\u0438\u0440\u0443\u044e\u0449\u0438\u043c\u0441\u044f \u043a\u043e\u0434\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u043e\u043f\u044b\u0442\u043a\u0430 \u0441\u043e\u0437\u0434\u0430\u0442\u044c \u0441\u0442\u0430\u0442\u0443\u0441 \u0441 \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u043c \u043a\u043e\u0434\u043e\u043c \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u0442 400 Bad Request.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_post.py::test_create_duplicate_task_status_code&#34;, &#34;time&#34;: &#34;0.016&#34;, &#34;duration&#34;: &#34;674 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_post.py::test_create_duplicate_task_status_code&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0441\u0442\u0430\u0442\u0443\u0441\u0430 \u0437\u0430\u0434\u0430\u0447\u0438 \u0441 \u0434\u0443\u0431\u043b\u0438\u0440\u0443\u044e\u0449\u0438\u043c\u0441\u044f \u043a\u043e\u0434\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.016&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;674 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_post.py::test_create_tag&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0442\u0435\u0433\u0430.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043c\u043e\u0436\u043d\u043e \u0441\u043e\u0437\u0434\u0430\u0442\u044c \u0442\u0435\u0433 \u0447\u0435\u0440\u0435\u0437 POST /tags \u0431\u0435\u0437 \u0430\u0432\u0442\u043e\u0440\u0438\u0437\u0430\u0446\u0438\u0438.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_post.py::test_create_tag&#34;, &#34;time&#34;: &#34;0.009&#34;, &#34;duration&#34;: &#34;129 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_post.py::test_create_tag&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0442\u0435\u0433\u0430.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.009&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;129 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_post.py::test_create_duplicate_tag&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0442\u0435\u0433\u0430 \u0441 \u0434\u0443\u0431\u043b\u0438\u0440\u0443\u044e\u0449\u0438\u043c\u0441\u044f \u0438\u043c\u0435\u043d\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u043e\u043f\u044b\u0442\u043a\u0430 \u0441\u043e\u0437\u0434\u0430\u0442\u044c \u0442\u0435\u0433 \u0441 \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u043c \u0438\u043c\u0435\u043d\u0435\u043c \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u0442 400 Bad Request.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_post.py::test_create_duplicate_tag&#34;, &#34;time&#34;: &#34;0.019&#34;, &#34;duration&#34;: &#34;127 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_post.py::test_create_duplicate_tag&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0442\u0435\u0433\u0430 \u0441 \u0434\u0443\u0431\u043b\u0438\u0440\u0443\u044e\u0449\u0438\u043c\u0441\u044f \u0438\u043c\u0435\u043d\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.019&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;127 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_post.py::test_create_task_as_user&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0437\u0430\u0434\u0430\u0447\u0438 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u0441\u043e\u0437\u0434\u0430\u0442\u044c \u0437\u0430\u0434\u0430\u0447\u0443 \u0434\u043b\u044f \u0441\u0435\u0431\u044f \u0447\u0435\u0440\u0435\u0437 POST /tasks.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_post.py::test_create_task_as_user&#34;, &#34;time&#34;: &#34;0.019&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_post.py::test_create_task_as_user&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0437\u0430\u0434\u0430\u0447\u0438 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.019&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_post.py::test_create_task_for_other_user_as_admin&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0437\u0430\u0434\u0430\u0447\u0438 \u0434\u043b\u044f \u0434\u0440\u0443\u0433\u043e\u0433\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440 \u043c\u043e\u0436\u0435\u0442 \u0441\u043e\u0437\u0434\u0430\u0442\u044c \u0437\u0430\u0434\u0430\u0447\u0443 \u0434\u043b\u044f \u043b\u044e\u0431\u043e\u0433\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0447\u0435\u0440\u0435\u0437 POST /tasks/{user_id}.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_post.py::test_create_task_for_other_user_as_admin&#34;, &#34;time&#34;: &#34;0.020&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_post.py::test_create_task_for_other_user_as_admin&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0437\u0430\u0434\u0430\u0447\u0438 \u0434\u043b\u044f \u0434\u0440\u0443\u0433\u043e\u0433\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.020&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_post.py::test_create_task_for_nonexistent_user&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0437\u0430\u0434\u0430\u0447\u0438 \u0434\u043b\u044f \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u043e\u043f\u044b\u0442\u043a\u0430 \u0441\u043e\u0437\u0434\u0430\u0442\u044c \u0437\u0430\u0434\u0430\u0447\u0443 \u0434\u043b\u044f \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u0442 404 Not Found.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_post.py::test_create_task_for_nonexistent_user&#34;, &#34;time&#34;: &#34;0.007&#34;, &#34;duration&#34;: &#34;660 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_post.py::test_create_task_for_nonexistent_user&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0437\u0430\u0434\u0430\u0447\u0438 \u0434\u043b\u044f \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.007&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;660 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_post.py::test_create_task_tag&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043f\u0440\u0438\u0432\u044f\u0437\u043a\u0438 \u0442\u0435\u0433\u0430 \u043a \u0437\u0430\u0434\u0430\u0447\u0435.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0432\u043b\u0430\u0434\u0435\u043b\u0435\u0446 \u0437\u0430\u0434\u0430\u0447\u0438 \u043c\u043e\u0436\u0435\u0442 \u043f\u0440\u0438\u0432\u044f\u0437\u0430\u0442\u044c \u0442\u0435\u0433 \u043a \u0441\u0432\u043e\u0435\u0439 \u0437\u0430\u0434\u0430\u0447\u0435 \u0447\u0435\u0440\u0435\u0437 POST /task-tags.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_post.py::test_create_task_tag&#34;, &#34;time&#34;: &#34;0.038&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_post.py::test_create_task_tag&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043f\u0440\u0438\u0432\u044f\u0437\u043a\u0438 \u0442\u0435\u0433\u0430 \u043a \u0437\u0430\u0434\u0430\u0447\u0435.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.038&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_post.py::test_create_reward_type_as_admin&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0442\u0438\u043f\u0430 \u043d\u0430\u0433\u0440\u0430\u0434\u044b \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440 \u043c\u043e\u0436\u0435\u0442 \u0441\u043e\u0437\u0434\u0430\u0442\u044c \u0442\u0438\u043f \u043d\u0430\u0433\u0440\u0430\u0434\u044b \u0447\u0435\u0440\u0435\u0437 POST /reward-types.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_post.py::test_create_reward_type_as_admin&#34;, &#34;time&#34;: &#34;0.011&#34;, &#34;duration&#34;: &#34;654 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_post.py::test_create_reward_type_as_admin&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0442\u0438\u043f\u0430 \u043d\u0430\u0433\u0440\u0430\u0434\u044b \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.011&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;654 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_post.py::test_create_reward_type_as_user_forbidden&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0442\u0438\u043f\u0430 \u043d\u0430\u0433\u0440\u0430\u0434\u044b \u043e\u0431\u044b\u0447\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043e\u0431\u044b\u0447\u043d\u044b\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043d\u0435 \u043c\u043e\u0436\u0435\u0442 \u0441\u043e\u0437\u0434\u0430\u0442\u044c \u0442\u0438\u043f \u043d\u0430\u0433\u0440\u0430\u0434\u044b (403 Forbidden).\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_post.py::test_create_reward_type_as_user_forbidden&#34;, &#34;time&#34;: &#34;0.004&#34;, &#34;duration&#34;: &#34;653 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_post.py::test_create_reward_type_as_user_forbidden&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0442\u0438\u043f\u0430 \u043d\u0430\u0433\u0440\u0430\u0434\u044b \u043e\u0431\u044b\u0447\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.004&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;653 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_post.py::test_create_reward&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u043d\u0430\u0433\u0440\u0430\u0434\u044b \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u0441\u043e\u0437\u0434\u0430\u0442\u044c \u043d\u0430\u0433\u0440\u0430\u0434\u0443 \u0434\u043b\u044f \u0441\u0435\u0431\u044f \u0447\u0435\u0440\u0435\u0437 POST /rewards.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_post.py::test_create_reward&#34;, &#34;time&#34;: &#34;0.018&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_post.py::test_create_reward&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u043d\u0430\u0433\u0440\u0430\u0434\u044b \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.018&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_post.py::test_create_competition_as_manager&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440 \u043c\u043e\u0436\u0435\u0442 \u0441\u043e\u0437\u0434\u0430\u0442\u044c \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u0435 \u0447\u0435\u0440\u0435\u0437 POST /competitions.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_post.py::test_create_competition_as_manager&#34;, &#34;time&#34;: &#34;0.008&#34;, &#34;duration&#34;: &#34;686 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_post.py::test_create_competition_as_manager&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.008&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;686 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_post.py::test_create_competition_as_user_forbidden&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u043e\u0431\u044b\u0447\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043e\u0431\u044b\u0447\u043d\u044b\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043d\u0435 \u043c\u043e\u0436\u0435\u0442 \u0441\u043e\u0437\u0434\u0430\u0442\u044c \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u0435 (403 Forbidden).\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_post.py::test_create_competition_as_user_forbidden&#34;, &#34;time&#34;: &#34;0.006&#34;, &#34;duration&#34;: &#34;682 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_post.py::test_create_competition_as_user_forbidden&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u043e\u0431\u044b\u0447\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.006&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;682 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_post.py::test_create_duplicate_competition_title&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u0441 \u0434\u0443\u0431\u043b\u0438\u0440\u0443\u044e\u0449\u0438\u043c\u0441\u044f \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u043e\u043f\u044b\u0442\u043a\u0430 \u0441\u043e\u0437\u0434\u0430\u0442\u044c \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u0435 \u0441 \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u043c \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435\u043c \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u0442 400 Bad Request.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_post.py::test_create_duplicate_competition_title&#34;, &#34;time&#34;: &#34;0.015&#34;, &#34;duration&#34;: &#34;728 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_post.py::test_create_duplicate_competition_title&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u0441 \u0434\u0443\u0431\u043b\u0438\u0440\u0443\u044e\u0449\u0438\u043c\u0441\u044f \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.015&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;728 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_put.py::test_update_own_user_success&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0443\u0441\u043f\u0435\u0448\u043d\u043e\u0433\u043e \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0441\u043e\u0431\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u0433\u043e \u043f\u0440\u043e\u0444\u0438\u043b\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u043e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0441\u0432\u043e\u0438 \u0434\u0430\u043d\u043d\u044b\u0435 \u0447\u0435\u0440\u0435\u0437 PUT /users/me.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_put.py::test_update_own_user_success&#34;, &#34;time&#34;: &#34;0.009&#34;, &#34;duration&#34;: &#34;689 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_put.py::test_update_own_user_success&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0443\u0441\u043f\u0435\u0448\u043d\u043e\u0433\u043e \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0441\u043e\u0431\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u0433\u043e \u043f\u0440\u043e\u0444\u0438\u043b\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.009&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;689 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_put.py::test_update_own_user_duplicate_email&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u043f\u0440\u043e\u0444\u0438\u043b\u044f \u0441 \u0434\u0443\u0431\u043b\u0438\u0440\u0443\u044e\u0449\u0438\u043c\u0441\u044f email.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043d\u0435 \u043c\u043e\u0436\u0435\u0442 \u043e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0441\u0432\u043e\u0439 email \u043d\u0430 \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u0439 (400 Bad Request).\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_put.py::test_update_own_user_duplicate_email&#34;, &#34;time&#34;: &#34;0.287&#34;, &#34;duration&#34;: &#34;945 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_put.py::test_update_own_user_duplicate_email&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u043f\u0440\u043e\u0444\u0438\u043b\u044f \u0441 \u0434\u0443\u0431\u043b\u0438\u0440\u0443\u044e\u0449\u0438\u043c\u0441\u044f email.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.287&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;945 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_put.py::test_update_user_by_admin&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440 \u043c\u043e\u0436\u0435\u0442 \u043e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0434\u0430\u043d\u043d\u044b\u0435 \u043b\u044e\u0431\u043e\u0433\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0447\u0435\u0440\u0435\u0437 PUT /admin/users/{id}.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_put.py::test_update_user_by_admin&#34;, &#34;time&#34;: &#34;0.009&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_put.py::test_update_user_by_admin&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.009&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_put.py::test_update_user_by_non_admin_forbidden&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u043d\u0435-\u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043e\u0431\u044b\u0447\u043d\u044b\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043d\u0435 \u043c\u043e\u0436\u0435\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u044f\u0442\u044c \u0434\u0440\u0443\u0433\u0438\u0445 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u0439 \u0447\u0435\u0440\u0435\u0437 \u0430\u0434\u043c\u0438\u043d\u0441\u043a\u0438\u0439 \u044d\u043d\u0434\u043f\u043e\u0438\u043d\u0442 (403 Forbidden).\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_put.py::test_update_user_by_non_admin_forbidden&#34;, &#34;time&#34;: &#34;0.005&#34;, &#34;duration&#34;: &#34;678 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_put.py::test_update_user_by_non_admin_forbidden&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u043d\u0435-\u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.005&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;678 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_put.py::test_update_nonexistent_user_by_admin&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u0440\u0438 \u043f\u043e\u043f\u044b\u0442\u043a\u0435 \u043e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u0442\u0441\u044f 404 Not Found.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_put.py::test_update_nonexistent_user_by_admin&#34;, &#34;time&#34;: &#34;0.005&#34;, &#34;duration&#34;: &#34;659 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_put.py::test_update_nonexistent_user_by_admin&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0433\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.005&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;659 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_put.py::test_assign_user_to_competition&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043d\u0430\u0437\u043d\u0430\u0447\u0435\u043d\u0438\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u043d\u0430 \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u0435 \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440 \u043c\u043e\u0436\u0435\u0442 \u043d\u0430\u0437\u043d\u0430\u0447\u0438\u0442\u044c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u043d\u0430 \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u0435 \u0447\u0435\u0440\u0435\u0437 PUT /users/{id}/competition.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_put.py::test_assign_user_to_competition&#34;, &#34;time&#34;: &#34;0.011&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_put.py::test_assign_user_to_competition&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043d\u0430\u0437\u043d\u0430\u0447\u0435\u043d\u0438\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u043d\u0430 \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u0435 \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.011&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_put.py::test_remove_user_from_competition&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0441\u043d\u044f\u0442\u0438\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0441 \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440 \u043c\u043e\u0436\u0435\u0442 \u0441\u043d\u044f\u0442\u044c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0441 \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f, \u0443\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0432 competition_id \u0432 None.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_put.py::test_remove_user_from_competition&#34;, &#34;time&#34;: &#34;0.016&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_put.py::test_remove_user_from_competition&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0441\u043d\u044f\u0442\u0438\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0441 \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.016&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_put.py::test_assign_to_nonexistent_competition&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043d\u0430\u0437\u043d\u0430\u0447\u0435\u043d\u0438\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u043d\u0430 \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0435 \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u0435.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u043e\u043f\u044b\u0442\u043a\u0430 \u043d\u0430\u0437\u043d\u0430\u0447\u0438\u0442\u044c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u043d\u0430 \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0435 \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u0435 \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u0442 404 Not Found.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_put.py::test_assign_to_nonexistent_competition&#34;, &#34;time&#34;: &#34;0.006&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_put.py::test_assign_to_nonexistent_competition&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043d\u0430\u0437\u043d\u0430\u0447\u0435\u043d\u0438\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u043d\u0430 \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0435 \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u0435.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.006&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_put.py::test_update_task_status_by_admin&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0441\u0442\u0430\u0442\u0443\u0441\u0430 \u0437\u0430\u0434\u0430\u0447\u0438 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440 \u043c\u043e\u0436\u0435\u0442 \u043e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0441\u0442\u0430\u0442\u0443\u0441 \u0437\u0430\u0434\u0430\u0447\u0438 \u0447\u0435\u0440\u0435\u0437 PUT /task-statuses/{id}.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_put.py::test_update_task_status_by_admin&#34;, &#34;time&#34;: &#34;0.009&#34;, &#34;duration&#34;: &#34;687 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_put.py::test_update_task_status_by_admin&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0441\u0442\u0430\u0442\u0443\u0441\u0430 \u0437\u0430\u0434\u0430\u0447\u0438 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.009&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;687 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_put.py::test_update_task_status_duplicate_code&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0441\u0442\u0430\u0442\u0443\u0441\u0430 \u0437\u0430\u0434\u0430\u0447\u0438 \u0441 \u0434\u0443\u0431\u043b\u0438\u0440\u0443\u044e\u0449\u0438\u043c\u0441\u044f \u043a\u043e\u0434\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u043e\u043f\u044b\u0442\u043a\u0430 \u043e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0441\u0442\u0430\u0442\u0443\u0441 \u043d\u0430 \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u0439 \u043a\u043e\u0434 \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u0442 400 Bad Request.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_put.py::test_update_task_status_duplicate_code&#34;, &#34;time&#34;: &#34;0.015&#34;, &#34;duration&#34;: &#34;691 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_put.py::test_update_task_status_duplicate_code&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0441\u0442\u0430\u0442\u0443\u0441\u0430 \u0437\u0430\u0434\u0430\u0447\u0438 \u0441 \u0434\u0443\u0431\u043b\u0438\u0440\u0443\u044e\u0449\u0438\u043c\u0441\u044f \u043a\u043e\u0434\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.015&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;691 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_put.py::test_update_tag_by_admin&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0442\u0435\u0433\u0430 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440 \u043c\u043e\u0436\u0435\u0442 \u043e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0442\u0435\u0433 \u0447\u0435\u0440\u0435\u0437 PUT /tags/{id}.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_put.py::test_update_tag_by_admin&#34;, &#34;time&#34;: &#34;0.008&#34;, &#34;duration&#34;: &#34;715 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_put.py::test_update_tag_by_admin&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0442\u0435\u0433\u0430 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.008&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;715 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_put.py::test_update_tag_duplicate_name&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0442\u0435\u0433\u0430 \u0441 \u0434\u0443\u0431\u043b\u0438\u0440\u0443\u044e\u0449\u0438\u043c\u0441\u044f \u0438\u043c\u0435\u043d\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u043e\u043f\u044b\u0442\u043a\u0430 \u043e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0442\u0435\u0433 \u043d\u0430 \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0435 \u0438\u043c\u044f \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u0442 400 Bad Request.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_put.py::test_update_tag_duplicate_name&#34;, &#34;time&#34;: &#34;0.012&#34;, &#34;duration&#34;: &#34;687 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_put.py::test_update_tag_duplicate_name&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0442\u0435\u0433\u0430 \u0441 \u0434\u0443\u0431\u043b\u0438\u0440\u0443\u044e\u0449\u0438\u043c\u0441\u044f \u0438\u043c\u0435\u043d\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.012&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;687 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_put.py::test_update_task_success&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0443\u0441\u043f\u0435\u0448\u043d\u043e\u0433\u043e \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0437\u0430\u0434\u0430\u0447\u0438 \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0432\u043b\u0430\u0434\u0435\u043b\u0435\u0446 \u0437\u0430\u0434\u0430\u0447\u0438 \u043c\u043e\u0436\u0435\u0442 \u043e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0441\u0432\u043e\u044e \u0437\u0430\u0434\u0430\u0447\u0443 \u0447\u0435\u0440\u0435\u0437 PUT /tasks/{id}.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_put.py::test_update_task_success&#34;, &#34;time&#34;: &#34;0.009&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_put.py::test_update_task_success&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0443\u0441\u043f\u0435\u0448\u043d\u043e\u0433\u043e \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0437\u0430\u0434\u0430\u0447\u0438 \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.009&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_put.py::test_update_task_status_to_done_during_competition&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0441\u0442\u0430\u0442\u0443\u0441\u0430 \u0437\u0430\u0434\u0430\u0447\u0438 \u043d\u0430 \&#34;\u0412\u044b\u043f\u043e\u043b\u043d\u0435\u043d\u043e\&#34; \u0432\u043e \u0432\u0440\u0435\u043c\u044f \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u043e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0441\u0442\u0430\u0442\u0443\u0441 \u0437\u0430\u0434\u0430\u0447\u0438 \u043d\u0430 \&#34;done\&#34; \u0432\u043e \u0432\u0440\u0435\u043c\u044f \u0443\u0447\u0430\u0441\u0442\u0438\u044f \u0432 \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u0438.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_put.py::test_update_task_status_to_done_during_competition&#34;, &#34;time&#34;: &#34;0.023&#34;, &#34;duration&#34;: &#34;00:00:02&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_put.py::test_update_task_status_to_done_during_competition&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0441\u0442\u0430\u0442\u0443\u0441\u0430 \u0437\u0430\u0434\u0430\u0447\u0438 \u043d\u0430 &amp;quot;\u0412\u044b\u043f\u043e\u043b\u043d\u0435\u043d\u043e&amp;quot; \u0432\u043e \u0432\u0440\u0435\u043c\u044f \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.023&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:02&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_put.py::test_update_task_nonexistent&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0439 \u0437\u0430\u0434\u0430\u0447\u0438.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043f\u0440\u0438 \u043f\u043e\u043f\u044b\u0442\u043a\u0435 \u043e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0443\u044e \u0437\u0430\u0434\u0430\u0447\u0443 \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u0442\u0441\u044f 404 Not Found.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_put.py::test_update_task_nonexistent&#34;, &#34;time&#34;: &#34;0.006&#34;, &#34;duration&#34;: &#34;708 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_put.py::test_update_task_nonexistent&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u043d\u0435\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0439 \u0437\u0430\u0434\u0430\u0447\u0438.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.006&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;708 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_put.py::test_update_reward_type_by_admin&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0442\u0438\u043f\u0430 \u043d\u0430\u0433\u0440\u0430\u0434\u044b \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440 \u043c\u043e\u0436\u0435\u0442 \u043e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0442\u0438\u043f \u043d\u0430\u0433\u0440\u0430\u0434\u044b \u0447\u0435\u0440\u0435\u0437 PUT /reward-types/{id}.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_put.py::test_update_reward_type_by_admin&#34;, &#34;time&#34;: &#34;0.010&#34;, &#34;duration&#34;: &#34;774 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_put.py::test_update_reward_type_by_admin&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0442\u0438\u043f\u0430 \u043d\u0430\u0433\u0440\u0430\u0434\u044b \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.010&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;774 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_put.py::test_update_reward_success&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0443\u0441\u043f\u0435\u0448\u043d\u043e\u0433\u043e \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u043d\u0430\u0433\u0440\u0430\u0434\u044b \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0432\u043b\u0430\u0434\u0435\u043b\u0435\u0446 \u043d\u0430\u0433\u0440\u0430\u0434\u044b \u043c\u043e\u0436\u0435\u0442 \u043e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0441\u0432\u043e\u044e \u043d\u0430\u0433\u0440\u0430\u0434\u0443 \u0438 \u043f\u0440\u0438 \u044d\u0442\u043e\u043c \u043e\u0431\u043d\u043e\u0432\u043b\u044f\u0435\u0442\u0441\u044f total_points \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_put.py::test_update_reward_success&#34;, &#34;time&#34;: &#34;0.013&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_put.py::test_update_reward_success&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0443\u0441\u043f\u0435\u0448\u043d\u043e\u0433\u043e \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u043d\u0430\u0433\u0440\u0430\u0434\u044b \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.013&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_put.py::test_update_competition_by_manager&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440 \u043c\u043e\u0436\u0435\u0442 \u043e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u0435 \u0447\u0435\u0440\u0435\u0437 PUT /competitions/{id}.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_put.py::test_update_competition_by_manager&#34;, &#34;time&#34;: &#34;0.009&#34;, &#34;duration&#34;: &#34;711 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_put.py::test_update_competition_by_manager&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.009&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;711 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_put.py::test_update_competition_by_user_forbidden&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u043e\u0431\u044b\u0447\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043e\u0431\u044b\u0447\u043d\u044b\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043d\u0435 \u043c\u043e\u0436\u0435\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u044f\u0442\u044c \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f (403 Forbidden).\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_put.py::test_update_competition_by_user_forbidden&#34;, &#34;time&#34;: &#34;0.005&#34;, &#34;duration&#34;: &#34;00:00:01&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_put.py::test_update_competition_by_user_forbidden&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u043e\u0431\u044b\u0447\u043d\u044b\u043c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.005&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:01&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_security.py::test_protected_endpoint_without_token&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0434\u043e\u0441\u0442\u0443\u043f\u0430 \u043a \u0437\u0430\u0449\u0438\u0449\u0435\u043d\u043d\u043e\u043c\u0443 \u044d\u043d\u0434\u043f\u043e\u0438\u043d\u0442\u0443 \u0431\u0435\u0437 \u0442\u043e\u043a\u0435\u043d\u0430.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0437\u0430\u043f\u0440\u043e\u0441 \u043a \u0437\u0430\u0449\u0438\u0449\u0435\u043d\u043d\u043e\u043c\u0443 \u044d\u043d\u0434\u043f\u043e\u0438\u043d\u0442\u0443 \u0431\u0435\u0437 \u0442\u043e\u043a\u0435\u043d\u0430 \u0430\u0432\u0442\u043e\u0440\u0438\u0437\u0430\u0446\u0438\u0438 \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u0442 401 Unauthorized.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_security.py::test_protected_endpoint_without_token&#34;, &#34;time&#34;: &#34;0.001&#34;, &#34;duration&#34;: &#34;87 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_security.py::test_protected_endpoint_without_token&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0434\u043e\u0441\u0442\u0443\u043f\u0430 \u043a \u0437\u0430\u0449\u0438\u0449\u0435\u043d\u043d\u043e\u043c\u0443 \u044d\u043d\u0434\u043f\u043e\u0438\u043d\u0442\u0443 \u0431\u0435\u0437 \u0442\u043e\u043a\u0435\u043d\u0430.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.001&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;87 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_security.py::test_user_cannot_access_admin_endpoint&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u0434\u043e\u0441\u0442\u0443\u043f\u0430 \u043e\u0431\u044b\u0447\u043d\u043e\u0433\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u043a \u0430\u0434\u043c\u0438\u043d\u0441\u043a\u0438\u043c \u044d\u043d\u0434\u043f\u043e\u0438\u043d\u0442\u0430\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u043e\u0431\u044b\u0447\u043d\u044b\u0439 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043d\u0435 \u043c\u043e\u0436\u0435\u0442 \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0434\u043e\u0441\u0442\u0443\u043f \u043a \u0430\u0434\u043c\u0438\u043d\u0441\u043a\u0438\u043c \u044d\u043d\u0434\u043f\u043e\u0438\u043d\u0442\u0430\u043c (403 Forbidden).\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_security.py::test_user_cannot_access_admin_endpoint&#34;, &#34;time&#34;: &#34;0.005&#34;, &#34;duration&#34;: &#34;689 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_security.py::test_user_cannot_access_admin_endpoint&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u0434\u043e\u0441\u0442\u0443\u043f\u0430 \u043e\u0431\u044b\u0447\u043d\u043e\u0433\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u043a \u0430\u0434\u043c\u0438\u043d\u0441\u043a\u0438\u043c \u044d\u043d\u0434\u043f\u043e\u0438\u043d\u0442\u0430\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.005&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;689 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/test_security.py::test_name_sql_injection&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0437\u0430\u0449\u0438\u0442\u044b \u043e\u0442 SQL \u0438\u043d\u044a\u0435\u043a\u0446\u0438\u0439 \u0432 \u043f\u043e\u043b\u0435 \u0438\u043c\u0435\u043d\u0438.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0441\u0438\u0441\u0442\u0435\u043c\u0430 \u043a\u043e\u0440\u0440\u0435\u043a\u0442\u043d\u043e \u043e\u0431\u0440\u0430\u0431\u0430\u0442\u044b\u0432\u0430\u0435\u0442 \u043f\u043e\u043f\u044b\u0442\u043a\u0438 SQL \u0438\u043d\u044a\u0435\u043a\u0446\u0438\u0439 \u0432 \u043f\u043e\u043b\u044f\u0445 \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u0438.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/test_security.py::test_name_sql_injection&#34;, &#34;time&#34;: &#34;0.283&#34;, &#34;duration&#34;: &#34;393 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/test_security.py::test_name_sql_injection&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0437\u0430\u0449\u0438\u0442\u044b \u043e\u0442 SQL \u0438\u043d\u044a\u0435\u043a\u0446\u0438\u0439 \u0432 \u043f\u043e\u043b\u0435 \u0438\u043c\u0435\u043d\u0438.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.283&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;393 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/unit/test_auth.py::test_password_hashing&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0445\u0435\u0448\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f \u0438 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438 \u043f\u0430\u0440\u043e\u043b\u0435\u0439.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0444\u0443\u043d\u043a\u0446\u0438\u044f get_password_hash \u0441\u043e\u0437\u0434\u0430\u0435\u0442 \u0445\u0435\u0448, \u0430 verify_password \u043a\u043e\u0440\u0440\u0435\u043a\u0442\u043d\u043e \u043f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u043f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u044b\u0439 \u0438 \u043d\u0435\u043f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u044b\u0439 \u043f\u0430\u0440\u043e\u043b\u0438.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/unit/test_auth.py::test_password_hashing&#34;, &#34;time&#34;: &#34;0.819&#34;, &#34;duration&#34;: &#34;820 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/unit/test_auth.py::test_password_hashing&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0445\u0435\u0448\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f \u0438 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438 \u043f\u0430\u0440\u043e\u043b\u0435\u0439.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.819&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;820 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/unit/test_auth.py::test_create_access_token&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f JWT \u0442\u043e\u043a\u0435\u043d\u0430 \u0434\u043e\u0441\u0442\u0443\u043f\u0430.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e create_access_token \u0441\u043e\u0437\u0434\u0430\u0435\u0442 \u0432\u0430\u043b\u0438\u0434\u043d\u044b\u0439 JWT \u0442\u043e\u043a\u0435\u043d \u0441 \u043f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u044b\u043c\u0438 \u043f\u043e\u043b\u044f\u043c\u0438 sub (user_id) \u0438 role.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/unit/test_auth.py::test_create_access_token&#34;, &#34;time&#34;: &#34;0.001&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/unit/test_auth.py::test_create_access_token&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u044f JWT \u0442\u043e\u043a\u0435\u043d\u0430 \u0434\u043e\u0441\u0442\u0443\u043f\u0430.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.001&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/unit/test_validators.py::test_invalid_email&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0432\u0430\u043b\u0438\u0434\u0430\u0446\u0438\u0438 \u043d\u0435\u0432\u0430\u043b\u0438\u0434\u043d\u043e\u0433\u043e email \u0430\u0434\u0440\u0435\u0441\u0430.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u0435 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0441 \u043d\u0435\u0432\u0430\u043b\u0438\u0434\u043d\u044b\u043c email \u0432\u044b\u0437\u044b\u0432\u0430\u0435\u0442 ValidationError.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/unit/test_validators.py::test_invalid_email&#34;, &#34;time&#34;: &#34;0.002&#34;, &#34;duration&#34;: &#34;3 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/unit/test_validators.py::test_invalid_email&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0432\u0430\u043b\u0438\u0434\u0430\u0446\u0438\u0438 \u043d\u0435\u0432\u0430\u043b\u0438\u0434\u043d\u043e\u0433\u043e email \u0430\u0434\u0440\u0435\u0441\u0430.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.002&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;3 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/unit/test_validators.py::test_short_password&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0432\u0430\u043b\u0438\u0434\u0430\u0446\u0438\u0438 \u043a\u043e\u0440\u043e\u0442\u043a\u043e\u0433\u043e \u043f\u0430\u0440\u043e\u043b\u044f.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u0435 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f \u0441 \u043f\u0430\u0440\u043e\u043b\u0435\u043c \u043a\u043e\u0440\u043e\u0447\u0435 \u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e\u0439 \u0434\u043b\u0438\u043d\u044b \u0432\u044b\u0437\u044b\u0432\u0430\u0435\u0442 ValidationError.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/unit/test_validators.py::test_short_password&#34;, &#34;time&#34;: &#34;0.001&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/unit/test_validators.py::test_short_password&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0432\u0430\u043b\u0438\u0434\u0430\u0446\u0438\u0438 \u043a\u043e\u0440\u043e\u0442\u043a\u043e\u0433\u043e \u043f\u0430\u0440\u043e\u043b\u044f.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.001&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;pytests/unit/test_validators.py::test_expired_token_forbidden&#34;: [{&#34;extras&#34;: [{&#34;name&#34;: null, &#34;format_type&#34;: &#34;html&#34;, &#34;content&#34;: &#34;&lt;div&gt;&lt;h4&gt;\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u0430:&lt;/h4&gt;&lt;pre&gt;\n\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u0434\u043e\u0441\u0442\u0443\u043f\u0430 \u0441 \u0438\u0441\u0442\u0435\u043a\u0448\u0438\u043c \u0438\u043b\u0438 \u043d\u0435\u0432\u0430\u043b\u0438\u0434\u043d\u044b\u043c \u0442\u043e\u043a\u0435\u043d\u043e\u043c.\n\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0447\u0442\u043e \u0437\u0430\u043f\u0440\u043e\u0441 \u0441 \u043d\u0435\u0432\u0430\u043b\u0438\u0434\u043d\u044b\u043c JWT \u0442\u043e\u043a\u0435\u043d\u043e\u043c \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u0442 401 Unauthorized.\n&lt;/pre&gt;&lt;/div&gt;&#34;, &#34;mime_type&#34;: null, &#34;extension&#34;: null}], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;pytests/unit/test_validators.py::test_expired_token_forbidden&#34;, &#34;time&#34;: &#34;0.003&#34;, &#34;duration&#34;: &#34;134 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;pytests/unit/test_validators.py::test_expired_token_forbidden&lt;/td&gt;&#34;, &#34;&lt;td&gt;\u0422\u0435\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0442\u0430 \u0434\u043e\u0441\u0442\u0443\u043f\u0430 \u0441 \u0438\u0441\u0442\u0435\u043a\u0448\u0438\u043c \u0438\u043b\u0438 \u043d\u0435\u0432\u0430\u043b\u0438\u0434\u043d\u044b\u043c \u0442\u043e\u043a\u0435\u043d\u043e\u043c.&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-time\&#34;&gt;0.003&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;134 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}]}, &#34;renderCollapsed&#34;: [&#34;passed&#34;], &#34;initialSort&#34;: &#34;result&#34;, &#34;title&#34;: &#34;\u041e\u0442\u0447\u0435\u0442 \u043e \u0442\u0435\u0441\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0438 - Gamification System&#34;}"></div>
+    <script>
+      (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+const { getCollapsedCategory, setCollapsedIds } = require('./storage.js')
+
+class DataManager {
+    setManager(data) {
+        const collapsedCategories = [...getCollapsedCategory(data.renderCollapsed)]
+        const collapsedIds = []
+        const tests = Object.values(data.tests).flat().map((test, index) => {
+            const collapsed = collapsedCategories.includes(test.result.toLowerCase())
+            const id = `test_${index}`
+            if (collapsed) {
+                collapsedIds.push(id)
+            }
+            return {
+                ...test,
+                id,
+                collapsed,
+            }
+        })
+        const dataBlob = { ...data, tests }
+        this.data = { ...dataBlob }
+        this.renderData = { ...dataBlob }
+        setCollapsedIds(collapsedIds)
+    }
+
+    get allData() {
+        return { ...this.data }
+    }
+
+    resetRender() {
+        this.renderData = { ...this.data }
+    }
+
+    setRender(data) {
+        this.renderData.tests = [...data]
+    }
+
+    toggleCollapsedItem(id) {
+        this.renderData.tests = this.renderData.tests.map((test) =>
+            test.id === id ? { ...test, collapsed: !test.collapsed } : test,
+        )
+    }
+
+    set allCollapsed(collapsed) {
+        this.renderData = { ...this.renderData, tests: [...this.renderData.tests.map((test) => (
+            { ...test, collapsed }
+        ))] }
+    }
+
+    get testSubset() {
+        return [...this.renderData.tests]
+    }
+
+    get environment() {
+        return this.renderData.environment
+    }
+
+    get initialSort() {
+        return this.data.initialSort
+    }
+}
+
+module.exports = {
+    manager: new DataManager(),
+}
+
+},{"./storage.js":8}],2:[function(require,module,exports){
+const mediaViewer = require('./mediaviewer.js')
+const templateEnvRow = document.getElementById('template_environment_row')
+const templateResult = document.getElementById('template_results-table__tbody')
+
+function htmlToElements(html) {
+    const temp = document.createElement('template')
+    temp.innerHTML = html
+    return temp.content.childNodes
+}
+
+const find = (selector, elem) => {
+    if (!elem) {
+        elem = document
+    }
+    return elem.querySelector(selector)
+}
+
+const findAll = (selector, elem) => {
+    if (!elem) {
+        elem = document
+    }
+    return [...elem.querySelectorAll(selector)]
+}
+
+const dom = {
+    getStaticRow: (key, value) => {
+        const envRow = templateEnvRow.content.cloneNode(true)
+        const isObj = typeof value === 'object' && value !== null
+        const values = isObj ? Object.keys(value).map((k) => `${k}: ${value[k]}`) : null
+
+        const valuesElement = htmlToElements(
+            values ? `<ul>${values.map((val) => `<li>${val}</li>`).join('')}<ul>` : `<div>${value}</div>`)[0]
+        const td = findAll('td', envRow)
+        td[0].textContent = key
+        td[1].appendChild(valuesElement)
+
+        return envRow
+    },
+    getResultTBody: ({ testId, id, log, extras, resultsTableRow, tableHtml, result, collapsed }) => {
+        const resultBody = templateResult.content.cloneNode(true)
+        resultBody.querySelector('tbody').classList.add(result.toLowerCase())
+        resultBody.querySelector('tbody').id = testId
+        resultBody.querySelector('.collapsible').dataset.id = id
+
+        resultsTableRow.forEach((html) => {
+            const t = document.createElement('template')
+            t.innerHTML = html
+            resultBody.querySelector('.collapsible').appendChild(t.content)
+        })
+
+        if (log) {
+            // Wrap lines starting with "E" with span.error to color those lines red
+            const wrappedLog = log.replace(/^E.*$/gm, (match) => `<span class="error">${match}</span>`)
+            resultBody.querySelector('.log').innerHTML = wrappedLog
+        } else {
+            resultBody.querySelector('.log').remove()
+        }
+
+        if (collapsed) {
+            resultBody.querySelector('.collapsible > td')?.classList.add('collapsed')
+            resultBody.querySelector('.extras-row').classList.add('hidden')
+        } else {
+            resultBody.querySelector('.collapsible > td')?.classList.remove('collapsed')
+        }
+
+        const media = []
+        extras?.forEach(({ name, format_type, content }) => {
+            if (['image', 'video'].includes(format_type)) {
+                media.push({ path: content, name, format_type })
+            }
+
+            if (format_type === 'html') {
+                resultBody.querySelector('.extraHTML').insertAdjacentHTML('beforeend', `<div>${content}</div>`)
+            }
+        })
+        mediaViewer.setup(resultBody, media)
+
+        // Add custom html from the pytest_html_results_table_html hook
+        tableHtml?.forEach((item) => {
+            resultBody.querySelector('td[class="extra"]').insertAdjacentHTML('beforeend', item)
+        })
+
+        return resultBody
+    },
+}
+
+module.exports = {
+    dom,
+    htmlToElements,
+    find,
+    findAll,
+}
+
+},{"./mediaviewer.js":6}],3:[function(require,module,exports){
+const { manager } = require('./datamanager.js')
+const { doSort } = require('./sort.js')
+const storageModule = require('./storage.js')
+
+const getFilteredSubSet = (filter) =>
+    manager.allData.tests.filter(({ result }) => filter.includes(result.toLowerCase()))
+
+const doInitFilter = () => {
+    const currentFilter = storageModule.getVisible()
+    const filteredSubset = getFilteredSubSet(currentFilter)
+    manager.setRender(filteredSubset)
+}
+
+const doFilter = (type, show) => {
+    if (show) {
+        storageModule.showCategory(type)
+    } else {
+        storageModule.hideCategory(type)
+    }
+
+    const currentFilter = storageModule.getVisible()
+    const filteredSubset = getFilteredSubSet(currentFilter)
+    manager.setRender(filteredSubset)
+
+    const sortColumn = storageModule.getSort()
+    doSort(sortColumn, true)
+}
+
+module.exports = {
+    doFilter,
+    doInitFilter,
+}
+
+},{"./datamanager.js":1,"./sort.js":7,"./storage.js":8}],4:[function(require,module,exports){
+const { redraw, bindEvents, renderStatic } = require('./main.js')
+const { doInitFilter } = require('./filter.js')
+const { doInitSort } = require('./sort.js')
+const { manager } = require('./datamanager.js')
+const data = JSON.parse(document.getElementById('data-container').dataset.jsonblob)
+
+function init() {
+    manager.setManager(data)
+    doInitFilter()
+    doInitSort()
+    renderStatic()
+    redraw()
+    bindEvents()
+}
+
+init()
+
+},{"./datamanager.js":1,"./filter.js":3,"./main.js":5,"./sort.js":7}],5:[function(require,module,exports){
+const { dom, find, findAll } = require('./dom.js')
+const { manager } = require('./datamanager.js')
+const { doSort } = require('./sort.js')
+const { doFilter } = require('./filter.js')
+const {
+    getVisible,
+    getCollapsedIds,
+    setCollapsedIds,
+    getSort,
+    getSortDirection,
+    possibleFilters,
+} = require('./storage.js')
+
+const removeChildren = (node) => {
+    while (node.firstChild) {
+        node.removeChild(node.firstChild)
+    }
+}
+
+const renderStatic = () => {
+    const renderEnvironmentTable = () => {
+        const environment = manager.environment
+        const rows = Object.keys(environment).map((key) => dom.getStaticRow(key, environment[key]))
+        const table = document.getElementById('environment')
+        removeChildren(table)
+        rows.forEach((row) => table.appendChild(row))
+    }
+    renderEnvironmentTable()
+}
+
+const addItemToggleListener = (elem) => {
+    elem.addEventListener('click', ({ target }) => {
+        const id = target.parentElement.dataset.id
+        manager.toggleCollapsedItem(id)
+
+        const collapsedIds = getCollapsedIds()
+        if (collapsedIds.includes(id)) {
+            const updated = collapsedIds.filter((item) => item !== id)
+            setCollapsedIds(updated)
+        } else {
+            collapsedIds.push(id)
+            setCollapsedIds(collapsedIds)
+        }
+        redraw()
+    })
+}
+
+const renderContent = (tests) => {
+    const sortAttr = getSort(manager.initialSort)
+    const sortAsc = JSON.parse(getSortDirection())
+    const rows = tests.map(dom.getResultTBody)
+    const table = document.getElementById('results-table')
+    const tableHeader = document.getElementById('results-table-head')
+
+    const newTable = document.createElement('table')
+    newTable.id = 'results-table'
+
+    // remove all sorting classes and set the relevant
+    findAll('.sortable', tableHeader).forEach((elem) => elem.classList.remove('asc', 'desc'))
+    tableHeader.querySelector(`.sortable[data-column-type="${sortAttr}"]`)?.classList.add(sortAsc ? 'desc' : 'asc')
+    newTable.appendChild(tableHeader)
+
+    if (!rows.length) {
+        const emptyTable = document.getElementById('template_results-table__body--empty').content.cloneNode(true)
+        newTable.appendChild(emptyTable)
+    } else {
+        rows.forEach((row) => {
+            if (!!row) {
+                findAll('.collapsible td:not(.col-links', row).forEach(addItemToggleListener)
+                find('.logexpander', row).addEventListener('click',
+                    (evt) => evt.target.parentNode.classList.toggle('expanded'),
+                )
+                newTable.appendChild(row)
+            }
+        })
+    }
+
+    table.replaceWith(newTable)
+}
+
+const renderDerived = () => {
+    const currentFilter = getVisible()
+    possibleFilters.forEach((result) => {
+        const input = document.querySelector(`input[data-test-result="${result}"]`)
+        input.checked = currentFilter.includes(result)
+    })
+}
+
+const bindEvents = () => {
+    const filterColumn = (evt) => {
+        const { target: element } = evt
+        const { testResult } = element.dataset
+
+        doFilter(testResult, element.checked)
+        const collapsedIds = getCollapsedIds()
+        const updated = manager.renderData.tests.map((test) => {
+            return {
+                ...test,
+                collapsed: collapsedIds.includes(test.id),
+            }
+        })
+        manager.setRender(updated)
+        redraw()
+    }
+
+    const header = document.getElementById('environment-header')
+    header.addEventListener('click', () => {
+        const table = document.getElementById('environment')
+        table.classList.toggle('hidden')
+        header.classList.toggle('collapsed')
+    })
+
+    findAll('input[name="filter_checkbox"]').forEach((elem) => {
+        elem.addEventListener('click', filterColumn)
+    })
+
+    findAll('.sortable').forEach((elem) => {
+        elem.addEventListener('click', (evt) => {
+            const { target: element } = evt
+            const { columnType } = element.dataset
+            doSort(columnType)
+            redraw()
+        })
+    })
+
+    document.getElementById('show_all_details').addEventListener('click', () => {
+        manager.allCollapsed = false
+        setCollapsedIds([])
+        redraw()
+    })
+    document.getElementById('hide_all_details').addEventListener('click', () => {
+        manager.allCollapsed = true
+        const allIds = manager.renderData.tests.map((test) => test.id)
+        setCollapsedIds(allIds)
+        redraw()
+    })
+}
+
+const redraw = () => {
+    const { testSubset } = manager
+
+    renderContent(testSubset)
+    renderDerived()
+}
+
+module.exports = {
+    redraw,
+    bindEvents,
+    renderStatic,
+}
+
+},{"./datamanager.js":1,"./dom.js":2,"./filter.js":3,"./sort.js":7,"./storage.js":8}],6:[function(require,module,exports){
+class MediaViewer {
+    constructor(assets) {
+        this.assets = assets
+        this.index = 0
+    }
+
+    nextActive() {
+        this.index = this.index === this.assets.length - 1 ? 0 : this.index + 1
+        return [this.activeFile, this.index]
+    }
+
+    prevActive() {
+        this.index = this.index === 0 ? this.assets.length - 1 : this.index -1
+        return [this.activeFile, this.index]
+    }
+
+    get currentIndex() {
+        return this.index
+    }
+
+    get activeFile() {
+        return this.assets[this.index]
+    }
+}
+
+
+const setup = (resultBody, assets) => {
+    if (!assets.length) {
+        resultBody.querySelector('.media').classList.add('hidden')
+        return
+    }
+
+    const mediaViewer = new MediaViewer(assets)
+    const container = resultBody.querySelector('.media-container')
+    const leftArrow = resultBody.querySelector('.media-container__nav--left')
+    const rightArrow = resultBody.querySelector('.media-container__nav--right')
+    const mediaName = resultBody.querySelector('.media__name')
+    const counter = resultBody.querySelector('.media__counter')
+    const imageEl = resultBody.querySelector('img')
+    const sourceEl = resultBody.querySelector('source')
+    const videoEl = resultBody.querySelector('video')
+
+    const setImg = (media, index) => {
+        if (media?.format_type === 'image') {
+            imageEl.src = media.path
+
+            imageEl.classList.remove('hidden')
+            videoEl.classList.add('hidden')
+        } else if (media?.format_type === 'video') {
+            sourceEl.src = media.path
+
+            videoEl.classList.remove('hidden')
+            imageEl.classList.add('hidden')
+        }
+
+        mediaName.innerText = media?.name
+        counter.innerText = `${index + 1} / ${assets.length}`
+    }
+    setImg(mediaViewer.activeFile, mediaViewer.currentIndex)
+
+    const moveLeft = () => {
+        const [media, index] = mediaViewer.prevActive()
+        setImg(media, index)
+    }
+    const doRight = () => {
+        const [media, index] = mediaViewer.nextActive()
+        setImg(media, index)
+    }
+    const openImg = () => {
+        window.open(mediaViewer.activeFile.path, '_blank')
+    }
+    if (assets.length === 1) {
+        container.classList.add('media-container--fullscreen')
+    } else {
+        leftArrow.addEventListener('click', moveLeft)
+        rightArrow.addEventListener('click', doRight)
+    }
+    imageEl.addEventListener('click', openImg)
+}
+
+module.exports = {
+    setup,
+}
+
+},{}],7:[function(require,module,exports){
+const { manager } = require('./datamanager.js')
+const storageModule = require('./storage.js')
+
+const genericSort = (list, key, ascending, customOrder) => {
+    let sorted
+    if (customOrder) {
+        sorted = list.sort((a, b) => {
+            const aValue = a.result.toLowerCase()
+            const bValue = b.result.toLowerCase()
+
+            const aIndex = customOrder.findIndex((item) => item.toLowerCase() === aValue)
+            const bIndex = customOrder.findIndex((item) => item.toLowerCase() === bValue)
+
+            // Compare the indices to determine the sort order
+            return aIndex - bIndex
+        })
+    } else {
+        sorted = list.sort((a, b) => a[key] === b[key] ? 0 : a[key] > b[key] ? 1 : -1)
+    }
+
+    if (ascending) {
+        sorted.reverse()
+    }
+    return sorted
+}
+
+const durationSort = (list, ascending) => {
+    const parseDuration = (duration) => {
+        if (duration.includes(':')) {
+            // If it's in the format "HH:mm:ss"
+            const [hours, minutes, seconds] = duration.split(':').map(Number)
+            return (hours * 3600 + minutes * 60 + seconds) * 1000
+        } else {
+            // If it's in the format "nnn ms"
+            return parseInt(duration)
+        }
+    }
+    const sorted = list.sort((a, b) => parseDuration(a['duration']) - parseDuration(b['duration']))
+    if (ascending) {
+        sorted.reverse()
+    }
+    return sorted
+}
+
+const doInitSort = () => {
+    const type = storageModule.getSort(manager.initialSort)
+    const ascending = storageModule.getSortDirection()
+    const list = manager.testSubset
+    const initialOrder = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed', 'Skipped', 'Passed']
+
+    storageModule.setSort(type)
+    storageModule.setSortDirection(ascending)
+
+    if (type?.toLowerCase() === 'original') {
+        manager.setRender(list)
+    } else {
+        let sortedList
+        switch (type) {
+        case 'duration':
+            sortedList = durationSort(list, ascending)
+            break
+        case 'result':
+            sortedList = genericSort(list, type, ascending, initialOrder)
+            break
+        default:
+            sortedList = genericSort(list, type, ascending)
+            break
+        }
+        manager.setRender(sortedList)
+    }
+}
+
+const doSort = (type, skipDirection) => {
+    const newSortType = storageModule.getSort(manager.initialSort) !== type
+    const currentAsc = storageModule.getSortDirection()
+    let ascending
+    if (skipDirection) {
+        ascending = currentAsc
+    } else {
+        ascending = newSortType ? false : !currentAsc
+    }
+    storageModule.setSort(type)
+    storageModule.setSortDirection(ascending)
+
+    const list = manager.testSubset
+    const sortedList = type === 'duration' ? durationSort(list, ascending) : genericSort(list, type, ascending)
+    manager.setRender(sortedList)
+}
+
+module.exports = {
+    doInitSort,
+    doSort,
+}
+
+},{"./datamanager.js":1,"./storage.js":8}],8:[function(require,module,exports){
+const possibleFilters = [
+    'passed',
+    'skipped',
+    'failed',
+    'error',
+    'xfailed',
+    'xpassed',
+    'rerun',
+]
+
+const getVisible = () => {
+    const url = new URL(window.location.href)
+    const settings = new URLSearchParams(url.search).get('visible')
+    const lower = (item) => {
+        const lowerItem = item.toLowerCase()
+        if (possibleFilters.includes(lowerItem)) {
+            return lowerItem
+        }
+        return null
+    }
+    return settings === null ?
+        possibleFilters :
+        [...new Set(settings?.split(',').map(lower).filter((item) => item))]
+}
+
+const hideCategory = (categoryToHide) => {
+    const url = new URL(window.location.href)
+    const visibleParams = new URLSearchParams(url.search).get('visible')
+    const currentVisible = visibleParams ? visibleParams.split(',') : [...possibleFilters]
+    const settings = [...new Set(currentVisible)].filter((f) => f !== categoryToHide).join(',')
+
+    url.searchParams.set('visible', settings)
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const showCategory = (categoryToShow) => {
+    if (typeof window === 'undefined') {
+        return
+    }
+    const url = new URL(window.location.href)
+    const currentVisible = new URLSearchParams(url.search).get('visible')?.split(',').filter(Boolean) ||
+        [...possibleFilters]
+    const settings = [...new Set([categoryToShow, ...currentVisible])]
+    const noFilter = possibleFilters.length === settings.length || !settings.length
+
+    noFilter ? url.searchParams.delete('visible') : url.searchParams.set('visible', settings.join(','))
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const getSort = (initialSort) => {
+    const url = new URL(window.location.href)
+    let sort = new URLSearchParams(url.search).get('sort')
+    if (!sort) {
+        sort = initialSort || 'result'
+    }
+    return sort
+}
+
+const setSort = (type) => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('sort', type)
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const getCollapsedCategory = (renderCollapsed) => {
+    let categories
+    if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href)
+        const collapsedItems = new URLSearchParams(url.search).get('collapsed')
+        switch (true) {
+        case !renderCollapsed && collapsedItems === null:
+            categories = ['passed']
+            break
+        case collapsedItems?.length === 0 || /^["']{2}$/.test(collapsedItems):
+            categories = []
+            break
+        case /^all$/.test(collapsedItems) || collapsedItems === null && /^all$/.test(renderCollapsed):
+            categories = [...possibleFilters]
+            break
+        default:
+            categories = collapsedItems?.split(',').map((item) => item.toLowerCase()) || renderCollapsed
+            break
+        }
+    } else {
+        categories = []
+    }
+    return categories
+}
+
+const getSortDirection = () => JSON.parse(sessionStorage.getItem('sortAsc')) || false
+const setSortDirection = (ascending) => sessionStorage.setItem('sortAsc', ascending)
+
+const getCollapsedIds = () => JSON.parse(sessionStorage.getItem('collapsedIds')) || []
+const setCollapsedIds = (list) => sessionStorage.setItem('collapsedIds', JSON.stringify(list))
+
+module.exports = {
+    getVisible,
+    hideCategory,
+    showCategory,
+    getCollapsedIds,
+    setCollapsedIds,
+    getSort,
+    setSort,
+    getSortDirection,
+    setSortDirection,
+    getCollapsedCategory,
+    possibleFilters,
+}
+
+},{}]},{},[4]);
+    </script>
+  </footer>
+</html>
