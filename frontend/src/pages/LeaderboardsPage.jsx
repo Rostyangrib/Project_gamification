@@ -60,9 +60,9 @@ const LeaderboardsPage = () => {
           .map((u) => ({
             first_name: u.first_name || '',
             last_name: u.last_name || '',
-            total_points: Number(u.total_points) || 0,
+            score: Number(u.score) || 0,
           }))
-          .sort((a, b) => b.total_points - a.total_points);
+          .sort((a, b) => b.score - a.score);
 
         setUsers(sortedUsers);
       } catch (err) {
@@ -208,7 +208,7 @@ const LeaderboardsPage = () => {
                         </td>
                         <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-right">
                           <span className="inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-200">
-                            {user.total_points}
+                            {user.score}
                           </span>
                         </td>
                       </tr>

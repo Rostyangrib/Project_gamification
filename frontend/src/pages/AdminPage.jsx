@@ -801,11 +801,7 @@ const AdminPage = () => {
                           <div className="text-sm text-gray-600 dark:text-gray-400">
                             {userItem.email}
                           </div>
-                          {userItem.role !== 'admin' && userItem.role !== 'manager' && (
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                              {userItem.total_points} баллов
-                            </div>
-                          )}
+                          {/* Баллы теперь считаются по соревнованиям (participants) и здесь не отображаются */}
                           <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                             Роль: <span className="font-semibold">
                               {userItem.role === 'admin' ? 'Администратор' : 

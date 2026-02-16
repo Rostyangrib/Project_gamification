@@ -75,11 +75,6 @@ const Navbar = () => {
           <div className="flex items-center space-x-4">
             {isAuthenticated && user && (
               <div className="flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-200">
-                {user.role !== 'admin' && user.role !== 'manager' && (
-                  <span className="px-2 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-200 font-semibold">
-                    {user.total_points ?? 0} баллов
-                  </span>
-                )}
                 <button
                   onClick={() => navigate('/profile')}
                   className="px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-indigo-600 dark:text-indigo-300 font-medium"

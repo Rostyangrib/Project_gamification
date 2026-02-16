@@ -4,7 +4,7 @@ from typing import List
 
 from schemas import TaskTitleAndDate, UserLeaderboard
 from db import get_db
-from database import User, TaskStatus, Tag, Task, RewardType, Reward, Competition
+from database import User, TaskStatus, Tag, Task, RewardType, Reward, Competition, Participant
 from schemas import (
     UserResponse, TaskStatusResponse,
     TagResponse, TaskResponse, RewardTypeResponse, RewardResponse,
@@ -121,18 +121,101 @@ def get_leaderboard(
     #current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    """
+    Лидерборд по соревнованию, использует таблицу participants и поле score.
+    """
     comp = db.query(Competition).filter(Competition.id == competition_id).first()
     if not comp:
         raise HTTPException(status_code=404, detail="Соревнование не найдено")
 
-    users = (
-        db.query(User.first_name, User.last_name, User.total_points)
-        .filter(User.cur_comp == competition_id)
-        .order_by(User.total_points.desc())
+    participants = (
+        db.query(Participant, User.first_name, User.last_name)
+        .join(User, Participant.user_id == User.id)
+        .filter(Participant.competition_id == competition_id)
+        .order_by(Participant.score.desc())
         .all()
     )
     leaderboard = [
-        UserLeaderboard(first_name=u.first_name, last_name=u.last_name, total_points=u.total_points)
-        for u in users
+        UserLeaderboard(first_name=first_name, last_name=last_name, score=participant.score)
+        for participant, first_name, last_name in participants
     ]
     return leaderboard
+
+
+@router.get("/participants/competition/{competition_id}")
+def get_competition_participants(
+    competition_id: int,
+    current_user: dict = Depends(require_manager),
+    db: Session = Depends(get_db)
+):
+    """
+    Возвращает участников соревнования из таблицы participants,
+    вместе с базовой информацией о пользователях.
+    """
+    comp = db.query(Competition).filter(Competition.id == competition_id).first()
+    if not comp:
+        raise HTTPException(status_code=404, detail="Соревнование не найдено")
+
+    rows = (
+        db.query(Participant, User)
+        .join(User, Participant.user_id == User.id)
+        .filter(Participant.competition_id == competition_id)
+        .all()
+    )
+
+    return [
+        {
+            "participant_id": participant.id,
+            "competition_id": participant.competition_id,
+            "user_id": user.id,
+            "score": participant.score,
+            "user": {
+                "id": user.id,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email,
+                "role": user.role,
+                "cur_comp": user.cur_comp,
+            },
+        }
+        for participant, user in rows
+    ]
+
+
+@router.get("/participants/users")
+def get_users_with_participations(
+    current_user: dict = Depends(require_manager),
+    db: Session = Depends(get_db)
+):
+    """
+    Возвращает пользователей (role == 'user') и их участия в соревнованиях
+    из таблицы participants. Используется для панели менеджера.
+    """
+    users = db.query(User).filter(User.role == "user").all()
+    participations = db.query(Participant).all()
+
+    parts_by_user: dict[int, list[dict]] = {}
+    for p in participations:
+        parts_by_user.setdefault(p.user_id, []).append(
+            {
+                "id": p.id,
+                "competition_id": p.competition_id,
+                "score": p.score,
+            }
+        )
+
+    result = []
+    for u in users:
+        result.append(
+            {
+                "id": u.id,
+                "first_name": u.first_name,
+                "last_name": u.last_name,
+                "email": u.email,
+                "role": u.role,
+                "cur_comp": u.cur_comp,
+                "participants": parts_by_user.get(u.id, []),
+            }
+        )
+
+    return result

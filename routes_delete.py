@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from db import get_db
-from database import User, TaskStatus, Tag, Task, TaskTag, RewardType, Reward, Competition
+from database import User, TaskStatus, Tag, Task, TaskTag, RewardType, Reward, Competition, Participant
 from dependencies import get_current_user, require_admin, require_manager
 
 router = APIRouter(prefix="", tags=["DELETE"])
@@ -184,7 +184,52 @@ def delete_competition(
         raise HTTPException(status_code=404, detail="Соревнование не найдено")
 
     db.query(User).filter(User.cur_comp == competition_id).update({User.cur_comp: None})
+    db.query(Participant).filter(Participant.competition_id == competition_id).delete()
 
     db.delete(competition)
+    db.commit()
+    return
+
+@router.delete("/participants/{participant_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_participant(
+    participant_id: int,
+    current_user: dict = Depends(require_manager),
+    db: Session = Depends(get_db)
+):
+    """Удаляет участника из соревнования по participant_id"""
+    participant = db.query(Participant).filter(Participant.id == participant_id).first()
+    if not participant:
+        raise HTTPException(status_code=404, detail="Участник не найден")
+    
+    # Обновляем cur_comp пользователя, если он был в этом соревновании
+    user = db.query(User).filter(User.id == participant.user_id).first()
+    if user and user.cur_comp == participant.competition_id:
+        user.cur_comp = None
+    
+    db.delete(participant)
+    db.commit()
+    return
+
+@router.delete("/participants/competition/{competition_id}/user/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_participant_by_competition_and_user(
+    competition_id: int,
+    user_id: int,
+    current_user: dict = Depends(require_manager),
+    db: Session = Depends(get_db)
+):
+    """Удаляет участника из соревнования по competition_id и user_id"""
+    participant = db.query(Participant).filter(
+        Participant.competition_id == competition_id,
+        Participant.user_id == user_id
+    ).first()
+    if not participant:
+        raise HTTPException(status_code=404, detail="Участник не найден")
+    
+    # Обновляем cur_comp пользователя, если он был в этом соревновании
+    user = db.query(User).filter(User.id == user_id).first()
+    if user and user.cur_comp == competition_id:
+        user.cur_comp = None
+    
+    db.delete(participant)
     db.commit()
     return

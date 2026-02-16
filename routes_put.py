@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 
 from db import get_db
-from database import TaskStatus, Tag, Task, TaskTag, RewardType, Reward, User, Competition
+from database import TaskStatus, Tag, Task, TaskTag, RewardType, Reward, User, Competition, Participant
 from schemas import (
     TaskStatusUpdate, TaskStatusResponse,
     TagUpdate, TagResponse,
@@ -11,7 +11,7 @@ from schemas import (
     RewardTypeUpdate, RewardTypeResponse,
     RewardUpdate, RewardResponse,
     UserUpdate, UserResponse, CompetitionResponse, CompetitionUpdate,
-    UserCompetitionAssign
+    UserCompetitionAssign, ParticipantUpdate, ParticipantResponse
 )
 from dependencies import get_current_user, require_admin, require_manager
 from auth import get_password_hash
@@ -78,43 +78,6 @@ def update_user_by_admin(
     db.refresh(user)
     return user
 
-
-@router.put("/users/{user_id}/competition", response_model=UserResponse)
-def assign_user_to_competition(
-    user_id: int,
-    payload: UserCompetitionAssign,
-    current_user: dict = Depends(require_manager),
-    db: Session = Depends(get_db)
-):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
-
-    if payload.competition_id is not None:
-        competition = db.query(Competition).filter(Competition.id == payload.competition_id).first()
-        if not competition:
-            raise HTTPException(status_code=404, detail="Соревнование не найдено")
-        
-        # Удаляем старые задачи пользователя при назначении нового соревнования
-        # Проверяем, что это действительно новое соревнование (не то же самое)
-        if user.cur_comp != payload.competition_id:
-            # Получаем все задачи пользователя
-            user_tasks = db.query(Task).filter(Task.user_id == user_id).all()
-            
-            # Удаляем связанные TaskTag записи и сами задачи
-            for task in user_tasks:
-                db.query(TaskTag).filter(TaskTag.task_id == task.id).delete()
-                db.delete(task)
-        
-        user.cur_comp = payload.competition_id
-        user.total_points = 0
-    else:
-        user.cur_comp = None
-    
-
-    db.commit()
-    db.refresh(user)
-    return user
 
 # @router.put("/boards/{board_id}", response_model=BoardResponse)
 # def update_board(
@@ -316,7 +279,15 @@ def update_reward(
 
     if update_data.points_amount is not None and update_data.points_amount != old_points:
         delta = update_data.points_amount - old_points
-        current_user["user"].total_points += delta
+        # Обновляем score в participants, если пользователь участвует в соревновании
+        user = current_user["user"]
+        if user.cur_comp:
+            participant = db.query(Participant).filter(
+                Participant.competition_id == user.cur_comp,
+                Participant.user_id == user.id
+            ).first()
+            if participant:
+                participant.score += delta
 
     db.commit()
     db.refresh(reward)
@@ -352,3 +323,22 @@ def update_competition(
     db.refresh(competition)
 
     return competition
+
+@router.put("/participants/{participant_id}", response_model=ParticipantResponse)
+def update_participant(
+    participant_id: int,
+    update_data: ParticipantUpdate,
+    current_user: dict = Depends(require_manager),
+    db: Session = Depends(get_db)
+):
+    """Обновляет score участника соревнования"""
+    participant = db.query(Participant).filter(Participant.id == participant_id).first()
+    if not participant:
+        raise HTTPException(status_code=404, detail="Участник не найден")
+    
+    if update_data.score is not None:
+        participant.score = update_data.score
+    
+    db.commit()
+    db.refresh(participant)
+    return participant

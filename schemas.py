@@ -14,7 +14,6 @@ class UserResponse(BaseModel):
     first_name: str
     last_name: str
     email: str
-    total_points: int
     role: Optional[str] = None
     cur_comp: Optional[int] = None
 
@@ -22,7 +21,7 @@ class UserLeaderboard(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     first_name: str
     last_name: str
-    total_points: int
+    score: int
 
 class AllUsersResponse(BaseModel):
     users: List[UserLeaderboard]
@@ -177,3 +176,18 @@ class TaskTitleAndDate(BaseModel):
 class CompetitionDatesResponse(BaseModel):
     start_date: datetime
     end_date: datetime
+
+class ParticipantCreate(BaseModel):
+    competition_id: int
+    user_id: int
+    score: Optional[int] = 0
+
+class ParticipantUpdate(BaseModel):
+    score: Optional[int] = None
+
+class ParticipantResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    competition_id: int
+    user_id: int
+    score: int

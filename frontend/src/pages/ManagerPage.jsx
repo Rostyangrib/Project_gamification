@@ -118,10 +118,16 @@ const ManagerPage = () => {
     }
   }, [searchParams, competitions]);
 
+  const getUserTotalScore = (user) => {
+    if (!user || !Array.isArray(user.participants)) return 0;
+    return user.participants.reduce((sum, p) => sum + (p.score || 0), 0);
+  };
+
   const loadUsers = async () => {
     try {
       setLoadingUsers(true);
-      const users = await api.get('/users/only');
+      // Загружаем пользователей и их участия через participants
+      const users = await api.get('/participants/users');
       setAllUsers(users || []);
     } catch (err) {
       console.error('Ошибка загрузки пользователей:', err);
@@ -312,8 +318,9 @@ const ManagerPage = () => {
       const competitionId = typeof competition.id === 'string' ? parseInt(competition.id) : competition.id;
 
       const assignPromises = selectedUsers.map(userId =>
-        api.put(`/users/${userId}/competition`, {
-          competition_id: competitionId
+        api.post('/participants', {
+          competition_id: competitionId,
+          user_id: userId
         })
       );
 
@@ -407,8 +414,9 @@ const ManagerPage = () => {
   const loadCompetitionParticipants = async (competitionId) => {
     try {
       setLoadingParticipants(true);
-      const users = await api.get('/users/only');
-      const participants = users.filter(user => user.cur_comp === competitionId).map(user => user.id);
+      // Загружаем участников конкретного соревнования через participants
+      const data = await api.get(`/participants/competition/${competitionId}`);
+      const participants = (data || []).map(item => item.user_id);
       setCompetitionParticipants(prev => ({
         ...prev,
         [competitionId]: participants
@@ -435,8 +443,9 @@ const ManagerPage = () => {
   const handleAddParticipant = async (competitionId, userId) => {
     try {
       setLoading(true);
-      await api.put(`/users/${userId}/competition`, {
-        competition_id: competitionId
+      await api.post('/participants', {
+        competition_id: competitionId,
+        user_id: userId
       });
       
       await loadCompetitionParticipants(competitionId);
@@ -453,9 +462,7 @@ const ManagerPage = () => {
   const handleRemoveParticipant = async (competitionId, userId) => {
     try {
       setLoading(true);
-      await api.put(`/users/${userId}/competition`, {
-        competition_id: null
-      });
+      await api.delete(`/participants/competition/${competitionId}/user/${userId}`);
       
       await loadCompetitionParticipants(competitionId);
       setSuccess('Участник успешно удалён из соревнования!');
@@ -1024,7 +1031,7 @@ const ManagerPage = () => {
                                     </span>
                                   </div>
                                   <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
-                                    {user.total_points} баллов
+                                    {user.score} баллов
                                   </span>
                                 </div>
                               ))}
@@ -1263,7 +1270,7 @@ const ManagerPage = () => {
                             ({userItem.email})
                           </span>
                           <span className="ml-2 text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
-                            {userItem.total_points} баллов
+                            {getUserTotalScore(userItem)} баллов
                           </span>
                         </div>
                       </label>

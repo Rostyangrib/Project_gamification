@@ -17,7 +17,6 @@ class User(Base):
     last_name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     password_hash = Column(Text, nullable=False)
-    total_points = Column(Integer, default=0)
     role = Column(String, default="user")
     cur_comp = Column(Integer, ForeignKey("competitions.id"), nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
@@ -27,6 +26,7 @@ class User(Base):
     #categories = relationship("Category", back_populates="user")
     rewards = relationship("Reward", back_populates="user")
     competition = relationship("Competition", back_populates="users")
+    participants = relationship("Participant", back_populates="user")
 
 class Competition(Base):
     __tablename__ = "competitions"
@@ -37,6 +37,16 @@ class Competition(Base):
     created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     updated_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"), onupdate=text("CURRENT_TIMESTAMP"))
     users = relationship("User", back_populates="competition")
+    participants = relationship("Participant", back_populates="competition")
+
+class Participant(Base):
+    __tablename__ = "participants"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    competition_id = Column(Integer, ForeignKey("competitions.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    score = Column(Integer, default=0)
+    competition = relationship("Competition", back_populates="participants")
+    user = relationship("User", back_populates="participants")
 
 class TaskStatus(Base):
     __tablename__ = "task_status"
@@ -99,7 +109,7 @@ class Reward(Base):
 def init_db():
     Base.metadata.create_all(bind=engine)
     with Session(engine) as db:
-        db.execute(text("TRUNCATE TABLE users, reward_types, tasks, task_status, tags, task_tags, rewards, competitions RESTART IDENTITY CASCADE;"))
+        db.execute(text("TRUNCATE TABLE users, reward_types, tasks, task_status, tags, task_tags, rewards, competitions, participants RESTART IDENTITY CASCADE;"))
         db.commit()
 
         if not db.query(TaskStatus).first():
@@ -127,7 +137,6 @@ def init_db():
                     last_name="admin",
                     email="admin@admin.com",
                     password_hash=get_password_hash("maximadmin"),
-                    total_points=52,
                     role="admin"
                 ),
                 User(
@@ -135,7 +144,6 @@ def init_db():
                     last_name="u1_lastname",
                     email="u1@user.com",
                     password_hash=get_password_hash("rost_user"),
-                    total_points=228,
                     role="user"
                 ),
                 User(
@@ -143,7 +151,6 @@ def init_db():
                     last_name="u2_lastname",
                     email="u2@user.com",
                     password_hash=get_password_hash("rost_user"),
-                    total_points=42,
                     role="user"
                 ),
                 User(
@@ -151,7 +158,6 @@ def init_db():
                     last_name="ssss",
                     email="sss@ss.s",
                     password_hash=get_password_hash("999999"),
-                    total_points=32,
                     role="admin"
                 ),
                 # Добавленные пользователи
@@ -160,7 +166,6 @@ def init_db():
                     last_name="Иванова",
                     email="manager@work.com",
                     password_hash=get_password_hash("999999"),
-                    total_points=150,
                     role="manager"
                 ),
                 User(
@@ -168,7 +173,6 @@ def init_db():
                     last_name="Сидоров",
                     email="dmitry@work.com",
                     password_hash=get_password_hash("999999"),
-                    total_points=180,
                     role="user"
                 ),
                 User(
@@ -176,7 +180,6 @@ def init_db():
                     last_name="Петрова",
                     email="elena@work.com",
                     password_hash=get_password_hash("password123"),
-                    total_points=210,
                     role="user"
                 ),
                 User(
@@ -184,7 +187,6 @@ def init_db():
                     last_name="Козлов",
                     email="mikhail@work.com",
                     password_hash=get_password_hash("password123"),
-                    total_points=95,
                     role="user"
                 ),
                 User(
@@ -192,7 +194,6 @@ def init_db():
                     last_name="Смирнова",
                     email="olga@work.com",
                     password_hash=get_password_hash("password123"),
-                    total_points=300,
                     role="user"
                 ),
                 User(
@@ -201,7 +202,6 @@ def init_db():
                     email="sergey@work.com",
 
                     password_hash=get_password_hash("password123"),
-                    total_points=110,
                     role="user"
                 )
             ]

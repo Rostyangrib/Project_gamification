@@ -8,7 +8,7 @@ from ml.ai_analyzer import analyze_task, YandexRateLimitError, YandexAPIError
 
 from db import get_db
 from database import (
-    User, TaskStatus, Tag, TaskTag, Task, RewardType, Reward, Competition
+    User, TaskStatus, Tag, TaskTag, Task, RewardType, Reward, Competition, Participant
 )
 from schemas import (
     UserCreate, UserResponse, Token, UserLogin,
@@ -18,7 +18,7 @@ from schemas import (
     RewardTypeCreate, RewardTypeResponse,
     RewardCreate, RewardResponse,
     TaskTagCreate, CompetitionCreate,
-    CompetitionResponse
+    CompetitionResponse, ParticipantCreate, ParticipantResponse
 )
 from auth import verify_password, get_password_hash, create_access_token
 from dependencies import get_current_user, require_admin, require_manager
@@ -42,7 +42,6 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         last_name=user.last_name,
         email=user.email,
         password_hash=hashed_password,
-        total_points=0,
         role="user"
     )
     # Запись в бд
@@ -58,8 +57,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
         first_name=user.first_name,
         last_name=user.last_name,
         email=user.email,
-        password_hash=hashed_password,
-        total_points=0
+        password_hash=hashed_password
     )
     try:
         db.add(db_user)
@@ -94,7 +92,6 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
             "email": db_user.email,
             "first_name": db_user.first_name,
             "last_name": db_user.last_name,
-            "total_points": db_user.total_points,
             "role": db_user.role
         }
     }
@@ -365,8 +362,16 @@ def create_reward(
     db.commit()
     db.refresh(db_reward)
 
-    current_user["user"].total_points += points_to_award
-    db.commit()
+    # Обновляем score в participants, если пользователь участвует в соревновании
+    user = current_user["user"]
+    if user.cur_comp:
+        participant = db.query(Participant).filter(
+            Participant.competition_id == user.cur_comp,
+            Participant.user_id == user.id
+        ).first()
+        if participant:
+            participant.score += points_to_award
+            db.commit()
 
     return db_reward
 
@@ -421,3 +426,49 @@ def create_task_single(
     db.commit()
     db.refresh(db_task)
     return db_task
+
+@router.post("/participants", response_model=ParticipantResponse, status_code=status.HTTP_201_CREATED)
+def create_participant(
+    participant: ParticipantCreate,
+    current_user: dict = Depends(require_manager),
+    db: Session = Depends(get_db)
+):
+    """Создает запись участника соревнования и назначает пользователя на соревнование"""
+    # Проверяем существование соревнования
+    competition = db.query(Competition).filter(Competition.id == participant.competition_id).first()
+    if not competition:
+        raise HTTPException(status_code=404, detail="Соревнование не найдено")
+    
+    # Проверяем существование пользователя
+    user = db.query(User).filter(User.id == participant.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    
+    # Проверяем, не существует ли уже такая запись
+    existing = db.query(Participant).filter(
+        Participant.competition_id == participant.competition_id,
+        Participant.user_id == participant.user_id
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Участник уже зарегистрирован на это соревнование")
+    
+    # Удаляем старые задачи пользователя при назначении нового соревнования
+    if user.cur_comp and user.cur_comp != participant.competition_id:
+        user_tasks = db.query(Task).filter(Task.user_id == participant.user_id).all()
+        for task in user_tasks:
+            db.query(TaskTag).filter(TaskTag.task_id == task.id).delete()
+            db.delete(task)
+    
+    # Обновляем cur_comp пользователя
+    user.cur_comp = participant.competition_id
+    
+    # Создаем новую запись participant
+    db_participant = Participant(
+        competition_id=participant.competition_id,
+        user_id=participant.user_id,
+        score=participant.score or 0
+    )
+    db.add(db_participant)
+    db.commit()
+    db.refresh(db_participant)
+    return db_participant
