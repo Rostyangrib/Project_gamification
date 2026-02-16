@@ -55,6 +55,38 @@ const getTimeRemaining = (endDate) => {
   return `Осталось: ${minutes} мин.`;
 };
 
+const getCompetitionStatus = (competition) => {
+  if (!competition?.start_date || !competition?.end_date) {
+    return {
+      text: 'Без дат',
+      color: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+    };
+  }
+
+  const now = new Date();
+  const startDate = new Date(competition.start_date);
+  const endDate = new Date(competition.end_date);
+
+  if (now < startDate) {
+    return {
+      text: 'Не началось',
+      color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+    };
+  }
+
+  if (now >= startDate && now <= endDate) {
+    return {
+      text: 'Идёт',
+      color: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+    };
+  }
+
+  return {
+    text: 'Завершено',
+    color: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+  };
+};
+
 const HomePage = () => {
   const api = useApi();
   const { user } = useAuth();
@@ -68,6 +100,10 @@ const HomePage = () => {
   const [allUsers, setAllUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const dashboardDataLoadedRef = useRef(false);
+  const [userCompetitions, setUserCompetitions] = useState([]);
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState(null);
+  const [competitionStats, setCompetitionStats] = useState(null);
+  const [isLoadingCompetitionStats, setIsLoadingCompetitionStats] = useState(false);
 
   useEffect(() => {
     document.title = 'Панель геймификации';
@@ -154,11 +190,50 @@ const HomePage = () => {
     const loadCompetition = async () => {
       try {
         setIsLoadingCompetition(true);
+        setIsLoadingCompetitionStats(true);
         const userInfo = await api.get('/users/me');
         if (userInfo?.cur_comp) {
           try {
             const compInfo = await api.get(`/competitions/${userInfo.cur_comp}`);
             setCompetition(compInfo);
+            setUserCompetitions([compInfo]);
+            setSelectedCompetitionId(compInfo.id);
+
+            try {
+              const leaderboardRaw = await api.get(`/leaderboard/${userInfo.cur_comp}`);
+              const usersArray = Array.isArray(leaderboardRaw) ? leaderboardRaw : [];
+              const sortedUsers = usersArray
+                .map((u) => ({
+                  first_name: u.first_name || '',
+                  last_name: u.last_name || '',
+                  total_points: Number(u.total_points) || 0,
+                }))
+                .sort((a, b) => b.total_points - a.total_points);
+
+              let userRank = null;
+              let userPoints = null;
+
+              const foundIndex = sortedUsers.findIndex(
+                (u) =>
+                  u.first_name === userInfo.first_name &&
+                  u.last_name === userInfo.last_name
+              );
+
+              if (foundIndex !== -1) {
+                userRank = foundIndex + 1;
+                userPoints = sortedUsers[foundIndex].total_points;
+              }
+
+              setCompetitionStats({
+                competitionId: userInfo.cur_comp,
+                totalParticipants: sortedUsers.length,
+                userRank,
+                userPoints,
+              });
+            } catch (statsErr) {
+              console.error('Ошибка загрузки статистики соревнования:', statsErr);
+              setCompetitionStats(null);
+            }
           } catch (err) {
             setCompetition({
               id: userInfo.cur_comp,
@@ -166,15 +241,25 @@ const HomePage = () => {
               end_date: null,
               start_date: null
             });
+            setUserCompetitions([]);
+            setSelectedCompetitionId(null);
+            setCompetitionStats(null);
           }
         } else {
           setCompetition(null);
+          setUserCompetitions([]);
+          setSelectedCompetitionId(null);
+          setCompetitionStats(null);
         }
       } catch (err) {
         console.error('Ошибка загрузки соревнования:', err);
         setCompetition(null);
+        setUserCompetitions([]);
+        setSelectedCompetitionId(null);
+        setCompetitionStats(null);
       } finally {
         setIsLoadingCompetition(false);
+        setIsLoadingCompetitionStats(false);
       }
     };
     loadCompetition();
@@ -287,6 +372,7 @@ const HomePage = () => {
       setError(errorMessage);
     }
   };
+
 
   const removeTask = async (taskId) => {
     try {
@@ -555,31 +641,156 @@ const HomePage = () => {
 
       <div className="grid grid-cols-1 gap-8">
         {!isLoadingCompetition && competition && (
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 p-6 rounded-lg shadow-lg text-white">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
-                   {competition.title || 'Соревнование'}
-                </h2>
-                {competition.end_date ? (
-                  <div className="space-y-1">
-                    <p className="text-blue-100 text-sm">
-                      <span className="font-semibold">Дедлайн:</span> {formatDateTime(competition.end_date)}
-                    </p>
-                    <p className="text-blue-100 text-sm font-medium">
-                      {getTimeRemaining(competition.end_date)}
-                    </p>
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+              <div className="flex flex-col justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">
+                    Мои соревнования
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Выберите соревнование, чтобы посмотреть подробную информацию.
+                  </p>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Соревнование
+                    </label>
+                    <select
+                      value={selectedCompetitionId || ''}
+                      onChange={(e) => {
+                        const value = e.target.value ? Number(e.target.value) : null;
+                        setSelectedCompetitionId(value);
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      disabled={userCompetitions.length <= 1}
+                    >
+                      {userCompetitions.length === 0 && (
+                        <option value="">Нет доступных соревнований</option>
+                      )}
+                      {userCompetitions.map((comp) => (
+                        <option key={comp.id} value={comp.id}>
+                          {comp.title}
+                        </option>
+                      ))}
+                    </select>
+                    {userCompetitions.length <= 1 && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Сейчас вы участвуете только в одном соревновании.
+                      </p>
+                    )}
                   </div>
-                ) : (
-                  <p className="text-blue-100 text-sm">
-                    Информация о дедлайне недоступна
-                  </p>
-                )}
-                {competition.start_date && (
-                  <p className="text-blue-100 text-sm mt-2">
-                    <span className="font-semibold">Начало:</span> {formatDateTime(competition.start_date)}
-                  </p>
-                )}
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-lg text-white p-5 flex flex-col justify-between">
+                {(() => {
+                  const currentComp =
+                    userCompetitions.find((c) => c.id === selectedCompetitionId) || competition;
+                  if (!currentComp) {
+                    return (
+                      <p className="text-sm text-blue-100">
+                        Выберите соревнование слева, чтобы увидеть подробности.
+                      </p>
+                    );
+                  }
+
+                  const status = getCompetitionStatus(currentComp);
+                  const statsAvailable =
+                    competitionStats &&
+                    competitionStats.competitionId === currentComp.id &&
+                    competitionStats.userRank != null;
+
+                  return (
+                    <>
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-2xl font-bold flex items-center gap-2">
+                            {currentComp.title || 'Соревнование'}
+                          </h3>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-semibold ${status.color}`}
+                          >
+                            {status.text}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1 text-sm">
+                          {currentComp.start_date && (
+                            <p className="text-blue-100">
+                              <span className="font-semibold">Начало:</span>{' '}
+                              {formatDateTime(currentComp.start_date)}
+                            </p>
+                          )}
+                          {currentComp.end_date ? (
+                            <>
+                              <p className="text-blue-100">
+                                <span className="font-semibold">Дедлайн:</span>{' '}
+                                {formatDateTime(currentComp.end_date)}
+                              </p>
+                              <p className="text-blue-100 font-medium">
+                                {getTimeRemaining(currentComp.end_date)}
+                              </p>
+                            </>
+                          ) : (
+                            <p className="text-blue-100">
+                              Информация о дедлайне недоступна
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                          <div className="bg-white/10 rounded-lg p-3">
+                            <p className="text-blue-100 text-xs">Мои баллы</p>
+                            {isLoadingCompetitionStats ? (
+                              <p className="text-lg font-semibold">...</p>
+                            ) : (
+                              <p className="text-lg font-semibold">
+                                {statsAvailable ? competitionStats.userPoints : '—'}
+                              </p>
+                            )}
+                          </div>
+                          <div className="bg-white/10 rounded-lg p-3">
+                            <p className="text-blue-100 text-xs">Моё место</p>
+                            {isLoadingCompetitionStats ? (
+                              <p className="text-lg font-semibold">...</p>
+                            ) : statsAvailable ? (
+                              <p className="text-lg font-semibold">
+                                {competitionStats.userRank}{' '}
+                                <span className="text-xs text-blue-100">
+                                  из {competitionStats.totalParticipants}
+                                </span>
+                              </p>
+                            ) : (
+                              <p className="text-lg font-semibold">—</p>
+                            )}
+                          </div>
+                          <div className="bg-white/10 rounded-lg p-3">
+                            <p className="text-blue-100 text-xs">Участников</p>
+                            {isLoadingCompetitionStats ? (
+                              <p className="text-lg font-semibold">...</p>
+                            ) : competitionStats &&
+                              competitionStats.competitionId === currentComp.id ? (
+                              <p className="text-lg font-semibold">
+                                {competitionStats.totalParticipants}
+                              </p>
+                            ) : (
+                              <p className="text-lg font-semibold">—</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4">
+                        <button
+                          onClick={() => navigate('/leaderboards')}
+                          className="inline-flex items-center px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium text-white transition-colors"
+                        >
+                          Открыть полный рейтинг
+                        </button>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </div>
